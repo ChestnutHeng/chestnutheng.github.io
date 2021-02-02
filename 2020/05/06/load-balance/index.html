@@ -1,0 +1,996 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+  <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic|monospace:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+  
+
+<link href="//cdn.bootcss.com/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="负载均衡,后台," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ChestnutHeng's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="负载均衡是集群中一个重要的组成部分。这个模块一般集成了名字服务、负载均衡、过载保护、限流等功能。第一部分是针对均衡本身算法的介绍。">
+<meta name="keywords" content="负载均衡,后台">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[后台]负载均衡 （一）算法篇">
+<meta property="og:url" content="chestnutheng.cn/2020/05/06/load-balance/index.html">
+<meta property="og:site_name" content="ChestnutHeng&#39;s Blog">
+<meta property="og:description" content="负载均衡是集群中一个重要的组成部分。这个模块一般集成了名字服务、负载均衡、过载保护、限流等功能。第一部分是针对均衡本身算法的介绍。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/load_ban1.jpg">
+<meta property="og:image" content="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb2.png">
+<meta property="og:updated_time" content="2020-05-21T09:13:47.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="[后台]负载均衡 （一）算法篇">
+<meta name="twitter:description" content="负载均衡是集群中一个重要的组成部分。这个模块一般集成了名字服务、负载均衡、过载保护、限流等功能。第一部分是针对均衡本身算法的介绍。">
+<meta name="twitter:image" content="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/load_ban1.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"right","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="chestnutheng.cn/2020/05/06/load-balance/"/>
+
+  <title> [后台]负载均衡 （一）算法篇 | ChestnutHeng's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans,en,default">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?53529277abe821f4686b3d713bf1ea67";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-right page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">ChestnutHeng's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                [后台]负载均衡 （一）算法篇
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2020-05-06T20:24:30+08:00" content="2020-05-06">
+              2020-05-06
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/后台/" itemprop="url" rel="index">
+                    <span itemprop="name">后台</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+             <span id="/2020/05/06/load-balance/" class="leancloud_visitors" data-flag-title="[后台]负载均衡 （一）算法篇">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>当单机的访问压力很大时，就需要引入集群。集群一个很重要的事情就是把请求均匀地分配在各个机器上，这就是负载均衡的雏形。<br>有基于MAC地址的二层负载均衡和基于IP地址的三层负载均衡。 二层负载均衡会通过一个虚拟MAC地址接收请求，然后再分配到真实的MAC地址；三层负载均衡会通过一个虚拟IP地址接收请求，然后再分配到真实的IP地址；<br>四层通过虚拟IP+端口接收请求，然后再分配到真实的服务器（比如LVS，F5）；七层通过虚拟的URL或主机名接收请求，然后再分配到真实的服务器（Haproxy和Nginx）。<br>四层和七层是最常见的负载均衡模型。<br><img src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/load_ban1.jpg" alt="七层和四层模型"><br><strong>四层：</strong>以常见的TCP为例，负载均衡设备在接收到第一个来自客户端的SYN请求时，通过负载均衡算法选择服务器，并对报文中目标IP地址进行修改（改为后端服务器IP），直接转发给该服务器。TCP的连接建立，即三次握手是客户端和服务器直接建立的，负载均衡设备只是起到一个类似路由器的转发动作。在某些部署情况下，为保证服务器回包可以正确返回给负载均衡设备，在转发报文的同时可能还会对报文原来的源地址进行修改。<br><strong>七层：</strong>以常见的TCP为例，负载均衡设备如果要根据真正的应用层内容再选择服务器，只能先代理最终的服务器和客户端建立连接(三次握手)后，才可能接受到客户端发送的真正应用层内容的报文，然后再根据该报文中的特定字段，再加上设置的负载均衡算法，选择内部某台服务器。负载均衡设备在这种情况下，更类似于一个代理服务器。负载均衡和前端的客户端以及后端的服务器会分别建立TCP连接。所以从这个技术原理上来看，七层负载均衡明显的对负载均衡设备的要求更高，处理七层的能力也必然会低于四层模式的部署方式。<br><a href="https://kb.cnblogs.com/page/188170/" target="_blank" rel="noopener">参考资料：四层和七层负载均衡的区别</a></p>
+<h1 id="nginx用的负载均衡算法"><a href="#nginx用的负载均衡算法" class="headerlink" title="nginx用的负载均衡算法"></a>nginx用的负载均衡算法</h1><p>Nginx可以作为HTTP反向代理，把访问本机的HTTP请求，均分到后端集群的若干台服务器上。负载均衡的核心就是负载均衡所使用的平衡算法，适用于各种场景。<br><a href="https://www.kancloud.cn/digest/sknginx/130029" target="_blank" rel="noopener">Nginx的负载均衡算法</a><br>Nginx目前提供的负载均衡模块：<br>ngx_http_upstream_round_robin，加权轮询，可均分请求，是默认的HTTP负载均衡算法，集成在框架中。<br>ngx_http_upstream_ip_hash_module，IP哈希，可保持会话。<br>ngx_http_upstream_least_conn_module，最少连接数，可均分连接。适用于链接数体现资源的服务，比如FTP。<br>ngx_http_upstream_hash_module，一致性哈希，可减少缓存数据的失效。</p>
+<h2 id="随机访问"><a href="#随机访问" class="headerlink" title="随机访问"></a>随机访问</h2><p>在介绍nginx的模式前，先介绍下普通的负载均衡方法。假设有7个请求，我们给A、B、C三个节点分别4、2、1的权重。最朴素的负载均衡方式有下面几种：</p>
+<ol>
+<li>完全轮询：访问完A去访问B，访问完B去访问C，再去访问A。缺点是没有权重，不能根据负载调节。</li>
+<li>列表轮询：构造一个数组[A, A, A, A, B, B, C]，每次pop出去一个访问。缺点是pop出去的元素太随机，可能一次集中访问A ，而且占用内存太大，对于几万的权重范围不合适。</li>
+<li>随机数：我们按照A、B、C的权重划分好区间，A（0、1、2、3），B（4、5），C（6），然后取一个随机数，模余7，看看最后的结果在哪个区间内，就取哪个节点。缺点是完全随机，无法避免集中访问。</li>
+</ol>
+<h2 id="加权轮询"><a href="#加权轮询" class="headerlink" title="加权轮询"></a>加权轮询</h2><p>假设有7个请求，我们给A、B、C三个节点分别4、2、1的权重。如果随机按照概率来选，那么很可能出现连续四个请求都在A上面的情况，这样只能保证结果看起来均衡，但是时间段内不均衡。Nginx采用了一种平滑的加权平均算法来选取节点（Weighted Round Robin）。<br>先引入三个概念，都用来描述服务器节点的权重：</p>
+<ol>
+<li>$W$ : weight 我们指定的权重，就是上面例子中的4、2、1。</li>
+<li>$W_{ew}$: effective_weight 有效权重，初始值为$W$。用来对故障节点降权。<br>如果通信中有错误产生，就减小effective_weight。（故障降权）<br>此后有新的请求过来时，再逐步增加effective_weight，最终又恢复到weight。（自动恢复）</li>
+<li>$W_{cw}$ : current_weight 当前真实权重，每次都会选到最大的真实权重的节点去请求</li>
+</ol>
+<p>真实权重$W_{cw}$计算方式：</p>
+<ol>
+<li>初始化：$W_{cw}$ 起始值为0</li>
+<li>获得实时权重：请求到来后，给每个节点的真实权重加上有效权重，即$每个节点 W_{cw} = W_{cw} + W_{ew}$ </li>
+<li>选出最大权重：选择真实权重最大的节点最为本次请求的目标</li>
+<li>回避刚选的节点：最选择的节点的实时权重减去所有节点（包括自己）的有效权重和。即$选中节点 W_{cw} = W_{cw} - (W_{ew1} + W_{ew2} + … + W_{ewn})$ </li>
+</ol>
+<p>来看一个具体的例子：<br>假设A、B、C三个节点的权重分别为4、2、1。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">请求序号</th>
+<th style="text-align:center">请求后的current_weight</th>
+<th style="text-align:center">选择的节点</th>
+<th style="text-align:center">选择后的current_weight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">未请求</td>
+<td style="text-align:center">{0,0,0}</td>
+<td style="text-align:center">/</td>
+<td style="text-align:center">/</td>
+</tr>
+<tr>
+<td style="text-align:center">1</td>
+<td style="text-align:center">{4,2,1}</td>
+<td style="text-align:center">A</td>
+<td style="text-align:center">{-3,2,1}</td>
+</tr>
+<tr>
+<td style="text-align:center">2</td>
+<td style="text-align:center">{1,4,2}</td>
+<td style="text-align:center">B</td>
+<td style="text-align:center">{1,-3,2}</td>
+</tr>
+<tr>
+<td style="text-align:center">3</td>
+<td style="text-align:center">{5,-1,3}</td>
+<td style="text-align:center">A</td>
+<td style="text-align:center">{-2,-1,3}</td>
+</tr>
+<tr>
+<td style="text-align:center">4</td>
+<td style="text-align:center">{2,1,4}</td>
+<td style="text-align:center">C</td>
+<td style="text-align:center">{2,1,-3}</td>
+</tr>
+<tr>
+<td style="text-align:center">5</td>
+<td style="text-align:center">{6,3,-2}</td>
+<td style="text-align:center">A</td>
+<td style="text-align:center">{-1,3,-2}</td>
+</tr>
+<tr>
+<td style="text-align:center">6</td>
+<td style="text-align:center">{3,5,-1}</td>
+<td style="text-align:center">B</td>
+<td style="text-align:center">{3,-2,-1}</td>
+</tr>
+<tr>
+<td style="text-align:center">7</td>
+<td style="text-align:center">{7,0,0}</td>
+<td style="text-align:center">A</td>
+<td style="text-align:center">{0,0,0}</td>
+</tr>
+</tbody>
+</table>
+<p>三个结论：每个节点被选中的次数是符合权重的；A没有被连续选取；七次之后权重会归零，是一个循环。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> ngx_http_upstream_rr_peer_t *<span class="title">ngx_http_upstream_get_peer</span><span class="params">(<span class="keyword">ngx_http_upstream_rr_peer_data_t</span> *rrp)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">time_t</span>                        now;</span><br><span class="line">    <span class="keyword">uintptr_t</span>                     m;</span><br><span class="line">    <span class="keyword">ngx_int_t</span>                     total;</span><br><span class="line">    <span class="keyword">ngx_uint_t</span>                    i, n, p;</span><br><span class="line">    <span class="keyword">ngx_http_upstream_rr_peer_t</span>  *peer, *best;</span><br><span class="line"></span><br><span class="line">    now = ngx_time();</span><br><span class="line">    best = <span class="literal">NULL</span>;</span><br><span class="line">    total = <span class="number">0</span>;</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* 遍历集群中的所有后端 */</span></span><br><span class="line">    <span class="keyword">for</span> (peer = rrp-&gt;peers-&gt;peer, i = <span class="number">0</span>;</span><br><span class="line">         peer;</span><br><span class="line">         peer = peer-&gt;next, i++)</span><br><span class="line">    &#123;</span><br><span class="line"></span><br><span class="line">        n = i / (<span class="number">8</span> * <span class="keyword">sizeof</span>(<span class="keyword">uintptr_t</span>));</span><br><span class="line">        m = (<span class="keyword">uintptr_t</span>) <span class="number">1</span> &lt;&lt; i % (<span class="number">8</span> * <span class="keyword">sizeof</span>(<span class="keyword">uintptr_t</span>));</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* 检查该后端服务器在位图中对应的位，为1时表示不可用 */</span></span><br><span class="line">        <span class="keyword">if</span> (rrp-&gt;tried[n] &amp; m)</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">       </span><br><span class="line">        <span class="comment">/* 永久不可用的标志 */</span></span><br><span class="line">        <span class="keyword">if</span> (peer-&gt;down) </span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        </span><br><span class="line">       <span class="comment">/* 在一段时间内，如果此后端服务器的失败次数，超过了允许的最大值，那么不允许使用此后端了 */</span></span><br><span class="line">       <span class="keyword">if</span> (peer-&gt;max_fails</span><br><span class="line">            &amp;&amp; peer-&gt;fails &gt;= peer-&gt;max_fails</span><br><span class="line">            &amp;&amp; now - peer-&gt;checked &lt;= peer-&gt;fail_timeout)</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        </span><br><span class="line">        peer-&gt;current_weight += peer-&gt;effective_weight; <span class="comment">/* 对每个后端，增加其当前权重 */</span></span><br><span class="line">        total += peer-&gt;effective_weight; <span class="comment">/* 累加所有后端的有效权重 */</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">/* 如果之前此后端发生了失败，会减小其effective_weight来降低它的权重。          </span></span><br><span class="line"><span class="comment">         * 此后在选取后端的过程中，又通过增加其effective_weight来恢复它的权重。          </span></span><br><span class="line"><span class="comment">         */</span>        </span><br><span class="line">        <span class="keyword">if</span> (peer-&gt;effective_weight &lt; peer-&gt;weight) </span><br><span class="line">            peer-&gt;effective_weight++;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">/* 选取当前权重最大者，作为本次选定的后端 */</span></span><br><span class="line">        <span class="keyword">if</span> (best == <span class="literal">NULL</span> || peer-&gt;current_weight &gt; best-&gt;current_weight) &#123;</span><br><span class="line">            best = peer;</span><br><span class="line">            p = i;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (best == <span class="literal">NULL</span>) <span class="comment">/* 没有可用的后端 */</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    </span><br><span class="line">    rrp-&gt;current = best; <span class="comment">/* 保存本次选定的后端 */</span></span><br><span class="line"></span><br><span class="line">    n = p / (<span class="number">8</span> * <span class="keyword">sizeof</span>(<span class="keyword">uintptr_t</span>));</span><br><span class="line">    m = (<span class="keyword">uintptr_t</span>) <span class="number">1</span> &lt;&lt; p % (<span class="number">8</span> * <span class="keyword">sizeof</span>(<span class="keyword">uintptr_t</span>));</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* 对于本次请求，如果之后需要再次选取后端，不能再选取这个后端了 */</span>    </span><br><span class="line">    rrp-&gt;tried[n] |= m;</span><br><span class="line"></span><br><span class="line">    best-&gt;current_weight -= total; <span class="comment">/* 选定后端后，需要降低其当前权重 */</span>  </span><br><span class="line">    <span class="comment">/* 更新checked时间 */</span></span><br><span class="line">    <span class="keyword">if</span> (now - best-&gt;checked &gt; best-&gt;fail_timeout)</span><br><span class="line">        best-&gt;checked = now;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> best;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="ip-hash"><a href="#ip-hash" class="headerlink" title="ip_hash"></a>ip_hash</h2><p>ip_hash是基于客户端IP的哈希值来选择服务器。同一个客户端的请求，都会发往同一台后端，除非该后端不可用了。ip_hash能够达到保持会话的效果。<br>和随机加权哈希一样，ip哈希借鉴了权重分段的思想，先算出哈希值, 然后模余total_weight，得到初始权重W [0, total_weight)，开始遍历节点。如果哈希值小于当前节点的权重，就选择当前节点；如果哈希值大于等于当前节点的权重，就减去当前节点的权重，再去尝试下个节点。我们还是讨论A，B，C三个节点的情况，假设权重分别为2、4、1 。<br>权重的和是7，那么哈希值应该是0~6 （因为模了哈希值）<br>6的情况：6 &gt;= 2 , 所以不选A，减去2。 6-2 &gt;= 4，所以不选B，减去4。2-4 &lt; 1，所以选C<br>5的情况：5 &gt;= 2 , 所以不选A，减去2。 5-2 &lt; 4，所以选B<br>4的情况：4 &gt;= 2 , 所以不选A，减去2。 4-2 &lt; 4，所以选B 。哈希值为3、2的情况也一样。<br>1、0的情况：1 &lt; 2，所以选A<br>可以看到最后四个选B，两个选A，一个选C，还是均衡的。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> ( ; ; ) &#123;</span><br><span class="line">    <span class="comment">/* 1.根据客户端IP、本次选取的初始hash值，计算得到本次最终的hash值 */</span></span><br><span class="line">    <span class="comment">/* hash1 = (hash0 * 113 + addr[0]) % 6271; hash2 = (hash1 * 113 + addr[1]) % 6271;...; */</span></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; (<span class="keyword">ngx_uint_t</span>) iphp-&gt;addrlen; i++)</span><br><span class="line">        hash = (hash * <span class="number">113</span> + iphp-&gt;addr[i]) % <span class="number">6271</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* 2. 先给w赋值为所有节点的权重和。total_weight和weight都是固定值 */</span></span><br><span class="line">    w = hash % iphp-&gt;rrp.peers-&gt;total_weight;</span><br><span class="line">    peer = iphp-&gt;rrp.peers-&gt;peer; <span class="comment">/* 第一台后端 */</span></span><br><span class="line">    p = <span class="number">0</span>;</span><br><span class="line">	</span><br><span class="line">	<span class="comment">/* 3.遍历后端链表时，依次减去每个后端的权重，直到w小于某个后端的权重 */</span></span><br><span class="line">    <span class="keyword">while</span> (w &gt;= peer-&gt;weight) &#123;</span><br><span class="line">        w -= peer-&gt;weight;</span><br><span class="line">        peer = peer-&gt;next;</span><br><span class="line">        p++;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">&#125;</span><br><span class="line">choose(p);</span><br></pre></td></tr></table></figure>
+<h2 id="least-conn"><a href="#least-conn" class="headerlink" title="least_conn"></a>least_conn</h2><p>有的场景下，把请求转发给连接数较少的后端，能够达到更好的负载均衡效果。<br>least_conn算法很简单，首选遍历后端集群，比较每个后端的conns/weight，选取该值最小的后端。如果有多个后端的conns/weight值同为最小的，那么对它们采用加权轮询算法。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (peer = peers-&gt;peer, i = <span class="number">0</span>; peer; peer = peer-&gt;next, i++)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">/* 检查此后端在状态位图中对应的位，为1时表示不可用 */</span> </span><br><span class="line">    n = i / (<span class="number">8</span> * <span class="keyword">sizeof</span>(<span class="keyword">uintptr_t</span>));</span><br><span class="line">    m = (<span class="keyword">uintptr_t</span>) <span class="number">1</span> &lt;&lt; i % (<span class="number">8</span> * <span class="keyword">sizeof</span>(<span class="keyword">uintptr_t</span>));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (rrp-&gt;tried[n] &amp; m)</span><br><span class="line">       <span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* server指令中携带了down属性，表示后端永久不可用 */</span></span><br><span class="line">    <span class="keyword">if</span> (peer-&gt;down)</span><br><span class="line">        <span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* 在一段时间内，如果此后端服务器的失败次数，超过了允许的最大值，那么不允许使用此后端了 */</span></span><br><span class="line">     <span class="keyword">if</span> (peer-&gt;max_fails &amp;&amp; peer-&gt;fails &gt;= peer-&gt;max_fails</span><br><span class="line">         &amp;&amp; now - peer-&gt;checked &lt;= peer-&gt;fail_timeout)</span><br><span class="line">        <span class="keyword">continue</span>;</span><br><span class="line">        </span><br><span class="line">    <span class="comment">/* 比较各个后端的conns/weight，选取最小者；</span></span><br><span class="line"><span class="comment">     * 如果有多个最小者，记录第一个的序号p，且设置many标志。</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">if</span> (best == <span class="literal">NULL</span> || peer-&gt;conns * best-&gt;weight &lt; best-&gt;conns * peer-&gt;weight)</span><br><span class="line">    &#123;</span><br><span class="line">        best = peer;</span><br><span class="line">        many = <span class="number">0</span>;</span><br><span class="line">        p = i;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (peer-&gt;conns * best-&gt;weight == best-&gt;conns * peer-&gt;weight)</span><br><span class="line">        many = <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/* 如果有多个后端的conns/weight同为最小者，则对它们使用轮询算法 */</span></span><br><span class="line"><span class="keyword">if</span> (many) &#123;</span><br><span class="line">    <span class="keyword">for</span> (peer = best, i = p; peer; peer-&gt;peer-&gt;next, i++)</span><br><span class="line">    &#123;</span><br><span class="line">       <span class="comment">/* conns/weight必须为最小的 */</span></span><br><span class="line">        <span class="keyword">if</span> (peer-&gt;conns * best-&gt;weight != best-&gt;conns * peer-&gt;weight)</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">        peer-&gt;current_weight += peer-&gt;effective_weight; <span class="comment">/* 对每个后端，增加其当前权重 */</span></span><br><span class="line">        total += peer-&gt;effective_weight; <span class="comment">/* 累加所有后端的有效权重 */</span></span><br><span class="line"></span><br><span class="line">       <span class="comment">/* 如果之前此后端发生了失败，会减小其effective_weight来降低它的权重。          </span></span><br><span class="line"><span class="comment">          * 此后在选取后端的过程中，又通过增加其effective_weight来恢复它的权重。          </span></span><br><span class="line"><span class="comment">          */</span>        </span><br><span class="line">        <span class="keyword">if</span> (peer-&gt;effective_weight &lt; peer-&gt;weight) </span><br><span class="line">            peer-&gt;effective_weight++;</span><br><span class="line">    </span><br><span class="line">        <span class="comment">/* 选取当前权重最大者，作为本次选定的后端 */</span></span><br><span class="line">        <span class="keyword">if</span> (best == <span class="literal">NULL</span> || peer-&gt;current_weight &gt; best-&gt;current_weight) &#123;</span><br><span class="line">            best = peer;</span><br><span class="line">            p = i;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="一致哈希"><a href="#一致哈希" class="headerlink" title="一致哈希"></a>一致哈希</h2><p>当后端是缓存服务器时，经常使用一致性哈希算法来进行负载均衡。使用一致性哈希的好处在于，增减集群的缓存服务器时，只有少量的缓存会失效，回源量较小。常见的CDN架构都是使用一致性哈希。<br>我们知道的<a href="https://www.codeproject.com/Articles/56138/Consistent-hashing" target="_blank" rel="noopener">一致性哈希</a>是一个环，每个哈希值对应的请求属于哈希值在环上遇到的下一个节点。为了使得请求分布更加均衡，我们建立了很多虚拟节点，请求会对应到虚拟节点的真实节点上。</p>
+<ol>
+<li>创造虚拟节点<br>在nginx中，为了保证节点的权重，一般一个真实节点对应weight * 160个虚拟节点。<br>每个虚拟节点的hash值hash = crc32(base_hash PREV_HASH)，其中，PREV_HASH表示上个虚拟节点的哈希值，这样就可以不断产出虚拟节点。base_hash 表示对应真实节点的哈希值（crc32(HOST 0 PORT)）。<br>创造完所有数量后，我们对虚拟节点按照哈希值排序。</li>
+<li>请求分配<br>先对请求做哈希，得出hash值，然后使用二分查找，寻找第一个hash值大于等于请求的哈希值的虚拟节点，即顺时针方向最近的一个虚拟节点。</li>
+<li>找到真实节点<br>遍历真实节点数组，寻找可用的、该虚拟节点归属的真实节点(server成员相同)，如果有多个真实节点同时符合条件，那么使用轮询来从中选取一个真实节点。</li>
+</ol>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> ( ; ; ) &#123;</span><br><span class="line">    <span class="comment">/* 在peer.init中，已根据请求的哈希值，找到顺时针方向最近的一个虚拟节点，</span></span><br><span class="line"><span class="comment">     * hash为该虚拟节点在数组中的索引。</span></span><br><span class="line"><span class="comment">     * 一开始hash值肯定小于number，之后每尝试一个虚拟节点后，hash++。取模是为了防止越界访问。</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    server = point[hp-&gt;hash % points-&gt;number].server;</span><br><span class="line">    best = <span class="literal">NULL</span>;</span><br><span class="line">    best_i = <span class="number">0</span>;</span><br><span class="line">    total = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* 遍历真实节点数组，寻找可用的、该虚拟节点归属的真实节点(server成员相同)，</span></span><br><span class="line"><span class="comment">      * 如果有多个真实节点同时符合条件，那么使用轮询来从中选取一个真实节点。</span></span><br><span class="line"><span class="comment">      */</span></span><br><span class="line">    <span class="keyword">for</span> (peer = hp-&gt;rrp.peers-&gt;peer, i = <span class="number">0</span>; peer; peer = peer-&gt;next, i++) &#123;</span><br><span class="line">        <span class="comment">/* 检查此真实节点在状态位图中对应的位，为1时表示不可用 */</span></span><br><span class="line">        n = i / (<span class="number">8</span> * <span class="keyword">sizeof</span>(<span class="keyword">uintptr_t</span>));</span><br><span class="line">        m = (<span class="keyword">uintptr_t</span>) <span class="number">1</span> &lt;&lt; i % (<span class="number">8</span> * <span class="keyword">sizeof</span>(<span class="keyword">uintptr_t</span>));</span><br><span class="line">        <span class="keyword">if</span> (hp-&gt;rrp.tried[n] &amp; m)</span><br><span class="line">            <span class="keyword">continue</span>;            </span><br><span class="line"></span><br><span class="line">        <span class="comment">/* server指令中携带了down属性，表示后端永久不可用 */</span></span><br><span class="line">        <span class="keyword">if</span> (peer-&gt;down)</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* 如果真实节点的server成员和虚拟节点的不同，表示虚拟节点不属于此真实节点 */</span></span><br><span class="line">        <span class="keyword">if</span> (peer-&gt;server.len != server-&gt;len || </span><br><span class="line">            ngx_strncmp(peer-&gt;server.data, server-&gt;data, server-&gt;len) != <span class="number">0</span>)</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">       <span class="comment">/* 在一段时间内，如果此真实节点的失败次数，超过了允许的最大值，那么不允许使用了 */</span></span><br><span class="line">       <span class="keyword">if</span> (peer-&gt;max_fails</span><br><span class="line">            &amp;&amp; peer-&gt;fails &gt;= peer-&gt;max_fails</span><br><span class="line">            &amp;&amp; now - peer-&gt;checked &lt;= peer-&gt;fail_timeout)</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">    </span><br><span class="line">        peer-&gt;current_weight += peer-&gt;effective_weight; <span class="comment">/* 对每个真实节点，增加其当前权重 */</span></span><br><span class="line">        total += peer-&gt;effective_weight; <span class="comment">/* 累加所有真实节点的有效权重 */</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">/* 如果之前此真实节点发生了失败，会减小其effective_weight来降低它的权重。          </span></span><br><span class="line"><span class="comment">         * 此后又通过增加其effective_weight来恢复它的权重。          </span></span><br><span class="line"><span class="comment">         */</span>        </span><br><span class="line">        <span class="keyword">if</span> (peer-&gt;effective_weight &lt; peer-&gt;weight) </span><br><span class="line">            peer-&gt;effective_weight++;</span><br><span class="line">    </span><br><span class="line">        <span class="comment">/* 选取当前权重最大者，作为本次选定的真实节点 */</span></span><br><span class="line">        <span class="keyword">if</span> (best == <span class="literal">NULL</span> || peer-&gt;current_weight &gt; best-&gt;current_weight) &#123;</span><br><span class="line">            best = peer;</span><br><span class="line">            best_i = i;</span><br><span class="line">        &#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">/* 如果选定了一个真实节点 */</span></span><br><span class="line">	<span class="keyword">if</span> (best) &#123;</span><br><span class="line">	    best-&gt;current_weight -= total; <span class="comment">/* 如果使用了轮询，需要降低选定节点的当前权重 */</span></span><br><span class="line">	    <span class="keyword">goto</span> found;</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	hp-&gt;hash++; <span class="comment">/* 增加虚拟节点的索引，即“沿着顺时针方向” */</span></span><br><span class="line">	hp-&gt;tries++; <span class="comment">/* 已经尝试的虚拟节点数 */</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="恐慌阈值-Envoy"><a href="#恐慌阈值-Envoy" class="headerlink" title="恐慌阈值 Envoy"></a>恐慌阈值 Envoy</h2><p>负载均衡一般是根据集群中主机的健康情况灵活变动的。当某台主机跪了，LB算法将会把它从候选列表中踢出去，这也是很合理的。</p>
+<p>但是我们假设这么一种情况，某一时间，所有服务主机的负载情况是最大负载的80%，（负载800；最大处理能力1000）<br>因为某种原因，导致20.0%的机器彻底崩溃。（负载800；最大处理能力800）<br>LB策略忽略20%的机器，导致剩下的80%的机器都在最大处理负载上运行；<br>又来了一个网络波动，造成所有的服务器一个接一个崩溃，整个集群雪崩。<br>每拉起一台新的机器，LB策略立刻把所有的流量打到这么一台机器上，导致它再次崩溃。</p>
+<p>如果有一个恐慌阈值，譬如50%，那么LB会在50%机器崩溃的时候，禁用淘汰策略，把所有机器都当做健康的，在整体集群上执行普通的Round-Robin策略。<br>多数机器恢复，整个集群的处理能力恢复80%的正确率。这使得整个集群能够在遇到极特殊情况的时候能够从困境中恢复</p>
+<h1 id="LB用的负载均衡算法"><a href="#LB用的负载均衡算法" class="headerlink" title="LB用的负载均衡算法"></a>LB用的负载均衡算法</h1><h2 id="EDF调度算法"><a href="#EDF调度算法" class="headerlink" title="EDF调度算法"></a>EDF调度算法</h2><p><a href="http://zablog.me/2019/08/02/2019-08-02/" target="_blank" rel="noopener">EDF调度算法</a><br>最早截止时间优先调度法 Earliest Deadline First (EDF) scheduler，是加权轮转调度算法（WRR，Weighted Round-Robin）的一种实现方式。<br>其核心思想是为每个条目截止时间赋值为当前时间加权重的倒数，然后采用最早截止时间优先的方式进行调度。<br>调度算法最主要的应用是操作系统调度进程，重要的调度理论基本上都是在此时涌现的。而后续反向代理对下游条目进行负载均衡，也可以参考一样的调度理论，只是进程的运行和切换转变为请求的接受与投递。</p>
+<p>假设有三个条目可供调度，分别是A、B、C，他们的权重分别是3：2：1。<br><img src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb2.png" alt="调度队列"><br>图上有一个数轴，从0到3，分别表示三个周期。<br>A条目的权重是3，我们以1/3为分隔不断重绘A，使得数轴的1/3，2/3，1，4/3等位置印上A；<br>B条目的权重是2，我们以1/2为分隔不断重绘B，使得数轴的1/2，1，3/2，2等位置印上B；<br>C条目的权重是1，我们以1为分隔不断重绘C，使得数轴的1，2，3等位置印上C；<br>最后，我们使用一个游标从左向右扫，扫描到的顺序就是调度的顺序，因此我们调度的顺序为A-B-A-C-B-A-A-B-A…<br>显而易见，调用的顺序含有一个循环节A-B-A-C-B-A，所以当调度足够多次数后，A、B、C的调度比值将会趋近于3：2：1</p>
+<h3 id="实现1"><a href="#实现1" class="headerlink" title="实现1"></a>实现1</h3><p>最简单的实现，是使用上述办法模拟一个周期，然后把周期存到数组中，用游标扫描即可。<br>以上述情形为例，首先我们定制一个数组 A-B-A-C-B-A，然后不断回环扫描这个数组，就可以完成加权轮转调度。<br>这种方法的每次调度的时间复杂度为O(1)，空间复杂度为O(M*N)，其中M是条目的平均权重，N是条目的数量。<br>优势：<br>实现简单，容易理解<br>单次调度的很快<br>多线程共享游标index即可，协作方便<br>劣势：<br>空间复杂度高<br>对条目修改很不友好（修改其中一个条目的权重，那么整个表需要重新构建，耗CPU）</p>
+<h3 id="实现2"><a href="#实现2" class="headerlink" title="实现2"></a>实现2</h3><p>我们可以维护一个大小为节点数量的堆，按照最快到期时间来排序，每次取最快到期的节点（就是线段上最靠前的节点），返回后更新它的节点到期时间。</p>
+<ol>
+<li>初始时 entry.deadline = 1.0/entry.Weight</li>
+<li>调度的时候，从中选择 deadline 最小的使用，并把 deadline 设置为 ttl（当前时间）+ 1.0/entry.Weight，然后重新把这个条目放入优先队列中。重新排布优先队列，如此往复。</li>
+</ol>
+<p>举个例子：<br>三个节点A、B、C权重分别为5、2、1</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">请求序号</th>
+<th style="text-align:center">选择的节点</th>
+<th style="text-align:center">选择节点后的堆</th>
+<th style="text-align:center">选择时的TTL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">未请求</td>
+<td style="text-align:center">/</td>
+<td style="text-align:center">[A(1/5), B(1/2), C(1)]</td>
+<td style="text-align:center">0</td>
+</tr>
+<tr>
+<td style="text-align:center">1</td>
+<td style="text-align:center">A</td>
+<td style="text-align:center">[A(2/5), B(1/2), C(1)]</td>
+<td style="text-align:center">1/5</td>
+</tr>
+<tr>
+<td style="text-align:center">2</td>
+<td style="text-align:center">A</td>
+<td style="text-align:center">[B(1/2), A(3/5), C(1)]</td>
+<td style="text-align:center">2/5</td>
+</tr>
+<tr>
+<td style="text-align:center">3</td>
+<td style="text-align:center">B</td>
+<td style="text-align:center">[A(3/5), B(1), C(1)]</td>
+<td style="text-align:center">1/2</td>
+</tr>
+<tr>
+<td style="text-align:center">4</td>
+<td style="text-align:center">A</td>
+<td style="text-align:center">[A(4/5), B(1), C(1)]</td>
+<td style="text-align:center">3/5</td>
+</tr>
+<tr>
+<td style="text-align:center">5</td>
+<td style="text-align:center">A</td>
+<td style="text-align:center">[A(1), B(1), C(1)]</td>
+<td style="text-align:center">4/5</td>
+</tr>
+<tr>
+<td style="text-align:center">6</td>
+<td style="text-align:center">A</td>
+<td style="text-align:center">[B(1), C(1), A(6/5)]</td>
+<td style="text-align:center">1</td>
+</tr>
+<tr>
+<td style="text-align:center">7</td>
+<td style="text-align:center">B</td>
+<td style="text-align:center">[C(1), A(6/5), B(3/2)]</td>
+<td style="text-align:center">3/2</td>
+</tr>
+<tr>
+<td style="text-align:center">8</td>
+<td style="text-align:center">C</td>
+<td style="text-align:center">[A(6/5), B(3/2), C(2)]</td>
+<td style="text-align:center">1</td>
+</tr>
+</tbody>
+</table>
+<p>复杂度分析：<br>空间复杂度降低为 O(N) ，每次Pick的时间复杂度为 O(logN)<br>初始化的时间复杂度为 O(N)，也就是堆排序的复杂度<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 节点</span></span><br><span class="line"><span class="keyword">type</span> Entry <span class="keyword">struct</span> &#123;</span><br><span class="line">	deadline <span class="keyword">float64</span></span><br><span class="line">	index    <span class="keyword">int64</span></span><br><span class="line">	Value    <span class="keyword">string</span></span><br><span class="line">	Weight   <span class="keyword">float64</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// EDF implements the Earliest Deadline First scheduling algorithm</span></span><br><span class="line"><span class="keyword">type</span> EDF <span class="keyword">struct</span> &#123;</span><br><span class="line">	pq       *priorityQueue    <span class="comment">//这个优先级队列用deadline排序</span></span><br><span class="line">	curIndex <span class="keyword">int64</span></span><br><span class="line">	curDDL   <span class="keyword">float64</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Add a new entry for load balance</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e *EDF)</span> <span class="title">Add</span><span class="params">(entry *Entry)</span></span> &#123;</span><br><span class="line">	entry.deadline = e.curDDL + <span class="number">1</span>/entry.Weight</span><br><span class="line">	e.curIndex++</span><br><span class="line">	entry.index = e.curIndex</span><br><span class="line">	heap.Push(e.pq, entry)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// AddRaw add a new entry for load balance without sort</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e *EDF)</span> <span class="title">AddRaw</span><span class="params">(entry *Entry)</span></span> &#123;</span><br><span class="line">	entry.deadline = e.curDDL + <span class="number">1</span>/entry.Weight</span><br><span class="line">	e.curIndex++</span><br><span class="line">	entry.index = e.curIndex</span><br><span class="line">	*e.pq = <span class="built_in">append</span>(*e.pq, entry)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Delete an entry</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e *EDF)</span> <span class="title">Delete</span><span class="params">(entry *Entry)</span></span> &#123;</span><br><span class="line">	entry.Weight = <span class="number">-1</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Pick an available entry</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e *EDF)</span> <span class="title">Pick</span><span class="params">()</span> *<span class="title">Entry</span></span> &#123;</span><br><span class="line">	<span class="comment">// if no available entry, return nil</span></span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(*e.pq) &lt;= <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line">	entry := heap.Pop(e.pq).(*Entry)</span><br><span class="line">	<span class="keyword">if</span> entry.Weight &lt;= <span class="number">0</span> &#123;</span><br><span class="line">		<span class="comment">// if Weight isn't positive, try another entry</span></span><br><span class="line">		<span class="keyword">return</span> e.Pick()</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// curDDL should be entry's deadline so that new added entry would have a fair</span></span><br><span class="line">	<span class="comment">// competition environment with the old ones</span></span><br><span class="line">	e.curDDL = entry.deadline</span><br><span class="line">	entry.deadline = entry.deadline + <span class="number">1</span>/entry.Weight</span><br><span class="line">	e.curIndex++</span><br><span class="line">	entry.index = e.curIndex</span><br><span class="line">	heap.Push(e.pq, entry)</span><br><span class="line">	<span class="keyword">return</span> entry</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// NewEDF create a new edf scheduler</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewEDF</span><span class="params">(entries []*Entry)</span> *<span class="title">EDF</span></span> &#123;</span><br><span class="line">	<span class="comment">// make a new edf</span></span><br><span class="line">	priorityQueue := <span class="built_in">make</span>(priorityQueue, <span class="number">0</span>)</span><br><span class="line">	edf := &amp;EDF&#123;</span><br><span class="line">		pq:       &amp;priorityQueue,</span><br><span class="line">		curIndex: <span class="number">0</span>,</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// put entries into priority queue</span></span><br><span class="line">	<span class="comment">// TODO(maziang): use O(N) heap.Init instead of O(NlogN) Add.</span></span><br><span class="line">	<span class="keyword">for</span> _, entry := <span class="keyword">range</span> entries &#123;</span><br><span class="line">		edf.AddRaw(entry)</span><br><span class="line">	&#125;</span><br><span class="line">	heap.Init(edf.pq)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// avoid instance flood pressure for the first entry</span></span><br><span class="line">	<span class="comment">// start from a random one via pick random times</span></span><br><span class="line">	rand.Seed(time.Now().UnixNano())</span><br><span class="line">	randomPick := rand.Intn(<span class="built_in">len</span>(entries))</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; randomPick; i++ &#123;</span><br><span class="line">		edf.Pick()</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> edf</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>Note1 同样权重的情况: index是节点进入堆的次序。当deadline一样时，会选取index小的那一个。这是为了避免当所有节点权重一样时，变成完全随机调度。如果有了index，那么每次选取之后该节点的index会加一（相当于排到后面去），这样就能保证下一个节点能被调度到。<br>Note2 存储空间优化：<br>Note3 起始随机化：如果有个节点权重很大，那么在调度器全部重启的时候可能都会调度到这个节点，导致这个节点压力过大。所以NewEDF的初始化阶段会有随机化操作。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/负载均衡/" rel="tag">#负载均衡</a>
+          
+            <a href="/tags/后台/" rel="tag">#后台</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/10/31/linux-io/" rel="next" title="[Linux]文件和零拷贝">
+                <i class="fa fa-chevron-left"></i> [Linux]文件和零拷贝
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/05/21/load-balance2/" rel="prev" title="[后台]负载均衡 （二）能力篇">
+                [后台]负载均衡 （二）能力篇 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zMDAxOS82NTg0"></div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.jpeg"
+               alt="吕子恒" />
+          <p class="site-author-name" itemprop="name">吕子恒</p>
+          <p class="site-description motion-element" itemprop="description">互联网 | NLP方向 | 喜欢制作所有东西 | INTJ</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">38</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">50</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chestnutheng" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/lu-zi-heng-91" target="_blank" title="ZhiHu">
+                  
+                    <i class="fa fa-fw fa-zhihu"></i>
+                  
+                  ZhiHu
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://cn.linkedin.com/in/子恒-吕-a52bba10a" target="_blank" title="Linkedin">
+                  
+                    <i class="fa fa-fw fa-linkedin"></i>
+                  
+                  Linkedin
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-block">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              Links
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://wangbicong.cn/" title="可爱的聪聪" target="_blank">可爱的聪聪</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://easonzero.cn/" title="可爱的小一" target="_blank">可爱的小一</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://wangzhpp.org/" title="可爱的弱弱" target="_blank">可爱的弱弱</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://shawnzeng.com/" title="可爱的帅帅" target="_blank">可爱的帅帅</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#nginx用的负载均衡算法"><span class="nav-number">1.</span> <span class="nav-text">nginx用的负载均衡算法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#随机访问"><span class="nav-number">1.1.</span> <span class="nav-text">随机访问</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#加权轮询"><span class="nav-number">1.2.</span> <span class="nav-text">加权轮询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ip-hash"><span class="nav-number">1.3.</span> <span class="nav-text">ip_hash</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#least-conn"><span class="nav-number">1.4.</span> <span class="nav-text">least_conn</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#一致哈希"><span class="nav-number">1.5.</span> <span class="nav-text">一致哈希</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#恐慌阈值-Envoy"><span class="nav-number">1.6.</span> <span class="nav-text">恐慌阈值 Envoy</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#LB用的负载均衡算法"><span class="nav-number">2.</span> <span class="nav-text">LB用的负载均衡算法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#EDF调度算法"><span class="nav-number">2.1.</span> <span class="nav-text">EDF调度算法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#实现1"><span class="nav-number">2.1.1.</span> <span class="nav-text">实现1</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#实现2"><span class="nav-number">2.1.2.</span> <span class="nav-text">实现2</span></a></li></ol></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2015 - 
+  <span itemprop="copyrightYear">2021</span> 
+  <span class="author" itemprop="copyrightHolder">吕子恒</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span>Hosted by <a href="https://pages.coding.me" style="font-weight: bold">Coding Pages</a></span>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/jquery/2.1.3/jquery.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/jquery_lazyload/1.9.7/jquery.lazyload.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/velocity/1.2.1/velocity.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/velocity/1.2.1/velocity.ui.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("0iVbAi6uVJSkvkk710Xk357P-gzGzoHsz", "GCWjnKs6J6DzdbJSP7KSqckD");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+<script src="/live2dw/lib/L2Dwidget.min.js?0c58a1486de42ac6cc1c59c7d98ae887"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/hijiki.model.json"},"display":{"position":"left","width":100,"height":200},"mobile":{"show":false},"log":false});</script></body>
+</html>

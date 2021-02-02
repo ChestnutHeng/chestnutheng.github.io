@@ -1,0 +1,941 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+  <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic|monospace:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+  
+
+<link href="//cdn.bootcss.com/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Linux," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ChestnutHeng's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="使用进程间通信来完成信息互换是很常见的场景。本文介绍了指令形式的通信（信号、信号量），文本形式的通信（共享内存，管道，FIFO，Unix域套接字）来完成这一基本的任务。">
+<meta name="keywords" content="Linux">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[Linux]进程间通信">
+<meta property="og:url" content="chestnutheng.cn/2019/08/01/ipc/index.html">
+<meta property="og:site_name" content="ChestnutHeng&#39;s Blog">
+<meta property="og:description" content="使用进程间通信来完成信息互换是很常见的场景。本文介绍了指令形式的通信（信号、信号量），文本形式的通信（共享内存，管道，FIFO，Unix域套接字）来完成这一基本的任务。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-08-06T12:51:39.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="[Linux]进程间通信">
+<meta name="twitter:description" content="使用进程间通信来完成信息互换是很常见的场景。本文介绍了指令形式的通信（信号、信号量），文本形式的通信（共享内存，管道，FIFO，Unix域套接字）来完成这一基本的任务。">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"right","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="chestnutheng.cn/2019/08/01/ipc/"/>
+
+  <title> [Linux]进程间通信 | ChestnutHeng's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans,en,default">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?53529277abe821f4686b3d713bf1ea67";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-right page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">ChestnutHeng's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                [Linux]进程间通信
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-08-01T20:26:09+08:00" content="2019-08-01">
+              2019-08-01
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+             <span id="/2019/08/01/ipc/" class="leancloud_visitors" data-flag-title="[Linux]进程间通信">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="管道"><a href="#管道" class="headerlink" title="管道"></a>管道</h1><p>管道是进程间通信的最古老方式。它通过共享文件来完成进程间的通信。它有两个局限性：</p>
+<ol>
+<li>它是半双工的。数据只能从一个进程流向另一个进程。</li>
+<li>通信的进程之间必须另一个进程是fork出来的。通常，一个进程会创建一个管道，然后执行fork，这样管道就会在两个进程之间共享。<br>FIFO解决了第一种局限性，Unix域套接字解决了第二种。我们先来看管道。</li>
+</ol>
+<p><code>int pipe(int pipefd[2]);</code>管道由pipe函数创建。</p>
+<ol>
+<li>参数<code>pipefd</code>是一个两个元素的数组。<code>pipefd[0]</code>用来读，<code>pipefd[1]</code>用来写。</li>
+<li>成功返回0 。失败返回-1并设置errno。</li>
+<li>单进程的管道没有任何用处。在这个函数之后一般会fork，然后一个进程来写<code>pipefd[1]</code>，一个进程来读<code>pipefd[0]</code>。他们的另一个fd元素将会被关闭。</li>
+</ol>
+<p>下面是一段实例, 父进程通过管道向子进程传递了信息，子进程接收并把他们输出：<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"apue.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">int</span>		n;</span><br><span class="line">	<span class="keyword">int</span>		fd[<span class="number">2</span>];</span><br><span class="line">	<span class="keyword">pid_t</span>	pid;</span><br><span class="line">	<span class="keyword">char</span>	line[MAXLINE];</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (pipe(fd) &lt; <span class="number">0</span>)</span><br><span class="line">		err_sys(<span class="string">"pipe error"</span>);</span><br><span class="line">	<span class="keyword">if</span> ((pid = fork()) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">		err_sys(<span class="string">"fork error"</span>);</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> (pid &gt; <span class="number">0</span>) &#123;		<span class="comment">/* parent */</span></span><br><span class="line">		close(fd[<span class="number">0</span>]);</span><br><span class="line">		write(fd[<span class="number">1</span>], <span class="string">"hello world\n"</span>, <span class="number">12</span>);</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;					<span class="comment">/* child */</span></span><br><span class="line">		close(fd[<span class="number">1</span>]);</span><br><span class="line">		n = read(fd[<span class="number">0</span>], line, MAXLINE);</span><br><span class="line">		write(STDOUT_FILENO, line, n);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><code>FILE *popen(const char *command, const char *type)</code> 函数popen执行一个命令，然后返回这个命令的文件指针。</p>
+<ol>
+<li><code>type</code>参数为’r’，表示这个文件可读，如果是’w’，表示可写。</li>
+<li><code>command</code>参数是要执行的命令</li>
+<li>使用完用<code>int pclose(FILE *stream)</code>关闭管道。</li>
+<li>这个函数是管道实现的一个例子。它先创建一个管道，然后fork一个子进程，关闭未使用的管道端（读或写），然后在子进程执行命令，最后等待执行完毕。</li>
+</ol>
+<h1 id="FIFO"><a href="#FIFO" class="headerlink" title="FIFO"></a>FIFO</h1><p><code>int mkfifo(const char *pathname, mode_t mode)</code>提供了任意进程间通过文件通信的方式。</p>
+<ol>
+<li>参数<code>path</code>表示管道的路径。</li>
+<li>参数<code>mode</code>和<code>open</code>函数的模式一样。</li>
+</ol>
+<p><code>int mkfifoat(int dirfd, const char *pathname, mode_t mode)</code>提供了更多选择的路径控制。</p>
+<h2 id="FIFO用于复制输出流"><a href="#FIFO用于复制输出流" class="headerlink" title="FIFO用于复制输出流"></a>FIFO用于复制输出流</h2><p>下面的命令展示了复制输出流的方法。输入文件先到达prog1，然后通过tee命令复制给fifo和prog2。fifo中的数据会流到prog3。<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mkfifo fifo1</span><br><span class="line">prog3 &lt; fifo1 &amp;</span><br><span class="line">prog1 &lt; infile | tee fifo1 |prog2</span><br></pre></td></tr></table></figure></p>
+<h2 id="FIFO用于服务端和客户端通信"><a href="#FIFO用于服务端和客户端通信" class="headerlink" title="FIFO用于服务端和客户端通信"></a>FIFO用于服务端和客户端通信</h2><p>使用FIFO可以用来做服务端-客户端通信。服务端提供一个FIFO让客户端写入，这样就可以接收到客户端的请求。那么如何响应客户端？可以让客户端在请求中携带进程ID，然后服务端为每个客户端都创建一个FIFO（和客户端约定好路径），然后让客户端从中读取。<br>这种方法有些问题：</p>
+<ol>
+<li>客户端可能随时进程消失，FIFO没有被回收</li>
+<li>客户端发起单向调用就终止时，FIFO没有被回收（监听SIGPIPE可以解决）</li>
+<li>客户进程从1变成0时，服务端需要处理EOF（请求FIFO可以设为读-写模式解决）</li>
+</ol>
+<h1 id="XSI-IPC"><a href="#XSI-IPC" class="headerlink" title="XSI IPC"></a>XSI IPC</h1><h2 id="IPC标识符"><a href="#IPC标识符" class="headerlink" title="IPC标识符"></a>IPC标识符</h2><p>进行进程间通信，必须要有一个编号来表明所用的资源（IPC对象）是哪个。在Linux中，IPC标识符是一个key_t类型（一般实现为长整型，从0开始分配，每有一个IPC对象就加一，直到最大值后又从0开始）。使用IPC操作必须提供这个IPC标识符，那么不同进程如何共享这个标识符呢？</p>
+<h3 id="ftok"><a href="#ftok" class="headerlink" title="ftok"></a>ftok</h3><p><code>key_t ftok(const char *pathname, int proj_id)</code> 通过ftok函数，不同进程可以产生相同的key。</p>
+<ol>
+<li>参数 <code>pathname</code> 是进程间约定的已经存在的文件路径。</li>
+<li>参数 <code>proj_id</code> 是约定的0-255的值，也是一个约定的项目id。</li>
+<li>事实上，ftok取了<code>pathname</code>中文件的设备编号<code>st_dev</code>的低8bit、文件iNode<code>st_ino</code>的低16bit，和<code>proj_id</code>的低8bit合并成了返回的<code>key_t</code>值。</li>
+<li>这意味着如果文件在使用中被删除并重建，key会发生变化。如果<code>proj_id</code>一致，也有可能造成冲突。</li>
+</ol>
+<h3 id="IPC-PRIVATE"><a href="#IPC-PRIVATE" class="headerlink" title="IPC_PRIVATE"></a>IPC_PRIVATE</h3><p><code>IPC_PRIVATE</code> 实际上是定义的值是0 。用这个做key时，系统将会产生一个新的IPC对象。一般用于不同进程间不需要约定key的时候，比如父进程在获得对象后传承给子进程。</p>
+<h3 id="IPC-权限"><a href="#IPC-权限" class="headerlink" title="IPC 权限"></a>IPC 权限</h3><p>所有的IPC对象都有一个权限字段来标识所属的线程。一般IPC对象只能由创建的进程或者超级权限进程来删除。这个权限信息里记录了一些创建者的信息。uid、gid、mode三个字段可以由用户通过msgctl、shmctl、semctl等函数来修改。修改者必须是创建进程或者超级权限进程。<br><code>mode</code> 字段有一些特定的值表示权限，类似文件的<code>chmod</code>。下面给出了该字段每一位的含义。<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> ipc_perm &#123;</span><br><span class="line">    <span class="keyword">key_t</span>          <span class="number">__</span>key;    <span class="comment">/* Key supplied to shmget(2) */</span></span><br><span class="line">    <span class="keyword">uid_t</span>          uid;      <span class="comment">/* Effective UID of owner */</span></span><br><span class="line">    <span class="keyword">gid_t</span>          gid;      <span class="comment">/* Effective GID of owner */</span></span><br><span class="line">    <span class="keyword">uid_t</span>          cuid;     <span class="comment">/* Effective UID of creator */</span></span><br><span class="line">    <span class="keyword">gid_t</span>          cgid;     <span class="comment">/* Effective GID of creator */</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">short</span> mode;     <span class="comment">/* Permissions + SHM_DEST and SHM_LOCKED flags */</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">short</span> <span class="number">__</span>seq;    <span class="comment">/* Sequence number */</span></span><br><span class="line">&#125;;</span><br><span class="line"><span class="comment">// mode字段</span></span><br><span class="line"><span class="number">0400</span> 用户读</span><br><span class="line"><span class="number">0200</span> 用户写</span><br><span class="line"><span class="number">0040</span> 组读</span><br><span class="line"><span class="number">0020</span> 组写</span><br><span class="line"><span class="number">0004</span> 其他读</span><br><span class="line"><span class="number">0002</span> 其他写</span><br></pre></td></tr></table></figure></p>
+<h3 id="IPC的缺点"><a href="#IPC的缺点" class="headerlink" title="IPC的缺点"></a>IPC的缺点</h3><ol>
+<li>IPC不会主动回收资源。IPC是系统来维护的，没有引用计数。如果一个进程在一个消息队列中添加了消息然后终止，系统不会删除这些消息，直到下个进程显示地使用或删除他们。<br>PIPE会在最后一个使用的进程终止后自动销毁。FIFO虽然在最后一个使用的进程结束后会保留名字，但是其中的数据会删除。</li>
+<li>IPC在文件系统中没有名字。Linux是一切皆文件的，没有文件描述符有几个麻烦：a)无法ls，rm，chmod，无法像操作文件一样操作IPC对象，只能用其特定的函数。b)没办法使用select，poll这样的多路复用技术，这将导致进程无法同时监听两个消息队列。</li>
+</ol>
+<h2 id="消息队列"><a href="#消息队列" class="headerlink" title="消息队列"></a>消息队列</h2><p><code>int msgget(key_t key, int msgflg)</code>创建一个msg对象。</p>
+<ol>
+<li><code>key</code>可以是<code>IPC_PRIVATE</code>或者一个存在的IPC的key。</li>
+<li><code>msgflg</code>提供了创建消息队列的选项。a)为0时返回<code>key</code>的消息队列的标识符，不存在会报错 b) <code>PC_CREAT</code>：当msgflg&amp;IPC_CREAT为真时，则新建一个消息队列；如果存在这样的消息队列，返回此消息队列的标识符 c) <code>IPC_CREAT|IPC_EXCL</code> 不存在则创建一个key的消息队列，存在则返回错误。</li>
+<li>成功返回消息队列的标识符，失败返回-1，并写errno。</li>
+</ol>
+<p><code>int msgctl(int msqid, int cmd, struct msqid_ds *buf)</code> 读写msg对象的属性</p>
+<ol>
+<li><code>msqid</code>是一个消息队列的标识符。</li>
+<li><code>cmd</code> 提供了读写的选项。a) <code>IPC_STAT</code> 读取属性到buf中。 b) <code>IPC_SET</code> 写入属性到buf中 c) <code>IPC_RMID</code> 删除消息队列和队列中的所有消息。删除前会用<code>msg_perm</code>校验归属。</li>
+<li><code>buf</code> 是设置的详情，见下表。</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> msqid_ds &#123;</span><br><span class="line">	<span class="keyword">struct</span> ipc_perm msg_perm;     <span class="comment">// Ownership and permissions 权限，初始化时填0 </span></span><br><span class="line">	<span class="keyword">time_t</span>          msg_stime;    <span class="comment">// Time of last msgsnd(2) 初始化时填0 </span></span><br><span class="line">	<span class="keyword">time_t</span>          msg_rtime;    <span class="comment">// Time of last msgrcv(2) 初始化时填0 </span></span><br><span class="line">	<span class="keyword">time_t</span>          msg_ctime;    <span class="comment">// Time of last change 初始化时设置为当前时间 </span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span>   <span class="number">__</span>msg_cbytes; <span class="comment">// Current number of bytes in queue (non-standard)  </span></span><br><span class="line">	<span class="keyword">msgqnum_t</span>       msg_qnum;     <span class="comment">// Current number of messages in queue 初始化时填0 </span></span><br><span class="line">	<span class="keyword">msglen_t</span>        msg_qbytes;   <span class="comment">// Maximum number of bytes allowed in queue 初始化时填系统值MSGMNB </span></span><br><span class="line">	<span class="keyword">pid_t</span>           msg_lspid;    <span class="comment">// PID of last msgsnd(2) 初始化时填0  </span></span><br><span class="line">	<span class="keyword">pid_t</span>           msg_lrpid;    <span class="comment">// PID of last msgrcv(2) 初始化时填0  </span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><code>int msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg)</code> 发送消息。如果消息队列已满，会阻塞等待。</p>
+<ol>
+<li>参数<code>msqid</code> 是发送消息的消息队列</li>
+<li><p>参数<code>msgp</code> 发送给队列的消息。msgp可以是任何类型的结构体，但第一个字段必须为long类型，即表明此发送消息的类型。msgp定义的参照格式如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> s_msg&#123; <span class="comment">/*msgp定义的参照格式*/</span></span><br><span class="line">	<span class="keyword">long</span> type; <span class="comment">/* 必须大于0,消息类型 */</span></span><br><span class="line">	<span class="keyword">char</span> mtext[<span class="number">256</span>]; <span class="comment">/*消息正文，可以是其他任何类型*/</span></span><br><span class="line">&#125; msgp;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>参数<code>msgsz</code> 要发送消息的大小, 其中不含消息类型的4个字节。</p>
+</li>
+<li>参数<code>msgflg</code> 设置发送的模式。<code>IPC_NOWAIT</code>类似一个非阻塞IO，写不进消息队列也会立即返回<code>IPC_NOERROR</code> 如果消息超过长度限制<code>msgsz</code>，会截断消息。</li>
+<li>成功返回0，失败返回-1，设置errno。EAGAIN 消息队列已满，EIDRM 消息队列已删除，EACCESS 无权限写入， EINVAL 参数错误。</li>
+<li>msgsnd会一直阻塞等待，直到 a) 消息队列有空余 b) 消息队列被删除 c) msgsnd函数被信号中断。</li>
+</ol>
+<p><code>size_t msgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp, int msgflg)</code> 会读取消息存入<code>msgp</code>指针，然后把消息从队列中删除。在此之前，此函数会一直阻塞。</p>
+<ol>
+<li>参数<code>msqid</code> 是接收消息的消息队列</li>
+<li>参数<code>msgp</code> 存放读出来的消息。结构体必须和上面的发送结构体相同。</li>
+<li>参数<code>msgsz</code> 读出来消息的大小, 其中不含消息类型的4个字节。</li>
+<li>参数<code>msgtyp</code>  a) 为0表示读第一个消息 b) 大于0表示读消息类型等于本参数的第一个消息 c) 小于0表示读消息类型小于等于本参数绝对值的第一个消息</li>
+<li>参数<code>msgflg</code> 设置读的模式。<code>IPC_NOWAIT</code>类似一个非阻塞IO，没有消息可读也会立即返回，此时错误为 ENOMSG。<code>IPC_NOERROR</code> 如果消息超过长度限制<code>msgsz</code>，会截断消息。</li>
+<li>成功返回消息长度，失败返回-1，设置errno。E2BIG 消息数据长度大于msgsz而msgflag没有设置IPC_NOERROR 。</li>
+</ol>
+<p>下面给出了一个两个进程间通过消息队列通信的样例。由于消息队列创建后不会自动删除，需要运行<code>ipcrm -q msqid</code>来手动删除队列。<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/ipc.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/msg.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span>  <span class="meta-string">&lt;time.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> TEXT_SIZE  512</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> msgbuf &#123;</span><br><span class="line">    <span class="keyword">long</span> mtype;</span><br><span class="line">    <span class="keyword">int</span>  status;</span><br><span class="line">    <span class="keyword">char</span> time[<span class="number">20</span>];</span><br><span class="line">    <span class="keyword">char</span> mtext[TEXT_SIZE];</span><br><span class="line">&#125;</span><br><span class="line">;</span><br><span class="line"><span class="function"><span class="keyword">char</span>  *<span class="title">getxtsj</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">time_t</span>  tv;</span><br><span class="line">    <span class="keyword">struct</span>  tm   *tmp;</span><br><span class="line">    <span class="keyword">static</span>  <span class="keyword">char</span>  buf[<span class="number">20</span>];</span><br><span class="line">    tv = time( <span class="number">0</span> );</span><br><span class="line">    tmp = localtime( &amp;tv );</span><br><span class="line">    <span class="built_in">sprintf</span>( buf, <span class="string">"%02d:%02d:%02d"</span>, tmp-&gt;tm_hour, tmp-&gt;tm_min, tmp-&gt;tm_sec );</span><br><span class="line">    <span class="keyword">return</span>   buf;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">( <span class="keyword">int</span> argc, <span class="keyword">char</span> **argv )</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> msqid;</span><br><span class="line">    <span class="keyword">struct</span> msqid_ds info;</span><br><span class="line">    <span class="keyword">struct</span> msgbuf buf;</span><br><span class="line">    <span class="keyword">struct</span> msgbuf buf1;</span><br><span class="line">    <span class="keyword">int</span> flag;</span><br><span class="line">    <span class="keyword">int</span> sendlength, recvlength;</span><br><span class="line">    <span class="keyword">int</span> key;</span><br><span class="line">    key = ftok( <span class="string">"msg.tmp"</span>, <span class="number">0x01</span> );</span><br><span class="line">    <span class="keyword">if</span> ( key &lt; <span class="number">0</span> ) &#123;</span><br><span class="line">        perror( <span class="string">"ftok key error"</span> );</span><br><span class="line">        <span class="keyword">return</span>(<span class="number">-1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    msqid = msgget( key, <span class="number">0600</span> | IPC_CREAT );</span><br><span class="line">    <span class="keyword">if</span> ( msqid &lt; <span class="number">0</span> ) &#123;</span><br><span class="line">        perror( <span class="string">"create message queue error"</span> );</span><br><span class="line">        <span class="keyword">return</span>(<span class="number">-1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    buf.mtype = <span class="number">1</span>;</span><br><span class="line">    buf.status = <span class="number">9</span>;</span><br><span class="line">    <span class="built_in">strcpy</span>( buf.time, getxtsj() );</span><br><span class="line">    <span class="built_in">strcpy</span>( buf.mtext, <span class="string">"happy new year!"</span> );</span><br><span class="line">    sendlength = <span class="keyword">sizeof</span>(<span class="keyword">struct</span> msgbuf) - <span class="keyword">sizeof</span>(<span class="keyword">long</span>);</span><br><span class="line">    flag = msgsnd( msqid, &amp;buf, sendlength, <span class="number">0</span> );</span><br><span class="line">    <span class="keyword">if</span> ( flag &lt; <span class="number">0</span> ) &#123;</span><br><span class="line">        perror( <span class="string">"send message error"</span> );</span><br><span class="line">        <span class="keyword">return</span>(<span class="number">-1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    buf.mtype = <span class="number">3</span>;</span><br><span class="line">    buf.status = <span class="number">9</span>;</span><br><span class="line">    <span class="built_in">strcpy</span>( buf.time, getxtsj() );</span><br><span class="line">    <span class="built_in">strcpy</span>( buf.mtext, <span class="string">"good bye!"</span> );</span><br><span class="line">    sendlength = <span class="keyword">sizeof</span>(<span class="keyword">struct</span> msgbuf) - <span class="keyword">sizeof</span>(<span class="keyword">long</span>);</span><br><span class="line">    flag = msgsnd( msqid, &amp;buf, sendlength, <span class="number">0</span> );</span><br><span class="line">    <span class="keyword">if</span> ( flag &lt; <span class="number">0</span> ) &#123;</span><br><span class="line">        perror( <span class="string">"send message error"</span> );</span><br><span class="line">        <span class="keyword">return</span> - <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    system( <span class="string">"ipcs -q"</span> );</span><br><span class="line">    <span class="keyword">return</span>(<span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>接受消息：<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/ipc.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/msg.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> TEXT_SIZE  512</span></span><br><span class="line"><span class="keyword">struct</span> msgbuf &#123;</span><br><span class="line">    <span class="keyword">long</span> mtype ;</span><br><span class="line">    <span class="keyword">int</span>  status ;</span><br><span class="line">    <span class="keyword">char</span> time[<span class="number">20</span>] ;</span><br><span class="line">    <span class="keyword">char</span> mtext[TEXT_SIZE] ;</span><br><span class="line">&#125;</span><br><span class="line">;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> **argv)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> msqid ;</span><br><span class="line">    <span class="keyword">struct</span> msqid_ds info ;</span><br><span class="line">    <span class="keyword">struct</span> msgbuf buf1 ;</span><br><span class="line">    <span class="keyword">int</span> flag ;</span><br><span class="line">    <span class="keyword">int</span>  recvlength ;</span><br><span class="line">    <span class="keyword">int</span> key ;</span><br><span class="line">    <span class="keyword">int</span> mtype ;</span><br><span class="line">    key = ftok(<span class="string">"msg.tmp"</span>, <span class="number">0x01</span> ) ;</span><br><span class="line">    <span class="keyword">if</span> ( key &lt; <span class="number">0</span> ) &#123;</span><br><span class="line">        perror(<span class="string">"ftok key error"</span>) ;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span> ;</span><br><span class="line">    &#125;</span><br><span class="line">    msqid = msgget( key, <span class="number">0</span> ) ;</span><br><span class="line">    <span class="keyword">if</span> ( msqid &lt; <span class="number">0</span> ) &#123;</span><br><span class="line">        perror(<span class="string">"get ipc_id error"</span>) ;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span> ;</span><br><span class="line">    &#125;</span><br><span class="line">    recvlength = <span class="keyword">sizeof</span>(<span class="keyword">struct</span> msgbuf) - <span class="keyword">sizeof</span>(<span class="keyword">long</span>) ;</span><br><span class="line">    <span class="built_in">memset</span>(&amp;buf1, <span class="number">0x00</span>, <span class="keyword">sizeof</span>(<span class="keyword">struct</span> msgbuf)) ;</span><br><span class="line">    mtype = <span class="number">1</span> ;</span><br><span class="line">    flag = msgrcv( msqid, &amp;buf1, recvlength ,mtype,<span class="number">0</span> ) ;</span><br><span class="line">    <span class="keyword">if</span> ( flag &lt; <span class="number">0</span> ) &#123;</span><br><span class="line">        perror(<span class="string">"recv message error\n"</span>) ;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span> ;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"type=%d,time=%s, message=%s\n"</span>, buf1.mtype, buf1.time,  buf1.mtext) ;</span><br><span class="line">    system(<span class="string">"ipcs -q"</span>) ;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span> ;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="信号量"><a href="#信号量" class="headerlink" title="信号量"></a>信号量</h2><p>信号量是一个计数器，用于控制多个进程对资源的访问。当一个进程访问信号量控制的资源时，以以下步骤执行：</p>
+<ol>
+<li>取信号量的值。如果值是正，则进程可以继续执行。进程访问资源，并把信号量的值减一，表示他占用了一个资源。</li>
+<li>如果值是0，进程会休眠，直到信号量的值大于0，进程被唤醒，再执行1。</li>
+<li>当进程释放资源时，信号量值加一，并唤醒正在等待的进程。</li>
+</ol>
+<p>实际上，XSI中的信号量要复杂一些，他有几个缺点：</p>
+<ol>
+<li>信号量并非是一个数值，而是一个多个值的集合。创建时要指定值的数量。</li>
+<li>信号量的创建和初始化是分开的，并非一个原子操作。这样就没法原子地创建一个信号量。</li>
+<li>即使已经没有进程再使用信号量，他们依然不会销毁。</li>
+</ol>
+<p>关于信号量不再展开描述，参见 <a href="https://blog.csdn.net/ljianhui/article/details/10243617" target="_blank" rel="noopener">Linux进程间通信——使用信号量</a></p>
+<h2 id="共享内存"><a href="#共享内存" class="headerlink" title="共享内存"></a>共享内存</h2><p>进程间通信最方便的方法，就是一起读写内存。由于进程不需要把这块内存复制到自己的进程空间内，所以共享内存的方法非常快。需要注意的是，在一个进程写内存的时候，其他进程不能操作这块内存。这里可以用记录锁、信号量或者互斥量来同步。</p>
+<p>通过<code>mmap</code>把文件映射到内存中也是一种共享内存的实现。于这种方式不同的是，XSI中的共享内存没有文件映射，是一个内存的匿名段。</p>
+<p><code>int shmget(key_t key, size_t size, int shmflg)</code> 用于创建一个共享内存。</p>
+<ol>
+<li><code>key</code>可以是<code>IPC_PRIVATE</code>或者一个存在的共享内存的key（可能是ftok生成）。</li>
+<li><code>size</code> 表示要创建的共享内存的大小，必须为内存页大小的整数倍。如果是读取线程获取已经存在的共享内存，填0。</li>
+<li><code>shmflg</code>提供了创建消息队列的选项。a)为0时返回<code>key</code>的共享内存的标识符，不存在会报错 b) <code>IPC_CREAT</code>：当<code>shmflg&amp;IPC_CREAT</code>为真时，则新建一个共享内存；如果存在这样的共享内存，返回此共享内存的标识符 c) <code>IPC_CREAT|IPC_EXCL</code> 不存在则创建一个key的共享内存，存在则返回错误。</li>
+<li>成功返回0，失败返回-1。<code>EINVAL</code> 参数size小于SHMMIN或大于SHMMAX。<code>EEXIST</code> 预建立key所指的共享内存，但已经存在。 <code>EIDRM</code>参数key所指的共享内存已经删除。 <code>ENOSPC</code>超过了系统允许建立的共享内存的最大值(SHMALL)。 <code>ENOENT</code>参数key所指的共享内存不存在，而参数shmflg未设IPC_CREAT位。<code>EACCES</code>没有权限 <code>ENOMEM</code> 核心内存不足。</li>
+</ol>
+<p><code>int shmctl(int shmid, int cmd, struct shmid_ds *buf)</code> 设置共享内存。</p>
+<ol>
+<li>参数 <code>shmid</code>是共享内存的id 。</li>
+<li>参数 <code>cmd</code> 指定了本次操作的行为。<code>IPC_STAT</code> 得到共享内存的状态，把共享内存的<code>shmid_ds</code>结构复制到buf中。<code>IPC_SET</code>改变共享内存的状态，把buf所指的<code>shmid_ds</code>结构中的uid、gid、mode复制到共享内存的<code>shmid_ds</code>结构内<code>IPC_RMID</code>删除这片共享内存。</li>
+<li>参数 <code>shmid_ds</code>是一些共享内存的设置。创建新字段时，应按照下面的初始化设置进行初始化。<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> shmid_ds &#123;</span><br><span class="line">	<span class="keyword">struct</span> ipc_perm shm_perm;    <span class="comment">// Ownership and permissions 权限初始化</span></span><br><span class="line">	<span class="keyword">size_t</span>          shm_segsz;   <span class="comment">// Size of segment (bytes) 初始化设置为请求的size</span></span><br><span class="line">	<span class="keyword">time_t</span>          shm_atime;   <span class="comment">// Last attach time 初始化设置为0</span></span><br><span class="line">	<span class="keyword">time_t</span>          shm_dtime;   <span class="comment">// Last detach time 初始化设置为0</span></span><br><span class="line">	<span class="keyword">time_t</span>          shm_ctime;   <span class="comment">// Last change time 初始化设置为当前时间</span></span><br><span class="line">	<span class="keyword">pid_t</span>           shm_cpid;    <span class="comment">// PID of creator </span></span><br><span class="line">	<span class="keyword">pid_t</span>           shm_lpid;    <span class="comment">// PID of last shmat(2)/shmdt(2) 初始化设置为0</span></span><br><span class="line">	<span class="keyword">shmatt_t</span>        shm_nattch;  <span class="comment">// No. of current attaches 初始化设置为0</span></span><br><span class="line">	...</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p><code>void *shmat(int shmid, const void *shmaddr, int shmflg)</code> 连接指定id的共享内存。连接后，这片共享内存就可以在进程空间内访问。</p>
+<ol>
+<li>参数<code>shmid</code>是共享内存的id。</li>
+<li>参数<code>shmaddr</code>指定本进程内内存的地址，之后这片地址会映射到共享内存。如果设为NULL，由系统决定地址（没有特殊需要就设为NULL）。</li>
+<li>参数<code>shmflg</code> 提供了一些选项。<code>SHM_RDONLY</code> 为只读模式，其他为读写模式。</li>
+<li>成功返回连接的本进程内存地址，失败返回-1。</li>
+<li>函数fork后，子进程会继承已连接的这片地址。exec后，子进程会和这片共享内存结束连接。</li>
+</ol>
+<p><code>int shmdt(const void *shmaddr)</code> 结束这片共享内存的映射。</p>
+<ol>
+<li>参数<code>shmaddr</code>指定本进程内内存的地址，是上面的<code>shmat</code>返回的。</li>
+<li>成功返回0，失败返回-1。</li>
+<li><code>shmdt</code>执行后，<code>shm_nattch</code>会减一。</li>
+</ol>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Linux/" rel="tag">#Linux</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/07/31/linux-epoll/" rel="next" title="[Linux]高级IO">
+                <i class="fa fa-chevron-left"></i> [Linux]高级IO
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/09/04/rocketmq/" rel="prev" title="[中间件]RocketMQ的架构和设计">
+                [中间件]RocketMQ的架构和设计 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zMDAxOS82NTg0"></div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.jpeg"
+               alt="吕子恒" />
+          <p class="site-author-name" itemprop="name">吕子恒</p>
+          <p class="site-description motion-element" itemprop="description">互联网 | NLP方向 | 喜欢制作所有东西 | INTJ</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">38</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">50</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chestnutheng" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/lu-zi-heng-91" target="_blank" title="ZhiHu">
+                  
+                    <i class="fa fa-fw fa-zhihu"></i>
+                  
+                  ZhiHu
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://cn.linkedin.com/in/子恒-吕-a52bba10a" target="_blank" title="Linkedin">
+                  
+                    <i class="fa fa-fw fa-linkedin"></i>
+                  
+                  Linkedin
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-block">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              Links
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://wangbicong.cn/" title="可爱的聪聪" target="_blank">可爱的聪聪</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://easonzero.cn/" title="可爱的小一" target="_blank">可爱的小一</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://wangzhpp.org/" title="可爱的弱弱" target="_blank">可爱的弱弱</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://shawnzeng.com/" title="可爱的帅帅" target="_blank">可爱的帅帅</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#管道"><span class="nav-number">1.</span> <span class="nav-text">管道</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#FIFO"><span class="nav-number">2.</span> <span class="nav-text">FIFO</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#FIFO用于复制输出流"><span class="nav-number">2.1.</span> <span class="nav-text">FIFO用于复制输出流</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#FIFO用于服务端和客户端通信"><span class="nav-number">2.2.</span> <span class="nav-text">FIFO用于服务端和客户端通信</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#XSI-IPC"><span class="nav-number">3.</span> <span class="nav-text">XSI IPC</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#IPC标识符"><span class="nav-number">3.1.</span> <span class="nav-text">IPC标识符</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ftok"><span class="nav-number">3.1.1.</span> <span class="nav-text">ftok</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IPC-PRIVATE"><span class="nav-number">3.1.2.</span> <span class="nav-text">IPC_PRIVATE</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IPC-权限"><span class="nav-number">3.1.3.</span> <span class="nav-text">IPC 权限</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IPC的缺点"><span class="nav-number">3.1.4.</span> <span class="nav-text">IPC的缺点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#消息队列"><span class="nav-number">3.2.</span> <span class="nav-text">消息队列</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#信号量"><span class="nav-number">3.3.</span> <span class="nav-text">信号量</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#共享内存"><span class="nav-number">3.4.</span> <span class="nav-text">共享内存</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2015 - 
+  <span itemprop="copyrightYear">2021</span> 
+  <span class="author" itemprop="copyrightHolder">吕子恒</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span>Hosted by <a href="https://pages.coding.me" style="font-weight: bold">Coding Pages</a></span>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/jquery/2.1.3/jquery.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/jquery_lazyload/1.9.7/jquery.lazyload.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/velocity/1.2.1/velocity.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/velocity/1.2.1/velocity.ui.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("0iVbAi6uVJSkvkk710Xk357P-gzGzoHsz", "GCWjnKs6J6DzdbJSP7KSqckD");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+<script src="/live2dw/lib/L2Dwidget.min.js?0c58a1486de42ac6cc1c59c7d98ae887"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/hijiki.model.json"},"display":{"position":"left","width":100,"height":200},"mobile":{"show":false},"log":false});</script></body>
+</html>

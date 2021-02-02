@@ -1,0 +1,845 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+  <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic|monospace:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+  
+
+<link href="//cdn.bootcss.com/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="普林斯顿算法公开课,双向队列,随机队列," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ChestnutHeng's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="普林斯顿算法公开课作业二, 双向队列和随机队列">
+<meta name="keywords" content="普林斯顿算法公开课,双向队列,随机队列">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[普林斯顿算法公开课]双向队列和随机队列">
+<meta property="og:url" content="chestnutheng.cn/2016/11/15/princeton-pa2-deque/index.html">
+<meta property="og:site_name" content="ChestnutHeng&#39;s Blog">
+<meta property="og:description" content="普林斯顿算法公开课作业二, 双向队列和随机队列">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2016-11-15T05:38:06.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="[普林斯顿算法公开课]双向队列和随机队列">
+<meta name="twitter:description" content="普林斯顿算法公开课作业二, 双向队列和随机队列">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"right","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="chestnutheng.cn/2016/11/15/princeton-pa2-deque/"/>
+
+  <title> [普林斯顿算法公开课]双向队列和随机队列 | ChestnutHeng's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans,en,default">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?53529277abe821f4686b3d713bf1ea67";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-right page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">ChestnutHeng's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                [普林斯顿算法公开课]双向队列和随机队列
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-11-15T13:38:03+08:00" content="2016-11-15">
+              2016-11-15
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/普林斯顿算法公开课/" itemprop="url" rel="index">
+                    <span itemprop="name">普林斯顿算法公开课</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/11/15/princeton-pa2-deque/" class="leancloud_visitors" data-flag-title="[普林斯顿算法公开课]双向队列和随机队列">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h2><p>这次的内容是写一个双向队列和随机队列, 双向队列自不必说, 用链表即可, 注意一下表头表尾的操作以及只有一个元素时的删除操作.<br>随机队列实现随机的时候需要查询具体下标的元素, 是一个O(1)操作, 所以使用自增长内存池实现.</p>
+<p>刷到满分的过程中逐步解决的一些问题:<br>1.&nbsp;对题目要求的每一个Exception都要抛出.否则会有以下问题:</p>
+<blockquote>
+<ul>
+<li>case test 失败</li>
+<li>测试中断:<br><code>Warning: the grading output was truncated due to excessive length.</code></li>
+</ul>
+</blockquote>
+<p>2.&nbsp;删除的节点和数组需要置null释放, 比如Deque出队的节点, RandomizedQueue出队的元素, 否则会报</p>
+<blockquote>
+<ul>
+<li><code>- loitering observed during 71 of 100 deletions</code></li>
+</ul>
+</blockquote>
+<p>3.&nbsp;注意RandomizedQueue的capacity大小调节的时机, 在size到达capacity一半时扩大, 在size到达capacity四分之一时减小.否则会有以下问题:</p>
+<blockquote>
+<ul>
+<li>不缩小capacity: 会导致内存测试失败</li>
+<li>调节时机不对: 会导致一半的时间测试失败, 或者测试中断:<br><code>Warning: the grading output was truncated due to excessive length.</code></li>
+<li>size 不为正数的边界情况: 数组越界</li>
+</ul>
+</blockquote>
+<p>= =这个capacity大小要求过于严格了, 导致我用自己习惯的增长方式没有AC…</p>
+<h2 id="Deque-java"><a href="#Deque-java" class="headerlink" title="Deque.java"></a>Deque.java</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Created by chestnutheng on 16-11-14.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.util.Iterator;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Deque</span>&lt;<span class="title">Item</span>&gt; <span class="keyword">implements</span> <span class="title">Iterable</span>&lt;<span class="title">Item</span>&gt;</span>&#123;</span><br><span class="line">    <span class="keyword">private</span> Node first = <span class="keyword">null</span>;</span><br><span class="line">    <span class="keyword">private</span> Node last = <span class="keyword">null</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> size = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">Node</span></span></span><br><span class="line"><span class="class">    </span>&#123;</span><br><span class="line">        Item item;</span><br><span class="line">        Node prev;</span><br><span class="line">        Node next;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// construct an empty deque</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Deque</span><span class="params">()</span> </span>&#123;&#125;</span><br><span class="line">    <span class="comment">// is the deque empty?</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">isEmpty</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> size == <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// return the number of items on the deque</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">size</span><span class="params">()</span>   </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> size;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// add the item to the front</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">addFirst</span><span class="params">(Item item)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(item == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> java.lang.NullPointerException();</span><br><span class="line">        &#125;</span><br><span class="line">        Node tv = <span class="keyword">new</span> Node();</span><br><span class="line">        tv.item = item;</span><br><span class="line">        tv.next = first;</span><br><span class="line">        <span class="keyword">if</span>(first != <span class="keyword">null</span>)&#123;</span><br><span class="line">            first.prev = tv;</span><br><span class="line">        &#125;</span><br><span class="line">        first = tv;</span><br><span class="line">        size++;</span><br><span class="line">        <span class="keyword">if</span>(last == <span class="keyword">null</span>)&#123;</span><br><span class="line">            last = tv;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// add the item to the end</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">addLast</span><span class="params">(Item item)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(item == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> java.lang.NullPointerException();</span><br><span class="line">        &#125;</span><br><span class="line">        Node tv = <span class="keyword">new</span> Node();</span><br><span class="line">        tv.item = item;</span><br><span class="line">        tv.next = <span class="keyword">null</span>;</span><br><span class="line">        tv.prev = last;</span><br><span class="line">        <span class="keyword">if</span>(last != <span class="keyword">null</span>)&#123;</span><br><span class="line">            last.next = tv;</span><br><span class="line">        &#125;</span><br><span class="line">        last = tv;</span><br><span class="line">        size++;</span><br><span class="line">        <span class="keyword">if</span>(first == <span class="keyword">null</span>)&#123;</span><br><span class="line">            first = tv;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// remove and return the item from the front</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Item <span class="title">removeFirst</span><span class="params">()</span>   </span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(isEmpty())&#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> java.util.NoSuchElementException();</span><br><span class="line">        &#125;</span><br><span class="line">        Item item = first.item;</span><br><span class="line">        first = first.next;</span><br><span class="line">        <span class="keyword">if</span>(first != <span class="keyword">null</span>) &#123;</span><br><span class="line">            first.prev = <span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        size--;</span><br><span class="line">        <span class="keyword">if</span>(size == <span class="number">0</span>)&#123;</span><br><span class="line">            first = last = <span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> item;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// remove and return the item from the end</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Item <span class="title">removeLast</span><span class="params">()</span>   </span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(isEmpty())&#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> java.util.NoSuchElementException();</span><br><span class="line">        &#125;</span><br><span class="line">        Item item = last.item;</span><br><span class="line">        last = last.prev;</span><br><span class="line">        <span class="keyword">if</span>(last != <span class="keyword">null</span>) &#123;</span><br><span class="line">            last.next = <span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        size--;</span><br><span class="line">        <span class="keyword">if</span>(size == <span class="number">0</span>)&#123;</span><br><span class="line">            first = last = <span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> item;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// return an iterator over items in order from front to end</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Iterator&lt;Item&gt; <span class="title">iterator</span><span class="params">()</span></span>&#123;</span><br><span class="line">         <span class="class"><span class="keyword">class</span> <span class="title">DequeIterator</span> <span class="keyword">implements</span> <span class="title">Iterator</span>&lt;<span class="title">Item</span>&gt;</span>&#123;</span><br><span class="line">            <span class="keyword">private</span> Node tv = first;</span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">hasNext</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                <span class="keyword">return</span> tv != <span class="keyword">null</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">remove</span><span class="params">()</span></span>&#123;<span class="keyword">throw</span> <span class="keyword">new</span> java.lang.UnsupportedOperationException();&#125;</span><br><span class="line">            <span class="function"><span class="keyword">public</span> Item <span class="title">next</span><span class="params">()</span></span></span><br><span class="line"><span class="function">            </span>&#123;</span><br><span class="line">                <span class="keyword">if</span>(!hasNext())&#123;</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> java.util.NoSuchElementException();</span><br><span class="line">                &#125;</span><br><span class="line">                Item item = tv.item;</span><br><span class="line">                tv = tv.next;</span><br><span class="line">                <span class="keyword">return</span> item;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> DequeIterator();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// unit testing</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Deque&lt;String&gt;deque = <span class="keyword">new</span> Deque&lt;&gt;();</span><br><span class="line">        deque.addLast(<span class="string">"0"</span>);</span><br><span class="line">        deque.removeLast();</span><br><span class="line">        deque.size();</span><br><span class="line">        deque.size();</span><br><span class="line">        deque.isEmpty();</span><br><span class="line">        deque.addFirst(<span class="string">"5"</span>);</span><br><span class="line">        deque.removeFirst();</span><br><span class="line">        System.out.println(deque.size());</span><br><span class="line">        deque.addLast(<span class="string">"7"</span>);</span><br><span class="line">        System.out.println(deque.removeFirst());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="RandomizedQueue-java"><a href="#RandomizedQueue-java" class="headerlink" title="RandomizedQueue.java"></a>RandomizedQueue.java</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Created by chestnutheng on 16-11-14.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">import</span> java.util.Iterator;</span><br><span class="line"><span class="keyword">import</span> edu.princeton.cs.algs4.StdRandom;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">RandomizedQueue</span>&lt;<span class="title">Item</span>&gt; <span class="keyword">implements</span> <span class="title">Iterable</span>&lt;<span class="title">Item</span>&gt;</span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> size = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">private</span> Item[] pool;</span><br><span class="line">    <span class="comment">// construct an empty randomized queue</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">RandomizedQueue</span><span class="params">()</span></span>&#123;</span><br><span class="line">        pool = (Item[])<span class="keyword">new</span> Object[<span class="number">5</span>];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// check capacity size and resize</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">check_capacity</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(size == pool.length - <span class="number">1</span>)&#123;</span><br><span class="line">            Item[] np = (Item[])<span class="keyword">new</span> Object[size*<span class="number">2</span>];</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; size; ++i)&#123;</span><br><span class="line">                np[i] = pool[i];</span><br><span class="line">            &#125;</span><br><span class="line">            pool = np;</span><br><span class="line">        &#125;<span class="keyword">else</span> <span class="keyword">if</span>(size == pool.length/<span class="number">4</span> + <span class="number">1</span> &amp;&amp; size &gt; <span class="number">0</span>)&#123;</span><br><span class="line">            Item[] np = (Item[])<span class="keyword">new</span> Object[size*<span class="number">2</span>];</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; size; ++i)&#123;</span><br><span class="line">                np[i] = pool[i];</span><br><span class="line">            &#125;</span><br><span class="line">            pool = np;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// is the queue empty?</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">isEmpty</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> size == <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// return the number of items on the queue</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">size</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> size;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// add the item</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">enqueue</span><span class="params">(Item item)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(item == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> java.lang.NullPointerException();</span><br><span class="line">        &#125;</span><br><span class="line">        check_capacity();</span><br><span class="line">        pool[size] = item;</span><br><span class="line">        size++;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// remove and return a random item</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Item <span class="title">dequeue</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(isEmpty())&#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> java.util.NoSuchElementException();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">int</span> target = (<span class="keyword">int</span>) (Math.random()*size);</span><br><span class="line">        Item item = pool[target];</span><br><span class="line">        pool[target] = pool[size - <span class="number">1</span>];</span><br><span class="line">        pool[size - <span class="number">1</span>] = <span class="keyword">null</span>;</span><br><span class="line">        size--;</span><br><span class="line">        check_capacity();</span><br><span class="line">        <span class="keyword">return</span> item;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// return (but do not remove) a random item</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Item <span class="title">sample</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(isEmpty())&#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> java.util.NoSuchElementException();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">int</span> target = (<span class="keyword">int</span>) (Math.random()*size);</span><br><span class="line">        <span class="keyword">return</span> pool[target];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// return an independent iterator over items in random order</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Iterator&lt;Item&gt; <span class="title">iterator</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="class"><span class="keyword">class</span> <span class="title">VectorIterator</span> <span class="keyword">implements</span> <span class="title">Iterator</span>&lt;<span class="title">Item</span>&gt;</span>&#123;</span><br><span class="line">            <span class="keyword">private</span> <span class="keyword">int</span> helicopter = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">private</span> Item[] random_array;</span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="title">VectorIterator</span><span class="params">()</span></span>&#123;</span><br><span class="line">                random_array = (Item[])<span class="keyword">new</span> Object[size];</span><br><span class="line">                <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; size; ++i)&#123;</span><br><span class="line">                    random_array[i] = pool[i];</span><br><span class="line">                &#125;</span><br><span class="line">                StdRandom.shuffle(random_array);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">hasNext</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                <span class="keyword">return</span> helicopter &lt; size;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">remove</span><span class="params">()</span></span>&#123;<span class="keyword">throw</span> <span class="keyword">new</span> java.lang.UnsupportedOperationException();&#125;</span><br><span class="line">            <span class="function"><span class="keyword">public</span> Item <span class="title">next</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                <span class="keyword">if</span>(!hasNext())&#123;</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> java.util.NoSuchElementException();</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">return</span> random_array[helicopter++];</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> VectorIterator();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//test client</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span>&#123;</span><br><span class="line">        RandomizedQueue&lt;Integer&gt; r = <span class="keyword">new</span> RandomizedQueue&lt;&gt;();</span><br><span class="line">        r.enqueue(<span class="number">1</span>);</span><br><span class="line">        r.enqueue(<span class="number">2</span>);</span><br><span class="line">        r.dequeue();</span><br><span class="line">        r.dequeue();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> s:r</span><br><span class="line">             ) &#123;</span><br><span class="line">            System.out.println(s);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/普林斯顿算法公开课/" rel="tag">#普林斯顿算法公开课</a>
+          
+            <a href="/tags/双向队列/" rel="tag">#双向队列</a>
+          
+            <a href="/tags/随机队列/" rel="tag">#随机队列</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/11/15/cmp-lex/" rel="next" title="[编译原理]Python实现的词法分析器">
+                <i class="fa fa-chevron-left"></i> [编译原理]Python实现的词法分析器
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/12/27/cmp-grammar/" rel="prev" title="[编译原理]Python实现的语法分析器">
+                [编译原理]Python实现的语法分析器 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zMDAxOS82NTg0"></div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.jpeg"
+               alt="吕子恒" />
+          <p class="site-author-name" itemprop="name">吕子恒</p>
+          <p class="site-description motion-element" itemprop="description">互联网 | NLP方向 | 喜欢制作所有东西 | INTJ</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">38</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">50</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chestnutheng" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/lu-zi-heng-91" target="_blank" title="ZhiHu">
+                  
+                    <i class="fa fa-fw fa-zhihu"></i>
+                  
+                  ZhiHu
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://cn.linkedin.com/in/子恒-吕-a52bba10a" target="_blank" title="Linkedin">
+                  
+                    <i class="fa fa-fw fa-linkedin"></i>
+                  
+                  Linkedin
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-block">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              Links
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://wangbicong.cn/" title="可爱的聪聪" target="_blank">可爱的聪聪</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://easonzero.cn/" title="可爱的小一" target="_blank">可爱的小一</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://wangzhpp.org/" title="可爱的弱弱" target="_blank">可爱的弱弱</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://shawnzeng.com/" title="可爱的帅帅" target="_blank">可爱的帅帅</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#思路"><span class="nav-number">1.</span> <span class="nav-text">思路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Deque-java"><span class="nav-number">2.</span> <span class="nav-text">Deque.java</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RandomizedQueue-java"><span class="nav-number">3.</span> <span class="nav-text">RandomizedQueue.java</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2015 - 
+  <span itemprop="copyrightYear">2021</span> 
+  <span class="author" itemprop="copyrightHolder">吕子恒</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span>Hosted by <a href="https://pages.coding.me" style="font-weight: bold">Coding Pages</a></span>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/jquery/2.1.3/jquery.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/jquery_lazyload/1.9.7/jquery.lazyload.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/velocity/1.2.1/velocity.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/velocity/1.2.1/velocity.ui.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("0iVbAi6uVJSkvkk710Xk357P-gzGzoHsz", "GCWjnKs6J6DzdbJSP7KSqckD");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+<script src="/live2dw/lib/L2Dwidget.min.js?0c58a1486de42ac6cc1c59c7d98ae887"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/hijiki.model.json"},"display":{"position":"left","width":100,"height":200},"mobile":{"show":false},"log":false});</script></body>
+</html>

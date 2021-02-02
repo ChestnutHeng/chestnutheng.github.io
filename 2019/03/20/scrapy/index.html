@@ -1,0 +1,981 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+  <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic|monospace:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+  
+
+<link href="//cdn.bootcss.com/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="scrapy,爬虫," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ChestnutHeng's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="scrapy是个很简单强大的python爬虫框架，不需要处理网络相关逻辑就可以轻松爬取。本文介绍了一些基本的内容。">
+<meta name="keywords" content="scrapy,爬虫">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[Web]Scrapy Scan">
+<meta property="og:url" content="chestnutheng.cn/2019/03/20/scrapy/index.html">
+<meta property="og:site_name" content="ChestnutHeng&#39;s Blog">
+<meta property="og:description" content="scrapy是个很简单强大的python爬虫框架，不需要处理网络相关逻辑就可以轻松爬取。本文介绍了一些基本的内容。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-03-20T15:00:30.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="[Web]Scrapy Scan">
+<meta name="twitter:description" content="scrapy是个很简单强大的python爬虫框架，不需要处理网络相关逻辑就可以轻松爬取。本文介绍了一些基本的内容。">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"right","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="chestnutheng.cn/2019/03/20/scrapy/"/>
+
+  <title> [Web]Scrapy Scan | ChestnutHeng's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans,en,default">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?53529277abe821f4686b3d713bf1ea67";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-right page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">ChestnutHeng's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                [Web]Scrapy Scan
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-03-20T23:00:25+08:00" content="2019-03-20">
+              2019-03-20
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/Python/" itemprop="url" rel="index">
+                    <span itemprop="name">Python</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+             <span id="/2019/03/20/scrapy/" class="leancloud_visitors" data-flag-title="[Web]Scrapy Scan">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>scrapy是个很简单强大的python爬虫框架，不需要处理网络相关逻辑就可以轻松爬取。本文介绍了一些基本的内容。需要注意的是，本文档中所有的●表示非必须内容。<br>本教程基于官方文档：<a href="https://scrapy-chs.readthedocs.io/zh_CN/0.24/topics/settings.html" target="_blank" rel="noopener">官方文档</a></p>
+<h1 id="安装scrapy"><a href="#安装scrapy" class="headerlink" title="安装scrapy"></a>安装scrapy</h1><h2 id="CentOS"><a href="#CentOS" class="headerlink" title="CentOS"></a>CentOS</h2><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">yum install python34-devel.x86_64</span><br><span class="line">pip3 install scrapy</span><br></pre></td></tr></table></figure>
+<h1 id="创建项目"><a href="#创建项目" class="headerlink" title="创建项目"></a>创建项目</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">//创建项目hello</span><br><span class="line">scrapy startproject hello</span><br><span class="line">//创建一个爬虫（在项目根目录运行，不要加http://），名字为baidu，域名为www.baidu.com</span><br><span class="line">scrapy genspider baidu &quot;www.baidu.com&quot;</span><br></pre></td></tr></table></figure>
+<p>● 需要注意的是，如果要无视robots.txt文件，请在下面的<code>settings.py</code>中设置<code>ROBOTSTXT_OBEY = False</code><br>● 刚才建好的项目目录文件树如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">tree hello </span><br><span class="line">hello</span><br><span class="line">|-- hello</span><br><span class="line">|   |-- __init__.py</span><br><span class="line">|   |-- items.py            // 输出结构体定义</span><br><span class="line">|   |-- middlewares.py</span><br><span class="line">|   |-- pipelines.py</span><br><span class="line">|   |-- __pycache__</span><br><span class="line">|   |-- settings.py         // 设置，记得把 ROBOTSTXT_OBEY = False</span><br><span class="line">|   |-- spiders</span><br><span class="line">|       |-- __init__.py</span><br><span class="line">|       |-- baidu.py        // 刚创建的爬虫</span><br><span class="line">|       |-- __pycache__</span><br><span class="line">|-- scrapy.cfg</span><br></pre></td></tr></table></figure></p>
+<h1 id="Shell：测试代码"><a href="#Shell：测试代码" class="headerlink" title="Shell：测试代码"></a>Shell：测试代码</h1><p>使用shell可以帮助实现爬虫的代码，查看网页的相关信息。结合浏览器中的审查元素查看会让你构造出需要选择的数据部分。<br><figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. 在命令行中执行 scrapy shell 就可以进入shell。</span></span><br><span class="line"><span class="comment"># ● 下面改造了http头的USER_AGENT，一般可以防止请求因为USER_AGENT被拒绝</span></span><br><span class="line">scrapy shell -s USER_AGENT，=<span class="string">"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36-480"</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 进入shell后可用的对象：request、response、sel（选择器）、settings、spider、crawler</span></span><br><span class="line"><span class="comment"># 可用的函数 帮助shelp() 请求fetch(url) fetch(req) 浏览器打开view(rsp)</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 接下来可以拉取网页，下面是一些操作的实例:</span></span><br><span class="line">fetch(<span class="string">'https://www.baidu.com'</span>)</span><br><span class="line"><span class="comment"># 浏览器中打开爬取的网页</span></span><br><span class="line">view(response)</span><br><span class="line"><span class="comment"># 查看req和rsp</span></span><br><span class="line">request.body</span><br><span class="line">response.headers</span><br><span class="line"><span class="comment"># 选择网页中的元素</span></span><br><span class="line">response.xpath(<span class="string">'//div'</span>)</span><br><span class="line">sel.xpath(<span class="string">'//title/text()'</span>).extract()</span><br><span class="line"><span class="comment"># ● get 改为post</span></span><br><span class="line">request = request.replace(method=<span class="string">"POST"</span>)</span><br></pre></td></tr></table></figure></p>
+<h2 id="●-调试您的spider"><a href="#●-调试您的spider" class="headerlink" title="● 调试您的spider"></a>● 调试您的spider</h2><p>下面代码会在运行spider时，在这里进入shell调试。</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> scrapy.shell <span class="keyword">import</span> inspect_response</span><br><span class="line">inspect_response(response, self)</span><br></pre></td></tr></table></figure>
+<h1 id="选择器：找到爬取的内容"><a href="#选择器：找到爬取的内容" class="headerlink" title="选择器：找到爬取的内容"></a>选择器：找到爬取的内容</h1><p>Scrapy选择器构建于 lxml 库之上，这意味着它们在速度和解析准确性上非常相似。选择器从如下的库中获取：<br><figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> scrapy.selector <span class="keyword">import</span> Selector</span><br><span class="line"><span class="keyword">from</span> scrapy.http <span class="keyword">import</span> HtmlResponse</span><br><span class="line"><span class="comment"># 可以从rsp中构造，也可以 text="&lt;h&gt;&lt;/h&gt;" 从字符串中构造</span></span><br><span class="line">response = HtmlResponse(url=<span class="string">'http://example.com'</span>, body=<span class="string">''</span>)</span><br><span class="line">Selector(response=response).xpath(<span class="string">'//span/text()'</span>).extract() <span class="comment"># [u'good']</span></span><br><span class="line"><span class="comment"># 幸运的是rsp提供了方法直接构造选择器：</span></span><br><span class="line">response.selector.xpath(<span class="string">'//span/text()'</span>).extract()</span><br><span class="line"><span class="comment"># 以及更短的快捷方式：</span></span><br><span class="line">response.xpath(<span class="string">'//title/text()'</span>).extract() </span><br><span class="line">response.css(<span class="string">'title::text'</span>).extract()</span><br></pre></td></tr></table></figure></p>
+<p>● xpath和css是两种用来选择数据的工具，他们遵循不同的语法。但是他们都都返回一个selector对象。selector有几个成员函数很有用，他们是</p>
+<ol>
+<li>extract() 返回里面文字的值</li>
+<li>re() 用正则过滤文字值，返回文字值</li>
+<li>xpath() css() 返回的selector依然可以用这些工具，这意味着可以嵌套</li>
+</ol>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 下面是一个从的img标签的text中获取括号内文字的方法</span></span><br><span class="line">response.xpath(<span class="string">'//a[contains(@href, "image")]/text()'</span>).re(<span class="string">r'Name:\s*(.*)'</span>)</span><br><span class="line"><span class="comment"># 下面是用xpath的相对路径和选择器嵌套：</span></span><br><span class="line">divs = response.xpath(<span class="string">'//div'</span>)</span><br><span class="line"><span class="keyword">for</span> p <span class="keyword">in</span> divs.xpath(<span class="string">'.//p'</span>):    <span class="comment"># 父路径下的所有后代p</span></span><br><span class="line">    ...</span><br><span class="line"><span class="keyword">for</span> p <span class="keyword">in</span> divs.xpath(<span class="string">'p'</span>):    <span class="comment"># 父路径下的所有直接</span></span><br><span class="line">    ...</span><br></pre></td></tr></table></figure>
+<h2 id="●-Xpath-语法参考"><a href="#●-Xpath-语法参考" class="headerlink" title="● Xpath 语法参考"></a>● Xpath 语法参考</h2><p><a href="http://www.w3school.com.cn/xpath/xpath_syntax.asp" target="_blank" rel="noopener">w3s : Xpath语法参考</a><br>Xpath是一种用于操作xml的选择器，可以快速操作想要的html标签。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">语法</th>
+<th style="text-align:left">实例</th>
+<th style="text-align:left">解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">a</td>
+<td style="text-align:left">bookstore</td>
+<td style="text-align:left">选取 bookstore 元素的所有子节点。</td>
+</tr>
+<tr>
+<td style="text-align:left">/a</td>
+<td style="text-align:left">/bookstore</td>
+<td style="text-align:left">选取根元素 bookstore。</td>
+</tr>
+<tr>
+<td style="text-align:left">a/b</td>
+<td style="text-align:left">bookstore/book</td>
+<td style="text-align:left">选取属于 bookstore 的子元素的所有 book 元素。</td>
+</tr>
+<tr>
+<td style="text-align:left">//a</td>
+<td style="text-align:left">//book</td>
+<td style="text-align:left">选取所有 book 子元素，而不管它们在文档中的位置。</td>
+</tr>
+<tr>
+<td style="text-align:left">a//b</td>
+<td style="text-align:left">bookstore//book</td>
+<td style="text-align:left">选择属于 bookstore 元素的后代的所有 book 元素，而不管它们位于 bookstore 之下的什么位置。</td>
+</tr>
+<tr>
+<td style="text-align:left">@a</td>
+<td style="text-align:left">//@lang</td>
+<td style="text-align:left">选取名为 lang 的所有属性。</td>
+</tr>
+<tr>
+<td style="text-align:left">*</td>
+<td style="text-align:left">/bookstore/*</td>
+<td style="text-align:left">选取 bookstore 元素的所有子元素。</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">//*</td>
+<td style="text-align:left">选取文档中的所有元素。</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">//title[@*]</td>
+<td style="text-align:left">选取所有带有属性的 title 元素。</td>
+</tr>
+</tbody>
+</table>
+<h2 id="●-CSS-语法参考"><a href="#●-CSS-语法参考" class="headerlink" title="● CSS 语法参考"></a>● CSS 语法参考</h2><p><a href="http://www.w3school.com.cn/cssref/css_selectors.asp" target="_blank" rel="noopener">w3s : CSS语法参考</a><br>如果要操作一个类或者id而不是标签，CSS是最快的方法。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">例子</th>
+<th style="text-align:left">例子描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">.intro</td>
+<td style="text-align:left">选择 class=”intro” 的所有元素</td>
+</tr>
+<tr>
+<td style="text-align:left">#firstname</td>
+<td style="text-align:left">选择 id=”firstname” 的所有元素</td>
+</tr>
+<tr>
+<td style="text-align:left">*</td>
+<td style="text-align:left">选择所有元素</td>
+</tr>
+<tr>
+<td style="text-align:left">p</td>
+<td style="text-align:left">选择所有 p 元素</td>
+</tr>
+<tr>
+<td style="text-align:left">div,p</td>
+<td style="text-align:left">选择所有 div元素和所有 p 元素</td>
+</tr>
+<tr>
+<td style="text-align:left">div p</td>
+<td style="text-align:left">选择 div 元素内部的所有 p 元素</td>
+</tr>
+<tr>
+<td style="text-align:left">div&gt;p</td>
+<td style="text-align:left">选择父元素为 <div> 元素的所有 <p> 元素</p></div></td>
+</tr>
+<tr>
+<td style="text-align:left">div+p</td>
+<td style="text-align:left">选择紧接在 <div> 元素之后的所有 <p> 元素</p></div></td>
+</tr>
+<tr>
+<td style="text-align:left">[target]</td>
+<td style="text-align:left">选择带有 target 属性所有元素</td>
+</tr>
+<tr>
+<td style="text-align:left">[target=_blank]</td>
+<td style="text-align:left">选择 target=”]_blank” 的所有元素。</td>
+</tr>
+<tr>
+<td style="text-align:left">[title~=flower]</td>
+<td style="text-align:left">选择 title 属性包含单词 “flower” 的所有元素</td>
+</tr>
+<tr>
+<td style="text-align:left">[lang&#124;=en]</td>
+<td style="text-align:left">选择 lang 属性值以 “en” 开头的所有元素</td>
+</tr>
+</tbody>
+</table>
+<h1 id="Item：存储你爬取结果的桶"><a href="#Item：存储你爬取结果的桶" class="headerlink" title="Item：存储你爬取结果的桶"></a>Item：存储你爬取结果的桶</h1><p>好了，现在开始写爬虫。不过在这之前需要先定义好你想要爬下来的数据格式是怎么样的，待会把他们装进去。你需要修改<code>hello/items.py</code>，编写一个简单的类。<br><figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">HelloItem</span><span class="params">(scrapy.Item)</span>:</span></span><br><span class="line">    <span class="comment"># 用 scrapy.Field() 作为类型就可以了</span></span><br><span class="line">    id = scrapy.Field()</span><br><span class="line">    name = scrapy.Field()</span><br><span class="line">    description = scrapy.Field()</span><br></pre></td></tr></table></figure></p>
+<p>● item和字典的API非常相似。可以使用get()、下标等读写item，甚至可以相互用对方初始化。</p>
+<h1 id="Spider：爬虫逻辑"><a href="#Spider：爬虫逻辑" class="headerlink" title="Spider：爬虫逻辑"></a>Spider：爬虫逻辑</h1><p>spider是爬取流程的主体。打开<code>hello/spiders/baidu.py</code>，编辑成员函数和成员变量：</p>
+<ol>
+<li><code>name</code> 爬虫的名字</li>
+<li><code>allowed_domains</code> 只允许爬取<code>allowed_domains</code>的内容</li>
+<li><code>start_urls</code> 运行时没指定url，就从这里开始爬</li>
+<li><code>start_requests()</code> 可以重写这个来处理第一个<code>request</code>。否则，将会用<code>make_requests_from_url</code>爬url列表里的内容。</li>
+<li><code>make_requests_from_url(url)</code> 可以重写这个来处理请求的发起。默认调用parse来处理rsp。</li>
+<li><code>parse(rsp)</code> 处理rsp。需要返回item或者req的迭代对象作为输出和下一批爬取的内容，或者都返回。<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> scrapy</span><br><span class="line"><span class="keyword">from</span> hello.items <span class="keyword">import</span> HelloItem</span><br><span class="line"><span class="keyword">import</span> scrapy</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BaiduSpider</span><span class="params">(scrapy.Spider)</span>:</span></span><br><span class="line">    <span class="comment"># 创建爬虫时指定的名字</span></span><br><span class="line">    name = <span class="string">'baidu'</span></span><br><span class="line">    <span class="comment"># ● 设置中OffsiteMiddleware=True的时候，只允许爬取allowed_domains的内容</span></span><br><span class="line">    allowed_domains = [<span class="string">'baidu.com'</span>]</span><br><span class="line">    <span class="comment"># 爬取的目标链接</span></span><br><span class="line">    start_urls = [<span class="string">'http://www.baidu.com/'</span>]</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 用这个函数处理url的rsp</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">parse</span><span class="params">(self, response)</span>:</span></span><br><span class="line">        sel = scrapy.Selector(response)</span><br><span class="line">        <span class="comment"># 选择所有的h3标题返回存储</span></span><br><span class="line">        <span class="keyword">for</span> h3 <span class="keyword">in</span> response.xpath(<span class="string">'//h3'</span>).extract():</span><br><span class="line">            <span class="keyword">yield</span> HelloItem(title=h3)</span><br><span class="line">        <span class="comment"># 返回链接继续爬取</span></span><br><span class="line">        <span class="keyword">for</span> url <span class="keyword">in</span> response.xpath(<span class="string">'//a/@href'</span>).extract():</span><br><span class="line">            <span class="keyword">yield</span> scrapy.Request(url, callback=self.parse)</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># ● 一个重写start_requests的样例，构造了req，并用logged_in函数处理rsp</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">start_requests</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> [scrapy.FormRequest(<span class="string">"http://www.example.com/login"</span>,</span><br><span class="line">                               formdata=&#123;<span class="string">'user'</span>: <span class="string">'john'</span>, <span class="string">'pass'</span>: <span class="string">'secret'</span>&#125;,</span><br><span class="line">                               callback=self.logged_in)]</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">logged_in</span><span class="params">(rsp)</span>:</span>...</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>写完后，在项目目录下运行scrapy crawl来运行spider：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">// 基础的运行</span><br><span class="line">scrapy crawl hello</span><br><span class="line">// 传递参数给myspider，并在构造函数中使用</span><br><span class="line">scrapy crawl myspider -a category=electronics</span><br><span class="line">class MySpider(Spider):</span><br><span class="line">    def __init__(self, category=None, *args, **kwargs):</span><br><span class="line">        super(MySpider, self).__init__(*args, **kwargs)</span><br><span class="line">        self.start_urls = [&apos;http://www.example.com/categories/%s&apos; % category]</span><br><span class="line">// 把爬到的item输出文件</span><br><span class="line">scrapy crawl dmoz -o items.json</span><br></pre></td></tr></table></figure></p>
+<h1 id="PipeLine：处理item并输出"><a href="#PipeLine：处理item并输出" class="headerlink" title="PipeLine：处理item并输出"></a>PipeLine：处理item并输出</h1><p>Pipeline提供了处理返回的item的几个函数。编辑<code>hello/pipeline.py</code>修改Pipeline的成员函数：</p>
+<ol>
+<li>process_item(item, spider) 每个item获取后都会用这个处理。这个函数会返回一个处理好的item。</li>
+<li>open_spider(spider) 开启spider时被调用</li>
+<li>close_spider(spider) 关闭spider时被调用</li>
+</ol>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 下面是一个用id去重item的样例：</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">DuplicatesPipeline</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self)</span>:</span></span><br><span class="line">        self.ids_seen = set()</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">process_item</span><span class="params">(self, item, spider)</span>:</span></span><br><span class="line">        <span class="keyword">if</span> item[<span class="string">'id'</span>] <span class="keyword">in</span> self.ids_seen:</span><br><span class="line">            <span class="keyword">raise</span> DropItem(<span class="string">"Duplicate item found: %s"</span> % item)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            self.ids_seen.add(item[<span class="string">'id'</span>])</span><br><span class="line">            <span class="keyword">return</span> item</span><br><span class="line"><span class="keyword">from</span> scrapy.exporters <span class="keyword">import</span> CsvItemExporter</span><br><span class="line"><span class="comment"># 一个用导出器导出的样例：</span></span><br><span class="line"><span class="keyword">from</span> scrapy.exporters <span class="keyword">import</span> CsvItemExporter</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ExportPipeline</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">open_spider</span><span class="params">(self, spider)</span>:</span></span><br><span class="line">        self.file = open(<span class="string">"test.csv"</span>, <span class="string">"wb"</span>)</span><br><span class="line">        self.exporter = CsvItemExporter(self.file,       </span><br><span class="line">        fields_to_export=[<span class="string">"id"</span>, <span class="string">"name"</span>, <span class="string">"desc"</span>])</span><br><span class="line">        self.exporter.start_exporting()</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">process_item</span><span class="params">(self, item, spider)</span>:</span></span><br><span class="line">        self.exporter.export_item(item)</span><br><span class="line">        <span class="keyword">return</span> item</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">close_spider</span><span class="params">(self, spider)</span>:</span></span><br><span class="line">        self.exporter.finish_exporting()</span><br><span class="line">        self.file.close()</span><br></pre></td></tr></table></figure>
+<p>最后，修改<code>settings.py</code>中的<code>ITEM_PIPELINES</code>保证你的Pipeline生效。key表示路径，值表示执行的顺序。<br><figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ITEM_PIPELINES = &#123;</span><br><span class="line">    <span class="string">'mybot.pipelines.validate.DuplicatesPipeline'</span>: <span class="number">300</span>,</span><br><span class="line">    <span class="string">'mybot.pipelines.validate.ExportPipeline'</span>: <span class="number">800</span>,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="●-Feeds-Export"><a href="#●-Feeds-Export" class="headerlink" title="● Feeds Export"></a>● Feeds Export</h2><p>序列化你的item结果有很多种方式：<br><figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">FEED_EXPORTERS_BASE = &#123;</span><br><span class="line">    <span class="string">'json'</span>: <span class="string">'scrapy.contrib.exporter.JsonItemExporter'</span>,</span><br><span class="line">    <span class="string">'jsonlines'</span>: <span class="string">'scrapy.contrib.exporter.JsonLinesItemExporter'</span>,</span><br><span class="line">    <span class="string">'csv'</span>: <span class="string">'scrapy.contrib.exporter.CsvItemExporter'</span>,</span><br><span class="line">    <span class="string">'xml'</span>: <span class="string">'scrapy.contrib.exporter.XmlItemExporter'</span>,</span><br><span class="line">    <span class="string">'marshal'</span>: <span class="string">'scrapy.contrib.exporter.MarshalItemExporter'</span>,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h1 id="高级特性"><a href="#高级特性" class="headerlink" title="高级特性"></a>高级特性</h1><h2 id="下载器中间件：修改req和rsp的钩子"><a href="#下载器中间件：修改req和rsp的钩子" class="headerlink" title="下载器中间件：修改req和rsp的钩子"></a>下载器中间件：修改req和rsp的钩子</h2><p><a href="https://scrapy-chs.readthedocs.io/zh_CN/0.24/topics/downloader-middleware.html#topics-downloader-middleware-ref" target="_blank" rel="noopener">官方文档：下载器中间件</a></p>
+<h1 id="最佳实践"><a href="#最佳实践" class="headerlink" title="最佳实践"></a>最佳实践</h1><p>下面是些处理这些站点的建议(tips):</p>
+<ol>
+<li>使用user agent池，轮流选择之一来作为user agent。池中包含常见的浏览器的user agent(google一下一大堆)</li>
+<li>禁止cookies(参考 <a href="https://scrapy-chs.readthedocs.io/zh_CN/0.24/topics/downloader-middleware.html#std:setting-COOKIES_ENABLED" target="_blank" rel="noopener">COOKIES_ENABLED</a>)，有些站点会使用cookies来发现爬虫的轨迹。</li>
+<li>设置下载延迟(2或更高)。参考 <a href="https://scrapy-chs.readthedocs.io/zh_CN/0.24/topics/settings.html#std:setting-DOWNLOAD_DELAY" target="_blank" rel="noopener">DOWNLOAD_DELAY</a> 设置。</li>
+<li>如果可行，使用 Google cache 来爬取数据，而不是直接访问站点。</li>
+<li>使用IP池。例如免费的 Tor项目 或付费服务(ProxyMesh)。</li>
+<li>使用高度分布式的下载器(downloader)来绕过禁止(ban)，您就只需要专注分析处理页面。这样的例子有: Crawlera</li>
+</ol>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/scrapy/" rel="tag">#scrapy</a>
+          
+            <a href="/tags/爬虫/" rel="tag">#爬虫</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/08/14/C1W1-C1W2/" rel="next" title="[deeplearning.ai]C1W1~C1W2">
+                <i class="fa fa-chevron-left"></i> [deeplearning.ai]C1W1~C1W2
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/03/20/rbtree/" rel="prev" title="[数据结构]深入理解红黑树">
+                [数据结构]深入理解红黑树 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zMDAxOS82NTg0"></div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.jpeg"
+               alt="吕子恒" />
+          <p class="site-author-name" itemprop="name">吕子恒</p>
+          <p class="site-description motion-element" itemprop="description">互联网 | NLP方向 | 喜欢制作所有东西 | INTJ</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">38</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">50</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chestnutheng" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/lu-zi-heng-91" target="_blank" title="ZhiHu">
+                  
+                    <i class="fa fa-fw fa-zhihu"></i>
+                  
+                  ZhiHu
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://cn.linkedin.com/in/子恒-吕-a52bba10a" target="_blank" title="Linkedin">
+                  
+                    <i class="fa fa-fw fa-linkedin"></i>
+                  
+                  Linkedin
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-block">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              Links
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://wangbicong.cn/" title="可爱的聪聪" target="_blank">可爱的聪聪</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://easonzero.cn/" title="可爱的小一" target="_blank">可爱的小一</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://wangzhpp.org/" title="可爱的弱弱" target="_blank">可爱的弱弱</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://shawnzeng.com/" title="可爱的帅帅" target="_blank">可爱的帅帅</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#安装scrapy"><span class="nav-number">1.</span> <span class="nav-text">安装scrapy</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#CentOS"><span class="nav-number">1.1.</span> <span class="nav-text">CentOS</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#创建项目"><span class="nav-number">2.</span> <span class="nav-text">创建项目</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Shell：测试代码"><span class="nav-number">3.</span> <span class="nav-text">Shell：测试代码</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#●-调试您的spider"><span class="nav-number">3.1.</span> <span class="nav-text">● 调试您的spider</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#选择器：找到爬取的内容"><span class="nav-number">4.</span> <span class="nav-text">选择器：找到爬取的内容</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#●-Xpath-语法参考"><span class="nav-number">4.1.</span> <span class="nav-text">● Xpath 语法参考</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#●-CSS-语法参考"><span class="nav-number">4.2.</span> <span class="nav-text">● CSS 语法参考</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Item：存储你爬取结果的桶"><span class="nav-number">5.</span> <span class="nav-text">Item：存储你爬取结果的桶</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Spider：爬虫逻辑"><span class="nav-number">6.</span> <span class="nav-text">Spider：爬虫逻辑</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#PipeLine：处理item并输出"><span class="nav-number">7.</span> <span class="nav-text">PipeLine：处理item并输出</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#●-Feeds-Export"><span class="nav-number">7.1.</span> <span class="nav-text">● Feeds Export</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#高级特性"><span class="nav-number">8.</span> <span class="nav-text">高级特性</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#下载器中间件：修改req和rsp的钩子"><span class="nav-number">8.1.</span> <span class="nav-text">下载器中间件：修改req和rsp的钩子</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#最佳实践"><span class="nav-number">9.</span> <span class="nav-text">最佳实践</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2015 - 
+  <span itemprop="copyrightYear">2021</span> 
+  <span class="author" itemprop="copyrightHolder">吕子恒</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span>Hosted by <a href="https://pages.coding.me" style="font-weight: bold">Coding Pages</a></span>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/jquery/2.1.3/jquery.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/jquery_lazyload/1.9.7/jquery.lazyload.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/velocity/1.2.1/velocity.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/velocity/1.2.1/velocity.ui.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("0iVbAi6uVJSkvkk710Xk357P-gzGzoHsz", "GCWjnKs6J6DzdbJSP7KSqckD");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+<script src="/live2dw/lib/L2Dwidget.min.js?0c58a1486de42ac6cc1c59c7d98ae887"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/hijiki.model.json"},"display":{"position":"left","width":100,"height":200},"mobile":{"show":false},"log":false});</script></body>
+</html>

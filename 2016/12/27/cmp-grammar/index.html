@@ -1,0 +1,820 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+  <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic|monospace:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+  
+
+<link href="//cdn.bootcss.com/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="编译原理," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ChestnutHeng's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="语法分析器是这套编译系统的第二部分,可以直接用上一篇中的词法分析器的结果继续做语法分析.">
+<meta name="keywords" content="编译原理">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[编译原理]Python实现的语法分析器">
+<meta property="og:url" content="chestnutheng.cn/2016/12/27/cmp-grammar/index.html">
+<meta property="og:site_name" content="ChestnutHeng&#39;s Blog">
+<meta property="og:description" content="语法分析器是这套编译系统的第二部分,可以直接用上一篇中的词法分析器的结果继续做语法分析.">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2016-12-26T17:20:28.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="[编译原理]Python实现的语法分析器">
+<meta name="twitter:description" content="语法分析器是这套编译系统的第二部分,可以直接用上一篇中的词法分析器的结果继续做语法分析.">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"right","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="chestnutheng.cn/2016/12/27/cmp-grammar/"/>
+
+  <title> [编译原理]Python实现的语法分析器 | ChestnutHeng's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans,en,default">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?53529277abe821f4686b3d713bf1ea67";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-right page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">ChestnutHeng's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                [编译原理]Python实现的语法分析器
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-12-27T01:20:24+08:00" content="2016-12-27">
+              2016-12-27
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/编译原理/" itemprop="url" rel="index">
+                    <span itemprop="name">编译原理</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/12/27/cmp-grammar/" class="leancloud_visitors" data-flag-title="[编译原理]Python实现的语法分析器">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>语法分析器是这套编译系统的第二部分,可以直接用上一篇中的词法分析器的结果继续做语法分析.<br><a id="more"></a></p>
+<h2 id="文法表"><a href="#文法表" class="headerlink" title="文法表"></a>文法表</h2><p>= =一直没时间更, 直到考试周格外闲…<br>借鉴了一个网络上的文法表, 覆盖了一些基础的C文法, 测试后发现该文法是LL(1)文法.<br>文法如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line">&lt;函数定义&gt;-&gt;&lt;修饰词闭包&gt;&lt;类型&gt;&lt;变量&gt;[(]&lt;参数声明&gt;[)][&#123;]&lt;函数块&gt;[&#125;]</span><br><span class="line">&lt;修饰词闭包&gt;-&gt;&lt;修饰词&gt;&lt;修饰词闭包&gt;</span><br><span class="line">&lt;修饰词闭包&gt;-&gt;[@]</span><br><span class="line">&lt;修饰词&gt;-&gt;[public]</span><br><span class="line">&lt;修饰词&gt;-&gt;[private]</span><br><span class="line">&lt;修饰词&gt;-&gt;[protected]</span><br><span class="line">&lt;类型&gt;-&gt;[int]&lt;取地址&gt;</span><br><span class="line">&lt;类型&gt;-&gt;[char]&lt;取地址&gt;</span><br><span class="line">&lt;类型&gt;-&gt;[boolean]&lt;取地址&gt;</span><br><span class="line">&lt;类型&gt;-&gt;[void]&lt;取地址&gt;</span><br><span class="line">&lt;取地址&gt;-&gt;&lt;星号&gt;&lt;取地址&gt;</span><br><span class="line">&lt;取地址&gt;-&gt;[@]</span><br><span class="line">&lt;星号&gt;-&gt;[*]</span><br><span class="line">&lt;变量&gt;-&gt;&lt;标志符&gt;&lt;数组下标&gt;</span><br><span class="line">&lt;标志符&gt;-&gt;[id]</span><br><span class="line">&lt;数组下标&gt;-&gt;[[]&lt;因式&gt;[]]</span><br><span class="line">&lt;数组下标&gt;-&gt;[@]</span><br><span class="line">&lt;因式&gt;-&gt;[(]&lt;表达式&gt;[)]</span><br><span class="line">&lt;因式&gt;-&gt;&lt;变量&gt;</span><br><span class="line">&lt;因式&gt;-&gt;&lt;数字&gt;</span><br><span class="line">&lt;数字&gt;-&gt;[digit]</span><br><span class="line">&lt;表达式&gt;-&gt;&lt;因子&gt;&lt;项&gt;</span><br><span class="line">&lt;因子&gt;-&gt;&lt;因式&gt;&lt;因式递归&gt;</span><br><span class="line">&lt;因式递归&gt;-&gt;[*]&lt;因式&gt;&lt;因式递归&gt;</span><br><span class="line">&lt;因式递归&gt;-&gt;[/]&lt;因式&gt;&lt;因式递归&gt;</span><br><span class="line">&lt;因式递归&gt;-&gt;[@]</span><br><span class="line">&lt;项&gt;-&gt;[+]&lt;因子&gt;&lt;项&gt;</span><br><span class="line">&lt;项&gt;-&gt;[-]&lt;因子&gt;&lt;项&gt;</span><br><span class="line">&lt;项&gt;-&gt;[@]</span><br><span class="line">&lt;参数声明&gt;-&gt;&lt;声明&gt;&lt;声明闭包&gt;</span><br><span class="line">&lt;参数声明&gt;-&gt;[@]</span><br><span class="line">&lt;声明&gt;-&gt;&lt;修饰词闭包&gt;&lt;类型&gt;&lt;变量&gt;&lt;赋初值&gt;</span><br><span class="line">&lt;赋初值&gt;-&gt;[=]&lt;右值&gt;</span><br><span class="line">&lt;赋初值&gt;-&gt;[@]</span><br><span class="line">&lt;右值&gt;-&gt;&lt;表达式&gt;</span><br><span class="line">&lt;右值&gt;-&gt;[&#123;]&lt;多个数据&gt;[&#125;]</span><br><span class="line">&lt;多个数据&gt;-&gt;&lt;数字&gt;&lt;数字闭包&gt;</span><br><span class="line">&lt;数字闭包&gt;-&gt;[,]&lt;数字&gt;&lt;数字闭包&gt;</span><br><span class="line">&lt;数字闭包&gt;-&gt;[@]</span><br><span class="line">&lt;声明闭包&gt;-&gt;[,]&lt;声明&gt;&lt;声明闭包&gt;</span><br><span class="line">&lt;声明闭包&gt;-&gt;[@]</span><br><span class="line">&lt;函数块&gt;-&gt;&lt;声明语句闭包&gt;&lt;函数块闭包&gt;</span><br><span class="line">&lt;声明语句闭包&gt;-&gt;&lt;声明语句&gt;&lt;声明语句闭包&gt;</span><br><span class="line">&lt;声明语句闭包&gt;-&gt;[@]</span><br><span class="line">&lt;声明语句&gt;-&gt;&lt;声明&gt;[;]</span><br><span class="line">&lt;函数块闭包&gt;-&gt;&lt;赋值函数&gt;&lt;函数块闭包&gt;</span><br><span class="line">&lt;函数块闭包&gt;-&gt;&lt;for循环&gt;&lt;函数块闭包&gt;</span><br><span class="line">&lt;函数块闭包&gt;-&gt;&lt;条件语句&gt;&lt;函数块闭包&gt;</span><br><span class="line">&lt;函数块闭包&gt;-&gt;&lt;函数返回&gt;&lt;函数块闭包&gt;</span><br><span class="line">&lt;函数块闭包&gt;-&gt;[@]</span><br><span class="line">&lt;赋值函数&gt;-&gt;&lt;变量&gt;&lt;赋值或函数调用&gt;</span><br><span class="line">&lt;赋值或函数调用&gt;-&gt;[=]&lt;右值&gt;[;]</span><br><span class="line">&lt;赋值或函数调用&gt;-&gt;[(]&lt;参数列表&gt;[)][;]</span><br><span class="line">&lt;参数列表&gt;-&gt;&lt;参数&gt;&lt;参数闭包&gt;</span><br><span class="line">&lt;参数闭包&gt;-&gt;[,]&lt;参数&gt;&lt;参数闭包&gt;</span><br><span class="line">&lt;参数闭包&gt;-&gt;[@]</span><br><span class="line">&lt;参数&gt;-&gt;&lt;标志符&gt;</span><br><span class="line">&lt;参数&gt;-&gt;&lt;数字&gt;</span><br><span class="line">&lt;参数&gt;-&gt;&lt;字符串&gt;</span><br><span class="line">&lt;字符串&gt;-&gt;[string]</span><br><span class="line">&lt;for循环&gt;-&gt;[for][(]&lt;赋值函数&gt;&lt;逻辑表达式&gt;[;]&lt;后缀表达式&gt;[)][&#123;]&lt;函数块&gt;[&#125;]</span><br><span class="line">&lt;逻辑表达式&gt;-&gt;&lt;表达式&gt;&lt;逻辑运算符&gt;&lt;表达式&gt;</span><br><span class="line">&lt;逻辑运算符&gt;-&gt;[&lt;]</span><br><span class="line">&lt;逻辑运算符&gt;-&gt;[&gt;]</span><br><span class="line">&lt;逻辑运算符&gt;-&gt;[==]</span><br><span class="line">&lt;逻辑运算符&gt;-&gt;[!=]</span><br><span class="line">&lt;后缀表达式&gt;-&gt;&lt;变量&gt;&lt;后缀运算符&gt;</span><br><span class="line">&lt;后缀运算符&gt;-&gt;[++]</span><br><span class="line">&lt;后缀运算符&gt;-&gt;[--]</span><br><span class="line">&lt;条件语句&gt;-&gt;[if][(]&lt;逻辑表达式&gt;[)][&#123;]&lt;函数块&gt;[&#125;]&lt;否则语句&gt;</span><br><span class="line">&lt;否则语句&gt;-&gt;[else][&#123;]&lt;函数块&gt;[&#125;]</span><br><span class="line">&lt;否则语句&gt;-&gt;[@]</span><br><span class="line">&lt;函数返回&gt;-&gt;[return]&lt;因式&gt;[;]</span><br></pre></td></tr></table></figure></p>
+<h2 id="Grammar-py"><a href="#Grammar-py" class="headerlink" title="Grammar.py"></a>Grammar.py</h2><p>典型的LL(1)的分析过程, 构造NULLABLE集, FIRST集, FOLLOW集, 计算SELECT集,最后画出预测分析表, 生成AST.<br>其中<code>simplify_tree</code>是用来递归简化树上的节点的.<br>代码很好读,都是华老师课件上的步骤.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> json</span><br><span class="line"><span class="keyword">import</span> re</span><br><span class="line"><span class="keyword">import</span> copy</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> Driver <span class="keyword">import</span> Driver</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># build tree</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">simplify_tree</span><span class="params">(x: list)</span>:</span></span><br><span class="line">    r = []</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> x:</span><br><span class="line">        <span class="keyword">if</span> isinstance(i, list):</span><br><span class="line">            v = simplify_tree(i)</span><br><span class="line">            <span class="keyword">if</span> v <span class="keyword">is</span> <span class="keyword">not</span> <span class="keyword">None</span>:</span><br><span class="line">                r.append(v)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            r.append(i)</span><br><span class="line">    <span class="keyword">if</span> len(r) == <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">None</span></span><br><span class="line">    <span class="keyword">elif</span> len(r) == <span class="number">1</span>:</span><br><span class="line">        <span class="keyword">return</span> r[<span class="number">0</span>]</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="keyword">return</span> r</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Parser</span>:</span></span><br><span class="line">    <span class="comment"># init sets</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self)</span>:</span></span><br><span class="line">        self.TERMINAL = []</span><br><span class="line">        self.NONTERMINAL = []</span><br><span class="line">        self.NULLABLE = set()</span><br><span class="line">        self. FIRST = &#123;&#125;</span><br><span class="line">        self.FOLLOW = &#123;&#125;</span><br><span class="line">        self.FIRST_S = &#123;&#125;</span><br><span class="line">        self.CFG = []</span><br><span class="line">        self.TABLE = &#123;&#125;</span><br><span class="line">        self.error_message = <span class="string">''</span></span><br><span class="line">        <span class="comment"># build terminal, nonterminal and CFG</span></span><br><span class="line">        <span class="keyword">with</span> open(<span class="string">'wenfa.json'</span>, <span class="string">'r'</span>) <span class="keyword">as</span> f:</span><br><span class="line">            raw_cfg = json.load(f)</span><br><span class="line">            <span class="keyword">for</span> v <span class="keyword">in</span> raw_cfg:</span><br><span class="line">                v = v.split(<span class="string">'-&gt;'</span>)</span><br><span class="line">                self.NONTERMINAL.append(v[<span class="number">0</span>])</span><br><span class="line">                beta = v[<span class="number">1</span>].split(<span class="string">'|'</span>)</span><br><span class="line">                <span class="keyword">for</span> s <span class="keyword">in</span> beta:</span><br><span class="line">                    item = s.split(<span class="string">' '</span>)</span><br><span class="line">                    <span class="keyword">for</span> l <span class="keyword">in</span> item:</span><br><span class="line">                        <span class="keyword">if</span> l <span class="keyword">not</span> <span class="keyword">in</span> self.TERMINAL <span class="keyword">and</span> re.match(<span class="string">'&lt;.*&gt;'</span>, l) <span class="keyword">is</span> <span class="keyword">None</span>:</span><br><span class="line">                            self.TERMINAL.append(l)</span><br><span class="line">                    self.CFG.append([v[<span class="number">0</span>], item])</span><br><span class="line">        <span class="comment"># init sets</span></span><br><span class="line">        self.init_nullable()</span><br><span class="line">        self.init_first()</span><br><span class="line">        self.init_follow()</span><br><span class="line">        self.init_first_s()</span><br><span class="line"></span><br><span class="line">    <span class="comment"># is x noterminal?</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">is_nonterminal_array</span><span class="params">(self, x)</span>:</span></span><br><span class="line">        <span class="keyword">for</span> v <span class="keyword">in</span> x:</span><br><span class="line">            <span class="keyword">if</span> v <span class="keyword">not</span> <span class="keyword">in</span> self.NONTERMINAL:</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">False</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">True</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># can x be null?</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">is_nullable_array</span><span class="params">(self, x)</span>:</span></span><br><span class="line">        <span class="keyword">for</span> v <span class="keyword">in</span> x:</span><br><span class="line">            <span class="keyword">if</span> v <span class="keyword">not</span> <span class="keyword">in</span> self.NULLABLE:</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">False</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">True</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># init nullable set</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">init_nullable</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="keyword">while</span> <span class="keyword">True</span>:</span><br><span class="line">            tmp = copy.deepcopy(self.NULLABLE)</span><br><span class="line">            <span class="keyword">for</span> v <span class="keyword">in</span> self.CFG:</span><br><span class="line">                <span class="keyword">if</span> v[<span class="number">1</span>] == [<span class="string">'@'</span>]:</span><br><span class="line">                    self.NULLABLE |= &#123;v[<span class="number">0</span>]&#125;</span><br><span class="line">                <span class="keyword">if</span> self.is_nonterminal_array(v[<span class="number">1</span>]) <span class="keyword">and</span> self.is_nullable_array(v[<span class="number">1</span>]):</span><br><span class="line">                    self.NULLABLE |= &#123;v[<span class="number">0</span>]&#125;</span><br><span class="line">            <span class="keyword">if</span> tmp == self.NULLABLE:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># init first set</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">init_first</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="keyword">for</span> v <span class="keyword">in</span> self.NONTERMINAL:</span><br><span class="line">            self.FIRST[v] = set()</span><br><span class="line">        change_flag = <span class="keyword">True</span></span><br><span class="line">        <span class="keyword">while</span> change_flag:</span><br><span class="line">            raw_set = copy.deepcopy(self.FIRST)</span><br><span class="line">            <span class="keyword">for</span> v <span class="keyword">in</span> self.CFG:</span><br><span class="line">                <span class="keyword">for</span> s <span class="keyword">in</span> v[<span class="number">1</span>]:</span><br><span class="line">                    <span class="keyword">if</span> s <span class="keyword">in</span> self.NONTERMINAL:</span><br><span class="line">                        self.FIRST[v[<span class="number">0</span>]] |= self.FIRST[s]</span><br><span class="line">                        <span class="keyword">if</span> s <span class="keyword">not</span> <span class="keyword">in</span> self.NULLABLE:</span><br><span class="line">                            <span class="keyword">break</span></span><br><span class="line">                    <span class="keyword">else</span>:</span><br><span class="line">                        self.FIRST[v[<span class="number">0</span>]] |= &#123;s&#125;</span><br><span class="line">                        <span class="keyword">break</span></span><br><span class="line">            change_flag = <span class="keyword">False</span></span><br><span class="line">            <span class="keyword">for</span> v <span class="keyword">in</span> raw_set:</span><br><span class="line">                <span class="keyword">if</span> raw_set[v] != self.FIRST[v]:</span><br><span class="line">                    change_flag = <span class="keyword">True</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># init follow set</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">init_follow</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="keyword">for</span> v <span class="keyword">in</span> self.NONTERMINAL:</span><br><span class="line">            self.FOLLOW[v] = set()</span><br><span class="line">        change_flag = <span class="keyword">True</span></span><br><span class="line">        <span class="keyword">while</span> change_flag:</span><br><span class="line">            raw_set = copy.deepcopy(self.FOLLOW)</span><br><span class="line">            <span class="keyword">for</span> v <span class="keyword">in</span> self.CFG:</span><br><span class="line">                tmp = self.FOLLOW[v[<span class="number">0</span>]]</span><br><span class="line">                beta = copy.deepcopy(v[<span class="number">1</span>])</span><br><span class="line">                beta.reverse()</span><br><span class="line">                <span class="keyword">for</span> s <span class="keyword">in</span> beta:</span><br><span class="line">                    <span class="keyword">if</span> s <span class="keyword">in</span> self.NONTERMINAL:</span><br><span class="line">                        self.FOLLOW[s] |= tmp</span><br><span class="line">                        <span class="keyword">if</span> s <span class="keyword">not</span> <span class="keyword">in</span> self.NULLABLE:</span><br><span class="line">                            tmp = self.FIRST[s]</span><br><span class="line">                        <span class="keyword">else</span>:</span><br><span class="line">                            tmp |= self.FIRST[s]</span><br><span class="line">                    <span class="keyword">else</span>:</span><br><span class="line">                        tmp = &#123;s&#125;</span><br><span class="line">            change_flag = <span class="keyword">False</span></span><br><span class="line">            <span class="keyword">for</span> v <span class="keyword">in</span> raw_set:</span><br><span class="line">                <span class="keyword">if</span> raw_set[v] != self.FOLLOW[v]:</span><br><span class="line">                    change_flag = <span class="keyword">True</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># init select set</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">init_first_s</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">0</span>, len(self.CFG)):</span><br><span class="line">            self.FIRST_S[i] = set()</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">0</span>, len(self.CFG)):</span><br><span class="line">            self.calc_first_s(i, self.CFG[i])</span><br><span class="line">        <span class="comment"># build table</span></span><br><span class="line">        self.TABLE = &#123;&#125;</span><br><span class="line">        <span class="keyword">for</span> v <span class="keyword">in</span> self.FIRST_S:</span><br><span class="line">            <span class="keyword">if</span> self.CFG[v][<span class="number">0</span>] <span class="keyword">not</span> <span class="keyword">in</span> self.TABLE:</span><br><span class="line">                self.TABLE[self.CFG[v][<span class="number">0</span>]] = &#123;&#125;</span><br><span class="line">            <span class="keyword">for</span> s <span class="keyword">in</span> self.FIRST_S[v]:</span><br><span class="line">                <span class="keyword">if</span> s <span class="keyword">not</span> <span class="keyword">in</span> self.TABLE[self.CFG[v][<span class="number">0</span>]]:</span><br><span class="line">                    self.TABLE[self.CFG[v][<span class="number">0</span>]][s] = v</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    <span class="comment"># occurs</span></span><br><span class="line">                    <span class="keyword">if</span> self.CFG[self.TABLE[self.CFG[v][<span class="number">0</span>]][s]][<span class="number">1</span>] != [<span class="string">'@'</span>]:</span><br><span class="line">                        <span class="keyword">if</span> self.CFG[v][<span class="number">1</span>] == [<span class="string">'@'</span>]:</span><br><span class="line">                            <span class="keyword">pass</span></span><br><span class="line">                        <span class="keyword">else</span>:</span><br><span class="line">                            print(<span class="string">'Occur: '</span>, v, <span class="string">'and'</span>, self.TABLE[self.CFG[v][<span class="number">0</span>]][s])</span><br><span class="line">                    <span class="keyword">else</span>:</span><br><span class="line">                        self.TABLE[self.CFG[v][<span class="number">0</span>]][s] = v</span><br><span class="line">        <span class="comment"># this code could print predict table</span></span><br><span class="line">        <span class="comment"># print table</span></span><br><span class="line">        <span class="comment"># for v in self.TERMINAL:</span></span><br><span class="line">        <span class="comment">#     print(v, end=' ')</span></span><br><span class="line">        <span class="comment"># print('')</span></span><br><span class="line">        <span class="comment"># for v in self.TABLE:</span></span><br><span class="line">        <span class="comment">#     print(v, end=' ')</span></span><br><span class="line">        <span class="comment">#     for s in self.TERMINAL:</span></span><br><span class="line">        <span class="comment">#         try:</span></span><br><span class="line">        <span class="comment">#             print(self.TABLE[v][s], end=' ')</span></span><br><span class="line">        <span class="comment">#         except:</span></span><br><span class="line">        <span class="comment">#             print('* ', end='')</span></span><br><span class="line">        <span class="comment">#     print('')</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># calc first_s for every rule</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">calc_first_s</span><span class="params">(self, i, v)</span>:</span></span><br><span class="line">        <span class="keyword">for</span> s <span class="keyword">in</span> v[<span class="number">1</span>]:</span><br><span class="line">            <span class="keyword">if</span> s <span class="keyword">in</span> self.NONTERMINAL:</span><br><span class="line">                self.FIRST_S[i] |= self.FIRST[s]</span><br><span class="line">                <span class="keyword">if</span> s <span class="keyword">not</span> <span class="keyword">in</span> self.NULLABLE:</span><br><span class="line">                    <span class="keyword">return</span></span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                self.FIRST_S[i] |= &#123;s&#125;</span><br><span class="line">                <span class="keyword">if</span> s != <span class="string">'@'</span>:</span><br><span class="line">                    <span class="keyword">return</span></span><br><span class="line">        self.FIRST_S[i] |= self.FOLLOW[v[<span class="number">0</span>]]</span><br><span class="line"></span><br><span class="line">    <span class="comment"># drive code</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">parse</span><span class="params">(self, tokens)</span>:</span></span><br><span class="line">        dom = []</span><br><span class="line">        stack = [(<span class="string">'&lt;函数定义&gt;'</span>, dom)]</span><br><span class="line">        i = <span class="number">0</span></span><br><span class="line">        <span class="keyword">while</span> stack:</span><br><span class="line">            <span class="comment"># EOF</span></span><br><span class="line">            <span class="keyword">if</span> i == len(tokens):</span><br><span class="line">                self.error_message = <span class="string">'Line '</span> + line_no + <span class="string">' EOF_ERROR: unexpected end of file'</span></span><br><span class="line">                <span class="keyword">return</span></span><br><span class="line">            <span class="comment"># get data</span></span><br><span class="line">            <span class="keyword">if</span> tokens[i][<span class="string">'raw_data'</span>] <span class="keyword">in</span> self.TERMINAL:</span><br><span class="line">                ch = tokens[i][<span class="string">'raw_data'</span>]</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                ch = tokens[i][<span class="string">'symbol'</span>]</span><br><span class="line">            line_no = str(tokens[i][<span class="string">'line_no'</span>])</span><br><span class="line">            <span class="comment"># operate stack</span></span><br><span class="line">            <span class="keyword">if</span> stack[<span class="number">-1</span>][<span class="number">0</span>] <span class="keyword">in</span> self.NONTERMINAL:</span><br><span class="line">                top = stack.pop(<span class="number">-1</span>)</span><br><span class="line">                T = top[<span class="number">0</span>]</span><br><span class="line">                <span class="keyword">try</span>:</span><br><span class="line">                    rule = self.TABLE[T][ch]</span><br><span class="line">                <span class="keyword">except</span> KeyError:</span><br><span class="line">                    ch = <span class="string">'@'</span></span><br><span class="line">                    <span class="keyword">if</span> ch <span class="keyword">not</span> <span class="keyword">in</span> self.TABLE[T]:</span><br><span class="line">                        self.error_message = <span class="string">'Line '</span> + line_no + <span class="string">' TB_ERROR: unexpected '</span> + tokens[i][<span class="string">'raw_data'</span>]</span><br><span class="line">                        <span class="keyword">return</span></span><br><span class="line">                    rule = self.TABLE[T][ch]</span><br><span class="line">                expression = copy.deepcopy(self.CFG[rule][<span class="number">1</span>])</span><br><span class="line">                expression.reverse()</span><br><span class="line">                sub = top[<span class="number">1</span>]</span><br><span class="line">                sub.append(T + <span class="string">':'</span> + str(rule))</span><br><span class="line">                <span class="keyword">for</span> j <span class="keyword">in</span> range(<span class="number">0</span>, len(expression)):</span><br><span class="line">                    sub.append([])</span><br><span class="line">                <span class="keyword">for</span> j <span class="keyword">in</span> range(<span class="number">0</span>, len(expression)):</span><br><span class="line">                    stack.append((expression[j], sub[len(expression) - j]))</span><br><span class="line">                <span class="comment"># print('Pop : ', stack[-1][0], '  Rule : ', rule, '  Stack : ', stack)</span></span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                <span class="keyword">if</span> stack[<span class="number">-1</span>][<span class="number">0</span>] == <span class="string">'@'</span>:</span><br><span class="line">                    stack.pop(<span class="number">-1</span>)</span><br><span class="line">                <span class="keyword">elif</span> stack[<span class="number">-1</span>][<span class="number">0</span>] == ch:</span><br><span class="line">                    stack[<span class="number">-1</span>][<span class="number">1</span>].append(tokens[i])</span><br><span class="line">                    stack.pop(<span class="number">-1</span>)</span><br><span class="line">                    i += <span class="number">1</span></span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    self.error_message = <span class="string">'Line '</span> + line_no + <span class="string">' TK_ERROR: expect   '</span> + stack[<span class="number">-1</span>][<span class="number">0</span>] \</span><br><span class="line">                                         + <span class="string">'   ,but got   '</span> + tokens[i][<span class="string">'raw_data'</span>]</span><br><span class="line">                    <span class="keyword">return</span></span><br><span class="line">        <span class="keyword">if</span> i &lt; len(tokens) - <span class="number">1</span>:</span><br><span class="line">            self.error_message = <span class="string">'Line '</span> + line_no + <span class="string">' LE_ERROR: unexpected   '</span> + tokens[i][<span class="string">'raw_data'</span>]</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            print(<span class="string">'Established.'</span>)</span><br><span class="line">        <span class="keyword">return</span> dom</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">run</span><span class="params">(self, text)</span>:</span></span><br><span class="line">        <span class="comment"># print('NULL',self.NULLABLE)</span></span><br><span class="line">        <span class="comment"># print('FIRST', self.FIRST)</span></span><br><span class="line">        <span class="comment"># print('FOLLOW', self.FOLLOW)</span></span><br><span class="line">        <span class="comment"># print('LEN_S', self.FIRST_S)</span></span><br><span class="line">        d = Driver(<span class="string">'state_machine.json'</span>)</span><br><span class="line">        d.run(text)</span><br><span class="line">        tokens = d.token_list</span><br><span class="line">        dom = self.parse(tokens)</span><br><span class="line">        <span class="keyword">if</span> dom <span class="keyword">is</span> <span class="keyword">None</span>:</span><br><span class="line">            <span class="keyword">return</span> self.error_message</span><br><span class="line">        r = simplify_tree(dom)</span><br><span class="line">        <span class="keyword">return</span> r</span><br><span class="line"></span><br><span class="line"><span class="comment"># AST: every first elem is (parent:cfg_rules_no), and remained are children.</span></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</span><br><span class="line">    p = Parser()</span><br><span class="line">    text = <span class="string">"""int main()\n&#123;\n\tint i = 7;\n\tint j = 9;\n\tint c[20] = &#123;2,10,10,19,3,4,5,5,34,6,54,52,34,55   \</span></span><br><span class="line"><span class="string">    ,68,10,90,78,56,20&#125;;\n\tfor (i=0;i&lt;20;i++)&#123;\n\t\tfor(j=i+1;j&lt;20;j--)&#123;\n\t\t\tif(j == 19)&#123;\n\t\t\t\tc[i] \</span></span><br><span class="line"><span class="string">     = j;\n\t\t\t&#125;\n\t\t&#125;\n\t&#125;\n\treturn 0;\n&#125;"""</span></span><br><span class="line">    text = <span class="string">"void main()&#123;&#125;"</span></span><br><span class="line">    st = p.run(text)</span><br><span class="line">    print(json.dumps(st, indent=<span class="number">8</span>, ensure_ascii=<span class="keyword">False</span>))</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/编译原理/" rel="tag">#编译原理</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/11/15/princeton-pa2-deque/" rel="next" title="[普林斯顿算法公开课]双向队列和随机队列">
+                <i class="fa fa-chevron-left"></i> [普林斯顿算法公开课]双向队列和随机队列
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/12/27/cmp-codegen/" rel="prev" title="[编译原理]Python实现的语义分析器">
+                [编译原理]Python实现的语义分析器 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zMDAxOS82NTg0"></div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.jpeg"
+               alt="吕子恒" />
+          <p class="site-author-name" itemprop="name">吕子恒</p>
+          <p class="site-description motion-element" itemprop="description">互联网 | NLP方向 | 喜欢制作所有东西 | INTJ</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">38</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">50</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chestnutheng" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/lu-zi-heng-91" target="_blank" title="ZhiHu">
+                  
+                    <i class="fa fa-fw fa-zhihu"></i>
+                  
+                  ZhiHu
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://cn.linkedin.com/in/子恒-吕-a52bba10a" target="_blank" title="Linkedin">
+                  
+                    <i class="fa fa-fw fa-linkedin"></i>
+                  
+                  Linkedin
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-block">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              Links
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://wangbicong.cn/" title="可爱的聪聪" target="_blank">可爱的聪聪</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://easonzero.cn/" title="可爱的小一" target="_blank">可爱的小一</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://wangzhpp.org/" title="可爱的弱弱" target="_blank">可爱的弱弱</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://shawnzeng.com/" title="可爱的帅帅" target="_blank">可爱的帅帅</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#文法表"><span class="nav-number">1.</span> <span class="nav-text">文法表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Grammar-py"><span class="nav-number">2.</span> <span class="nav-text">Grammar.py</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2015 - 
+  <span itemprop="copyrightYear">2021</span> 
+  <span class="author" itemprop="copyrightHolder">吕子恒</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span>Hosted by <a href="https://pages.coding.me" style="font-weight: bold">Coding Pages</a></span>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/jquery/2.1.3/jquery.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/jquery_lazyload/1.9.7/jquery.lazyload.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/velocity/1.2.1/velocity.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/velocity/1.2.1/velocity.ui.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("0iVbAi6uVJSkvkk710Xk357P-gzGzoHsz", "GCWjnKs6J6DzdbJSP7KSqckD");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+<script src="/live2dw/lib/L2Dwidget.min.js?0c58a1486de42ac6cc1c59c7d98ae887"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/hijiki.model.json"},"display":{"position":"left","width":100,"height":200},"mobile":{"show":false},"log":false});</script></body>
+</html>

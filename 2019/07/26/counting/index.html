@@ -1,0 +1,855 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+  <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic|monospace:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+  
+
+<link href="//cdn.bootcss.com/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Linux，并行编程," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ChestnutHeng's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="多线程计数依然是处理多线程问题中最基础的操作之一。本文讨论了简单的并行计数、最终一致的并行计数、有上限的并行计数等，视图从这个最简单的问题中学习并行设计的思维。">
+<meta name="keywords" content="Linux，并行编程">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[Linux]谈一谈并行Counting">
+<meta property="og:url" content="chestnutheng.cn/2019/07/26/counting/index.html">
+<meta property="og:site_name" content="ChestnutHeng&#39;s Blog">
+<meta property="og:description" content="多线程计数依然是处理多线程问题中最基础的操作之一。本文讨论了简单的并行计数、最终一致的并行计数、有上限的并行计数等，视图从这个最简单的问题中学习并行设计的思维。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/count1.png">
+<meta property="og:image" content="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/counters_add.png">
+<meta property="og:image" content="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/counterflow.png">
+<meta property="og:updated_time" content="2019-07-26T10:26:43.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="[Linux]谈一谈并行Counting">
+<meta name="twitter:description" content="多线程计数依然是处理多线程问题中最基础的操作之一。本文讨论了简单的并行计数、最终一致的并行计数、有上限的并行计数等，视图从这个最简单的问题中学习并行设计的思维。">
+<meta name="twitter:image" content="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/count1.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"right","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="chestnutheng.cn/2019/07/26/counting/"/>
+
+  <title> [Linux]谈一谈并行Counting | ChestnutHeng's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans,en,default">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?53529277abe821f4686b3d713bf1ea67";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-right page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">ChestnutHeng's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                [Linux]谈一谈并行Counting
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-07-26T16:49:50+08:00" content="2019-07-26">
+              2019-07-26
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/后台/" itemprop="url" rel="index">
+                    <span itemprop="name">后台</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+             <span id="/2019/07/26/counting/" class="leancloud_visitors" data-flag-title="[Linux]谈一谈并行Counting">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="简单的并行计数"><a href="#简单的并行计数" class="headerlink" title="简单的并行计数"></a>简单的并行计数</h1><p>在一个简单的多线程计数程序中，我们假设要每个线程去把sum的值多加100m，同时进行。代码如下：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;pthread.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> 0</span></span><br><span class="line">  <span class="meta">#<span class="meta-keyword">define</span> ADD_P(x) __sync_fetch_and_add((x), 1)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line">  <span class="meta">#<span class="meta-keyword">define</span> ADD_P(x) (++(*x))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> TC 8</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">thgo</span><span class="params">(<span class="keyword">void</span> *arg)</span></span>&#123;</span><br><span class="line">  <span class="keyword">long</span> i = <span class="number">1000</span>*<span class="number">1000</span>*<span class="number">100</span>;</span><br><span class="line">  <span class="keyword">while</span>(i-- &gt; <span class="number">0</span>)&#123;ADD_P((<span class="keyword">long</span> *)arg);&#125;;</span><br><span class="line">  <span class="keyword">pthread_t</span> me = pthread_self();</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">"thread sum: %ld tid: %lu \n"</span>,  *(<span class="keyword">long</span> *)arg, (<span class="keyword">unsigned</span> <span class="keyword">long</span>)me);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span> <span class="params">()</span></span>&#123;</span><br><span class="line">  <span class="keyword">long</span> sum = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">pthread_t</span> ths[TC];</span><br><span class="line">  <span class="comment">// threads</span></span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; TC; ++i)&#123;</span><br><span class="line">      pthread_create(&amp;ths[i], <span class="literal">NULL</span>, thgo, &amp;sum);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// main thread</span></span><br><span class="line">  thgo(&amp;sum);</span><br><span class="line">  <span class="comment">// join</span></span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; TC; ++i)&#123;</span><br><span class="line">      pthread_join(ths[i], <span class="literal">NULL</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">"all final sum : %ld\n"</span>, sum);</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>如果使用一般的计数，会出现严重的数据踩踏问题，导致结果只能取得一定近似的值：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ time ./t</span><br><span class="line">thread sum_added : 96683538 tid: 139864218973952 </span><br><span class="line">thread sum_added : 97597912 tid: 139864210581248 </span><br><span class="line">thread sum_added : 98631229 tid: 139864202188544 </span><br><span class="line">thread sum_added : 106625687 tid: 139864228308800 </span><br><span class="line">all final sum : 106628420</span><br><span class="line"></span><br><span class="line">real  0m1.079s</span><br><span class="line">user  0m4.240s</span><br><span class="line">sys	  0m0.000s</span><br></pre></td></tr></table></figure></p>
+<p>如果切换原子原语，性能会下降大约八倍（4个线程，在一亿的计数时）。原因是一个变量被4个线程同时竞争，等待的时间大大加长。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">thread sum_added : 297410188 tid: 140249129400064 </span><br><span class="line">thread sum_added : 323862913 tid: 140249121007360 </span><br><span class="line">thread sum_added : 325497470 tid: 140249137792768 </span><br><span class="line">thread sum_added : 399999202 tid: 140249147127616 </span><br><span class="line">all final sum : 400000000</span><br><span class="line"></span><br><span class="line">real 0m8.323s</span><br><span class="line">user 0m31.044s</span><br><span class="line">sys  0m0.000s</span><br></pre></td></tr></table></figure></p>
+<p><img src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/count1.png" width="400"><br>上面是一个使用原子原语时，线程个数和花费时间的关系。随着线程个数的增多，耗时几乎是等比例增长。</p>
+<h1 id="经常写计数，偶尔读计数"><a href="#经常写计数，偶尔读计数" class="headerlink" title="经常写计数，偶尔读计数"></a>经常写计数，偶尔读计数</h1><p>有一个程序每秒钟处理1亿左右的包，我们需要每五秒查看一下总包长。这是一个典型的经常写计数，偶尔读计数的场景。</p>
+<h2 id="利用数组分开计数"><a href="#利用数组分开计数" class="headerlink" title="利用数组分开计数"></a>利用数组分开计数</h2><p>一个经典的方法是，取消上一节中进程们共享的变量，改为每个进程独有的变量，然后再做加和。在下面的代码中，用线程id作为key，线程自己的计数作为value建立了map，各个线程分别写入自己的计数器内，避免了冲突。伪代码如下：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">counts = &#123;&#125;</span><br><span class="line">void write_count()&#123;</span><br><span class="line">   tid = pthread_self()</span><br><span class="line">   counts[tid] += <span class="number">1</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">long read_count()&#123;</span><br><span class="line">    sum = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> tid, c <span class="keyword">in</span> counts&#123;</span><br><span class="line">        sum += c</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> sum</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这种方法有两个问题：</p>
+<ol>
+<li>读操作时，写操作依然在进行，导致结果不准确。读到的不同线程的计数，介于开始读到读结束的窗口之间。</li>
+<li>读操作需要聚合所有线程，对读取端而言比较复杂</li>
+</ol>
+<h2 id="定时刷新，最终一致"><a href="#定时刷新，最终一致" class="headerlink" title="定时刷新，最终一致"></a>定时刷新，最终一致</h2><p>为了解决上述的两个问题，我们设计了最终一致的版本：每隔1ms把所有线程的计数加和，存入全局变量中。这样有两个优点：</p>
+<ol>
+<li>不一致窗口最多为1ms</li>
+<li>读取的时候只要直接读变量就可以了，不用加和</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">counts = &#123;&#125;</span><br><span class="line">global_count = <span class="number">0</span></span><br><span class="line">void write_count()&#123;</span><br><span class="line">   tid = pthread_self()</span><br><span class="line">   counts[tid] += <span class="number">1</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">long read_count()&#123;</span><br><span class="line">    <span class="keyword">return</span> global_count</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 另起一个线程用来计数</span><br><span class="line">void eventual_count()&#123;</span><br><span class="line">    <span class="keyword">for</span> &#123;</span><br><span class="line">        sum = <span class="number">0</span></span><br><span class="line">        <span class="keyword">for</span> tid, c <span class="keyword">in</span> counts&#123;</span><br><span class="line">            sum += c</span><br><span class="line">        &#125;</span><br><span class="line">        global_count = sum</span><br><span class="line">        sleep <span class="number">1</span>ms</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Note: 线程数量增多时，<code>eventual_count</code>可能会越来越不准确。解决这个问题的方法是对线程分组，每组线程让一个<code>eventual_count</code>线程来处理计数，这样每个<code>eventual_count</code>线程都不会耗费太多的时间处理。必要的时候，可以采用树状的<code>eventual_count</code>线程，层级处理。</p>
+<h2 id="线程私有的-thread"><a href="#线程私有的-thread" class="headerlink" title="线程私有的__thread"></a>线程私有的__thread</h2><p><code>__thread</code> gcc提供的关键字，修饰线程私有的变量。修饰后每个线程都有一份该变量实体，且值互不干扰。<br><code>counter</code> 是每个线程自己的计数器，long类型。<br><code>counterp</code> 是一个用于存放线程私有变量指针的数组。初始化时，把线程私有变量的地址写进数组。读取时，读取所有指针的值加和。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="number">__</span>thread counter = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> *counterp[NR_THREADS] = &#123; <span class="literal">NULL</span> &#125;;</span><br><span class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> finalcount = <span class="number">0</span>;</span><br><span class="line">DEFINE_SPINLOCK(final_mutex);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">inc_count</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	counter++;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="title">read_count</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">int</span> t;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> sum;</span><br><span class="line"></span><br><span class="line">	spin_lock(&amp;final_mutex);</span><br><span class="line">	sum = finalcount;</span><br><span class="line">	for_each_thread(t)</span><br><span class="line">		<span class="keyword">if</span> (counterp[t] != <span class="literal">NULL</span>)</span><br><span class="line">			sum += *counterp[t];</span><br><span class="line">	spin_unlock(&amp;final_mutex);</span><br><span class="line">	<span class="keyword">return</span> sum;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">count_register_thread</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">int</span> idx = smp_thread_id();</span><br><span class="line"></span><br><span class="line">	spin_lock(&amp;final_mutex);</span><br><span class="line">	counterp[idx] = &amp;counter;</span><br><span class="line">	spin_unlock(&amp;final_mutex);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h1 id="近似上限的计数"><a href="#近似上限的计数" class="headerlink" title="近似上限的计数"></a>近似上限的计数</h1><p>有一些场景需要我们限制计数器的上限，比如限制一个广告曝光的次数。各个线程处理广告的请求，每返回一个广告就给计数器加一，直到总上限到达，就不再返回广告。<br>比较理想的方案是把任务平均分给每个线程，当他们都达到上限时，认为总上限也已经到达。这样会有几个问题：</p>
+<ol>
+<li>每个线程曝光广告的速度不同，可能有点线程很快到达上限了，有的却没有曝光，攒了大量的指标。</li>
+<li>这时候如果曝光满了的线程还要继续处理曝光，就要写别的线程的计数器。这会造成昂贵的跨线程通信。</li>
+</ol>
+<p>我们可以从上一节的最终一致的方法得到启发，把计数任务分割给各个线程。我们维护一个每个线程的计数器<code>counter</code>和每个线程的计数上限<code>countermax</code>，以及一个全局的计数器<code>globalcount</code>和全局的计数上限<code>globalcountmax</code>。<br>需要注意的是，我们额外引入了一个<code>globalreserve</code>。它在数值上是<code>countermax</code>的和，用来表示预分配给每个counter的名额，也算在已经用掉的指标里。</p>
+<p>这个方法的思想在于，先预分配给每个线程一些指标。如果有一个线程指标都用掉了，那么就收集里面的计数，并给他分配新的指标。直到所有的指标都用尽为止。收集计数的过程，就是<code>globalize_count</code>。分配计数的过程，就是<code>balance_count</code>。流程如下图<br><img src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/counters_add.png"><br><img src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/counterflow.png"><br>这种设计就是一个并行快速路径的例子，这是一种重要的设计模式，适用于下面这种情况：在多数情况没有线程间通信和交互的开销，而偶尔进行的跨进程通信又使用了精心设计的（但是开销仍然很大）全局算法。<br>在阅读代码之后，还有几点需要思考：</p>
+<ol>
+<li>这种计数会有误差。这个方法给每个线程预分配了计数值，但是这些计数值未必有被真实使用。所以最大会有<code>globalreserve</code>大小的误差。</li>
+<li>在每个线程刚开始计数时，<code>countermax</code>被设置为总上限除以线程数的值。此时<code>globalreserve</code>和总上限值相等，这意味着最差情况下，如果一直请求某一个特定线程，很快就到达上限了。</li>
+<li>我们设置了<code>MAX_COUNTERMAX</code>来缓解第二点的问题。这样<code>globalreserve</code>不会迅速增长的过大。</li>
+<li><code>countermax</code>的值直接决定了误差。当离上限还比较远时，可以给每线程变量countermax赋值一个比较大的数，这样对性能和扩展性比较有好处。当靠近上限时，可以给这些countermax赋值一个较小的数，这样可以降低超过<code>globalcountmax</code>的风险。</li>
+<li>在balance操作的时候，我们把<code>counter</code> 设为 <code>countermax/2</code>，这样就可以保证，a)每次计数器把计数交还给总数时，至少有一半的计数被使用了。b)加减计数都能在快速路径中 c)第二点的问题得到缓解</li>
+<li><code>MAX_COUNTERMAX</code> 导致不能进入快速路径的线程增加了，这会导致性能的降低。</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="number">__</span>thread counter = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="number">__</span>thread countermax = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> globalcountmax = <span class="number">10000</span>;</span><br><span class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> globalcount = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> globalreserve = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> *counterp[NR_THREADS] = &#123; <span class="literal">NULL</span> &#125;;</span><br><span class="line">DEFINE_SPINLOCK(gblcnt_mutex);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MAX_COUNTERMAX 100</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">globalize_count</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	globalcount += counter;</span><br><span class="line">	counter = <span class="number">0</span>;</span><br><span class="line">	globalreserve -= countermax;</span><br><span class="line">	countermax = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">balance_count</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	countermax = globalcountmax - globalcount - globalreserve;</span><br><span class="line">	countermax /= num_online_threads();</span><br><span class="line">	<span class="keyword">if</span> (countermax &gt; MAX_COUNTERMAX)</span><br><span class="line">		countermax = MAX_COUNTERMAX;</span><br><span class="line">	globalreserve += countermax;</span><br><span class="line">	counter = countermax / <span class="number">2</span>;</span><br><span class="line">	<span class="keyword">if</span> (counter &gt; globalcount)</span><br><span class="line">		counter = globalcount;</span><br><span class="line">	globalcount -= counter;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">add_count</span><span class="params">(<span class="keyword">unsigned</span> <span class="keyword">long</span> delta)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="comment">// 减，而不是countermax + delta。防止整形溢出。</span></span><br><span class="line">	<span class="keyword">if</span> (countermax - counter &gt;= delta) &#123;</span><br><span class="line">		counter += delta;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 所有的全局变量访问都会上锁</span></span><br><span class="line">	spin_lock(&amp;gblcnt_mutex);</span><br><span class="line">	globalize_count();</span><br><span class="line">	<span class="keyword">if</span> (globalcountmax - globalcount - globalreserve &lt; delta) &#123;</span><br><span class="line">		spin_unlock(&amp;gblcnt_mutex);</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	globalcount += delta;</span><br><span class="line">	balance_count();</span><br><span class="line">	spin_unlock(&amp;gblcnt_mutex);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="title">read_count</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">int</span> t;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">long</span> sum;</span><br><span class="line"></span><br><span class="line">	spin_lock(&amp;gblcnt_mutex);</span><br><span class="line">	sum = globalcount;</span><br><span class="line">	for_each_thread(t)</span><br><span class="line">		<span class="keyword">if</span> (counterp[t] != <span class="literal">NULL</span>)</span><br><span class="line">			sum += *counterp[t];</span><br><span class="line">	spin_unlock(&amp;gblcnt_mutex);</span><br><span class="line">	<span class="keyword">return</span> sum;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">count_register_thread</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">int</span> idx = smp_thread_id();</span><br><span class="line"></span><br><span class="line">	spin_lock(&amp;gblcnt_mutex);</span><br><span class="line">	counterp[idx] = &amp;counter;</span><br><span class="line">	spin_unlock(&amp;gblcnt_mutex);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Linux，并行编程/" rel="tag">#Linux，并行编程</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/07/25/pthread/" rel="next" title="[Linux]并行编程：进程、线程和同步">
+                <i class="fa fa-chevron-left"></i> [Linux]并行编程：进程、线程和同步
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/07/31/linux-epoll/" rel="prev" title="[Linux]高级IO">
+                [Linux]高级IO <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zMDAxOS82NTg0"></div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.jpeg"
+               alt="吕子恒" />
+          <p class="site-author-name" itemprop="name">吕子恒</p>
+          <p class="site-description motion-element" itemprop="description">互联网 | NLP方向 | 喜欢制作所有东西 | INTJ</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">38</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">50</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chestnutheng" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/lu-zi-heng-91" target="_blank" title="ZhiHu">
+                  
+                    <i class="fa fa-fw fa-zhihu"></i>
+                  
+                  ZhiHu
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://cn.linkedin.com/in/子恒-吕-a52bba10a" target="_blank" title="Linkedin">
+                  
+                    <i class="fa fa-fw fa-linkedin"></i>
+                  
+                  Linkedin
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-block">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              Links
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://wangbicong.cn/" title="可爱的聪聪" target="_blank">可爱的聪聪</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://easonzero.cn/" title="可爱的小一" target="_blank">可爱的小一</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://wangzhpp.org/" title="可爱的弱弱" target="_blank">可爱的弱弱</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://shawnzeng.com/" title="可爱的帅帅" target="_blank">可爱的帅帅</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#简单的并行计数"><span class="nav-number">1.</span> <span class="nav-text">简单的并行计数</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#经常写计数，偶尔读计数"><span class="nav-number">2.</span> <span class="nav-text">经常写计数，偶尔读计数</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#利用数组分开计数"><span class="nav-number">2.1.</span> <span class="nav-text">利用数组分开计数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#定时刷新，最终一致"><span class="nav-number">2.2.</span> <span class="nav-text">定时刷新，最终一致</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#线程私有的-thread"><span class="nav-number">2.3.</span> <span class="nav-text">线程私有的__thread</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#近似上限的计数"><span class="nav-number">3.</span> <span class="nav-text">近似上限的计数</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2015 - 
+  <span itemprop="copyrightYear">2021</span> 
+  <span class="author" itemprop="copyrightHolder">吕子恒</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span>Hosted by <a href="https://pages.coding.me" style="font-weight: bold">Coding Pages</a></span>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/jquery/2.1.3/jquery.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/jquery_lazyload/1.9.7/jquery.lazyload.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/velocity/1.2.1/velocity.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/velocity/1.2.1/velocity.ui.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("0iVbAi6uVJSkvkk710Xk357P-gzGzoHsz", "GCWjnKs6J6DzdbJSP7KSqckD");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+<script src="/live2dw/lib/L2Dwidget.min.js?0c58a1486de42ac6cc1c59c7d98ae887"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/hijiki.model.json"},"display":{"position":"left","width":100,"height":200},"mobile":{"show":false},"log":false});</script></body>
+</html>

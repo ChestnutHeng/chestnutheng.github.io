@@ -1,0 +1,908 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+  <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic|monospace:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+  
+
+<link href="//cdn.bootcss.com/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Redis,中间件," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ChestnutHeng's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="本文介绍了Redis的一些应用，包括分布式锁、消息/延迟队列、hyperloglog、位图、布隆过滤器、限流、地理位置等。">
+<meta name="keywords" content="Redis,中间件">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[Redis]Redis 应用篇">
+<meta property="og:url" content="chestnutheng.cn/2020/09/24/redis-1/index.html">
+<meta property="og:site_name" content="ChestnutHeng&#39;s Blog">
+<meta property="og:description" content="本文介绍了Redis的一些应用，包括分布式锁、消息/延迟队列、hyperloglog、位图、布隆过滤器、限流、地理位置等。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2020-09-24T07:57:32.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="[Redis]Redis 应用篇">
+<meta name="twitter:description" content="本文介绍了Redis的一些应用，包括分布式锁、消息/延迟队列、hyperloglog、位图、布隆过滤器、限流、地理位置等。">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"right","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="chestnutheng.cn/2020/09/24/redis-1/"/>
+
+  <title> [Redis]Redis 应用篇 | ChestnutHeng's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans,en,default">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?53529277abe821f4686b3d713bf1ea67";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-right page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">ChestnutHeng's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                [Redis]Redis 应用篇
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2020-09-24T15:57:27+08:00" content="2020-09-24">
+              2020-09-24
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/中间件/" itemprop="url" rel="index">
+                    <span itemprop="name">中间件</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+             <span id="/2020/09/24/redis-1/" class="leancloud_visitors" data-flag-title="[Redis]Redis 应用篇">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="分布式锁"><a href="#分布式锁" class="headerlink" title="分布式锁"></a>分布式锁</h1><h2 id="简单加锁"><a href="#简单加锁" class="headerlink" title="简单加锁"></a>简单加锁</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">// 思想：利用setnx检测有没有set过，如果set过就表示没有抢到锁</span><br><span class="line">&gt; setnx locker true</span><br><span class="line">OK</span><br><span class="line">// ... do somthing ...</span><br><span class="line">&gt; del locker</span><br></pre></td></tr></table></figure>
+<h2 id="处理set之后进程崩溃的死锁问题"><a href="#处理set之后进程崩溃的死锁问题" class="headerlink" title="处理set之后进程崩溃的死锁问题"></a>处理set之后进程崩溃的死锁问题</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">// 思想：给锁加上过期时间，即使set之后进程挂掉，也不会死锁</span><br><span class="line">&gt; setnx locker true</span><br><span class="line">OK</span><br><span class="line">&gt; expire locker 5</span><br><span class="line">// ... do somthing ...</span><br><span class="line">&gt; del locker</span><br></pre></td></tr></table></figure>
+<h2 id="处理非原子性问题"><a href="#处理非原子性问题" class="headerlink" title="处理非原子性问题"></a>处理非原子性问题</h2><p>setnx之后，expire之前，进程挂了，也会死锁。怎么处理这种情况？</p>
+<ol>
+<li>使用redis事务吗？事务里没有if else，要么全部执行，要么全部不执行。需求是setnx成功才执行expire，有依赖关系，没法用事务</li>
+<li>使用新的原子命令，如下<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&gt; set locker true ex5 nx</span><br><span class="line">OK</span><br><span class="line">// ... do somthing ...</span><br><span class="line">&gt; del locker</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h2 id="处理超时问题"><a href="#处理超时问题" class="headerlink" title="处理超时问题"></a>处理超时问题</h2><p>上面的方案设定了超时时间。但是如果少数操作的时间超过了超时时间怎么办？有两个问题：</p>
+<ol>
+<li>这个时候其他线程就会抢占到锁，导致资源发生竞争。</li>
+<li>如果锁是超时释放的，当前进程处理完操作之后又会释放锁，会把别人的锁释放<br>我们先来解决问题2。我们可以把locker的value设置为随机数，保证锁只会被当前线程释放。这个操作也要保证原子性，我们用lua脚本实现：<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">// del lua</span><br><span class="line"><span class="keyword">if</span> redis.call(<span class="string">"get"</span>, key) == tag <span class="keyword">then</span></span><br><span class="line">	<span class="keyword">return</span> redis.call(<span class="string">"del"</span>, key)</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line">// set java</span><br><span class="line">tag = random.nextint()</span><br><span class="line"><span class="keyword">if</span> redis.set(key, tag, nx=True, ex=<span class="number">5</span>):</span><br><span class="line">	do_somthing()</span><br><span class="line">	// eval del lua</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h2 id="获得不了锁的处理"><a href="#获得不了锁的处理" class="headerlink" title="获得不了锁的处理"></a>获得不了锁的处理</h2><p>上面介绍了锁的实现，现在我们需要关注获取锁失败的分支。这个时候资源正在被其他过程占用，我们有几个处理办法：</p>
+<ol>
+<li>直接抛出异常，比如管理端场景</li>
+<li>sleep一会重试，但是sleep会阻塞处理线程，并不好</li>
+<li>把请求放到一个延时队列，延后处理</li>
+</ol>
+<h1 id="消息队列"><a href="#消息队列" class="headerlink" title="消息队列"></a>消息队列</h1><p>使用list和lpush/rpop，生产者使用lpush推入队列，消费者通过rpop推出队列。因为redis的命令是原子的，所以这里不会有竞争的问题。</p>
+<p>我们该什么时候调用pop？<br>一种常见的方法是pull，定时去消费（pop），比如每隔1s，但是这样消息会有一定的延时<br>另一种方法是调用b开头的阻塞函数，比如brpop，会阻塞到队列里有消息才会返回。需要注意的是，如果阻塞过久，redis会认为这个网络连接是闲置连接，会断开这些连接，所以客户端里要做好重试</p>
+<p>还会有什么问题？</p>
+<ol>
+<li>做消费确认ACK比较麻烦，就是不能保证消费者在读取之后，未处理后的宕机问题。导致消息意外丢失。通常需要自己维护一个Pending列表，保证消息的处理确认。</li>
+<li>不能广播、分组消费、重复消费</li>
+</ol>
+<h2 id="多次消费"><a href="#多次消费" class="headerlink" title="多次消费"></a>多次消费</h2><p>如果要有多个消费者需要消费同一条消息，list就无法满足。Redis提供了pub/sub模式来解决这一问题。有下面几个操作：</p>
+<ol>
+<li>SUBSCRIBE，用于订阅信道</li>
+<li>PUBLISH，向信道发送消息</li>
+<li>UNSUBSCRIBE，取消订阅</li>
+</ol>
+<p>生产者和消费者通过一个队列进行交互。通常会有多个消费者，多个消费者订阅同一个信道，当生产者向信道发布消息时，该信道会立即将消息逐一发布给每个消费者。</p>
+<p>优点：</p>
+<ol>
+<li>典型的广播模式，一个消息可以发布到多个消费者</li>
+<li>多信道订阅，消费者可以同时订阅多个信道，从而接收多类消息</li>
+<li>消息即时发送，消息不用等待消费者读取，消费者会自动接收到信道发布的消息</li>
+</ol>
+<p>缺点：</p>
+<ol>
+<li>消息一旦发布，不能接收。换句话就是发布时若客户端不在线，则消息丢失，不能寻回</li>
+<li>不能保证每个消费者接收的时间是一致的</li>
+<li>若消费者客户端出现消息积压，到一定程度，会被强制断开，导致消息意外丢失。通常发生在消息的生产远大于消费速度时</li>
+</ol>
+<p>可见，Pub/Sub 模式不适合做消息存储，消息积压类的业务，而是擅长处理广播，即时通讯，即时反馈的业务。</p>
+<h2 id="延时队列"><a href="#延时队列" class="headerlink" title="延时队列"></a>延时队列</h2><p>我们实现一个五秒后再处理消息的延时队列。</p>
+<ol>
+<li>使用一个zset，score存放到期的时间戳。</li>
+<li>然后用一个循环，zrangebyscore查出到期的消息，进行处理，如果没有消息就sleep一小会</li>
+<li>如果有消息，用zrem先删除消息，然后再处理，确保只有一个线程处理</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">delay</span><span class="params">(msg)</span>:</span></span><br><span class="line">	msg.id = str(uuid.uuid4()) <span class="comment"># 保证 value 值唯一</span></span><br><span class="line">	value = json.dumps(msg)</span><br><span class="line">	retry_ts = time.time() + <span class="number">5</span> <span class="comment"># 5 秒后重试</span></span><br><span class="line">	redis.zadd(<span class="string">"delay-queue"</span>, retry_ts, value)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">loop</span><span class="params">()</span>:</span></span><br><span class="line">	<span class="keyword">while</span> <span class="keyword">True</span>:</span><br><span class="line">		<span class="comment"># 最多取 1 条</span></span><br><span class="line">		values = redis.zrangebyscore(<span class="string">"delay-queue"</span>, <span class="number">0</span>, time.time(), start=<span class="number">0</span>, num=<span class="number">1</span>)</span><br><span class="line">		<span class="keyword">if</span> <span class="keyword">not</span> values: </span><br><span class="line">			time.sleep(<span class="number">1</span>) <span class="comment"># 延时队列空的，休息 1s</span></span><br><span class="line">			<span class="keyword">continue</span></span><br><span class="line">		value = values[<span class="number">0</span>] <span class="comment"># 拿第一条，也只有一条</span></span><br><span class="line">		success = redis.zrem(<span class="string">"delay-queue"</span>, value) <span class="comment"># 从消息队列中移除该消息</span></span><br><span class="line">		<span class="keyword">if</span> success: <span class="comment"># 因为有多进程并发的可能，最终只会有一个进程可以抢到消息</span></span><br><span class="line">			msg = json.loads(value)</span><br><span class="line">			handle_msg(msg)</span><br></pre></td></tr></table></figure>
+<h2 id="Redis-Stream"><a href="#Redis-Stream" class="headerlink" title="Redis Stream"></a>Redis Stream</h2><p><a href="http://www.hellokang.net/redis/stream.html" target="_blank" rel="noopener">Redis对消息队列（MQ，Message Queue）的完善实现</a></p>
+<h1 id="hyperloglog-做基数-UV-统计"><a href="#hyperloglog-做基数-UV-统计" class="headerlink" title="hyperloglog 做基数(UV)统计"></a>hyperloglog 做基数(UV)统计</h1><p>对于一些网站统计uv的场景，常见的做法用set是记录下访问过站点的uid，然后返回set的大小。<br>hyperloglog不存储具体的uid，只是做一个数学估计。</p>
+<p>每次进来一个数字，我们看他从低位开始全是0的位有多少个。然后取<br>maxbit = max(maxbit, now0bit)<br>我们看看一次添加后发生了什么。比如这个命令：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">PFADD runoobkey <span class="string">"r"</span></span><br><span class="line"><span class="comment">// 第一步，r的二进制为 01110010，得到最后只有1个0</span></span><br><span class="line"><span class="comment">// now0bit=1，maxbit=max(maxbit, now0bit)=1</span></span><br></pre></td></tr></table></figure>
+<p>我们会发现maxbit和总共的基数N有一定的关系。多次测试后，发现N和maxbit的关系大概是：<br>$$N=2^{maxbit}$$<br>但是这里可能会有很大的误差。只要有一个数字的now0bit非常大，就会把这个估计拉的很远。所以这里要用分组平均一下。<br>假设我们分为1024个桶，然后对每个桶分别估计的N取调和平均值，这样误差就会比较小。当取1024个桶时，误差大概在10%以内。此时N和maxbit的关系大概是（n=1024）：<br>$$ N={\frac{n}{\sum_{i=1}^{n}{\frac{1}{maxbit_{i}}}}}$$<br>Note: redis把数字分为16384(2^14)个桶，每个桶的maxbit占用6bit，所以占用的空间大概为2^14*6/8=12KB，误差在1%以内。</p>
+<h1 id="位图和布隆过滤器"><a href="#位图和布隆过滤器" class="headerlink" title="位图和布隆过滤器"></a>位图和布隆过滤器</h1><h2 id="位图"><a href="#位图" class="headerlink" title="位图"></a>位图</h2><p>redis提供了位图操作</p>
+<ol>
+<li><code>setbit key offset value</code> 设置某个位</li>
+<li><code>getbit key offset</code> 获取某个位</li>
+<li><code>bitcount key start end</code> 获取某个区间之间的1的数量</li>
+<li><code>bitop and/or/not/xor key1 key2</code></li>
+</ol>
+<p>数据结构：这里面的存储结构实际上是一个SDS。在Redis Object里有一个char数组buf，里面存放着位信息，每个char能存8个位。在buf数组的末尾有一个<code>&#39;\0&#39;</code>表示位图的结尾。</p>
+<h3 id="setbit-getbit"><a href="#setbit-getbit" class="headerlink" title="setbit/getbit"></a>setbit/getbit</h3><p>如何实现：setbit和getbit，都只要通过模余运算得到对应的buf下标和位，就可以拿到对应的值。<br>我们怎么拿到第n位的值？需要一个第n位为1的掩码 <code>1&lt;&lt;(7 - n)</code></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// getbit</span></span><br><span class="line"><span class="comment">// 计算出 offset 所指定的位所在的字节 = offset/8</span></span><br><span class="line">byte = bitoffset &gt;&gt; <span class="number">3</span>;</span><br><span class="line"><span class="comment">// 计算出位所在的位置 = offset%8, bitoffset &amp; 0x7得到后三位（offset%8）</span></span><br><span class="line">bit = <span class="number">7</span> - (bitoffset &amp; <span class="number">0x7</span>);</span><br><span class="line">bitval = ((<span class="keyword">uint8_t</span>*)buf)[byte] &amp; (<span class="number">1</span> &lt;&lt; bit);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 第17位为例子 getbit [key] 17</span></span><br><span class="line"><span class="comment">// 除以8得到第几个byte，byte = 17 &gt;&gt; 3 = 2</span></span><br><span class="line"><span class="comment">// 模8取得字节数，取后三位 17 &amp; 0111 = 01 0001 &amp; 0111 = 0001</span></span><br><span class="line"><span class="comment">// 得到掩码 7 - 0001 = 6，1 &lt;&lt; 6 = 0100 0000</span></span><br><span class="line"><span class="comment">// 取出第3个字节的第二位 buf[2] &amp; 0100 0000</span></span><br></pre></td></tr></table></figure>
+<p>setbit稍微麻烦一些。在设置位的基础上还要考虑到SDS扩容的情况，如果setbit的offset超过了最大值，那么需要进行扩容并把扩好的空间初始化位0。</p>
+<h3 id="bitcount"><a href="#bitcount" class="headerlink" title="bitcount"></a>bitcount</h3><p>计算二进制中1的个数，有几种方法：</p>
+<ol>
+<li>查表。预处理好0000 0001 ~ 1111 1111 和其中1的个数的映射，比如0000 0001(1)，后面来了直接查表。我们最高可以建16位的表，仅需百KB左右的内存</li>
+<li>variable-precision swar算法。<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">i = (i &amp; <span class="number">0x55555555</span>) + ((i &gt;&gt; <span class="number">1</span>) &amp; <span class="number">0x55555555</span>);</span><br><span class="line">i = (i &amp; <span class="number">0x33333333</span>) + ((i &gt;&gt; <span class="number">2</span>) &amp; <span class="number">0x33333333</span>);</span><br><span class="line">i = (i &amp; <span class="number">0x0F0F0F0F</span>) + ((i &gt;&gt; <span class="number">4</span>) &amp; <span class="number">0x0F0F0F0F</span>);</span><br><span class="line">i = (i * (<span class="number">0x01010101</span>) &gt;&gt; <span class="number">24</span>);</span><br><span class="line"><span class="keyword">return</span> i</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>Redis中，不足128位的bitmap会查表，有一个8位的表查16次；超过8位的，每次载入128位，然后调用四次SWAR算法计算汉明重量。</p>
+<h2 id="布隆过滤器"><a href="#布隆过滤器" class="headerlink" title="布隆过滤器"></a>布隆过滤器</h2><p>布隆过滤器，是用来判断元素在不在set里的一种方法。上面的hyperloglog只能支持count操作，但是不支持contains操作。要大概地判断元素是否出现过就可以用布隆过滤器，他会用很多个哈希函数对元素进行哈希，把对应的位都设置；查找时也同样哈希，并查看对应的位是否被设置。布隆过滤器有一定的概率会把不存在的元素判定为存在（取决于要求的占用空间，），但是存在的元素一定不会判断错。</p>
+<ol>
+<li>bf.add</li>
+<li>bf.exists</li>
+</ol>
+<h1 id="限流"><a href="#限流" class="headerlink" title="限流"></a>限流</h1><h2 id="简单限流"><a href="#简单限流" class="headerlink" title="简单限流"></a>简单限流</h2><p>每一个行为到来时，都维护一次时间窗口。将时间窗口外的记录全部清理掉，只保留窗口内的记录。zset 集合中只有 score 值非常重要，value 值没有特别的意义，只需要保证它是唯一的就可以了（也可以用uuid，这里用了毫秒）。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 业务代码 调用这个接口 , 一分钟内只允许最多回复 5 个帖子</span></span><br><span class="line">can_reply = is_action_allowed(<span class="string">"laoqian"</span>, <span class="string">"reply"</span>, <span class="number">60</span>, <span class="number">5</span>)</span><br><span class="line"><span class="keyword">if</span> can_reply:</span><br><span class="line">	do_reply()</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">is_action_allowed</span><span class="params">(user_id, action_key, period, max_count)</span>:</span></span><br><span class="line">	key = <span class="string">'hist:%s:%s'</span> % (user_id, action_key)</span><br><span class="line">	now_ts = int(time.time() * <span class="number">1000</span>) <span class="comment"># 毫秒时间戳</span></span><br><span class="line">	<span class="keyword">with</span> client.pipeline() <span class="keyword">as</span> pipe: <span class="comment"># client 是 StrictRedis 实例</span></span><br><span class="line">		<span class="comment"># 记录行为</span></span><br><span class="line">		pipe.zadd(key, now_ts, now_ts) <span class="comment"># value 和 score 都使用毫秒时间戳</span></span><br><span class="line">		<span class="comment"># 移除时间窗口之前的行为记录，剩下的都是时间窗口内的</span></span><br><span class="line">		pipe.zremrangebyscore(key, <span class="number">0</span>, now_ts - period * <span class="number">1000</span>)</span><br><span class="line">		<span class="comment"># 获取窗口内的行为数量</span></span><br><span class="line">		pipe.zcard(key)</span><br><span class="line">		<span class="comment"># 设置 zset 过期时间，避免冷用户持续占用内存</span></span><br><span class="line">		<span class="comment"># 过期时间应该等于时间窗口的长度，再多宽限 1s</span></span><br><span class="line">		pipe.expire(key, period + <span class="number">1</span>)</span><br><span class="line">	<span class="comment"># 批量执行</span></span><br><span class="line">	_, _, current_count, _ = pipe.execute()</span><br><span class="line">	<span class="comment"># 比较数量是否超标</span></span><br><span class="line">	<span class="keyword">return</span> current_count &lt;= max_count</span><br></pre></td></tr></table></figure>
+<h2 id="漏桶限流-Redis-Cell"><a href="#漏桶限流-Redis-Cell" class="headerlink" title="漏桶限流 Redis-Cell"></a>漏桶限流 Redis-Cell</h2><p>Redis4.0之后提供了更好用的限流组件。<br><code>CL.THROTTLE reply 15 30 60 1</code><br><code>CL.THROTTLE key 初始容量 次数 秒数 每次加几个资格</code><br>这条命令限定了回复行为的频率为每 60s 最多 30 次(漏水速率)，漏斗的初始容量为 15，也就是说一开始可以连续回复 15 个帖子，然后才开始受漏水速率的影响。返回值也很有用：<br>参数1： 0 表示允许，1 表示拒绝<br>参数2： 漏斗容量 capacity<br>参数3： 漏斗剩余空间 left_quota<br>参数4： 如果拒绝了，需要多长时间后再试(漏斗有空间了，单位秒)<br>参数5： 多长时间后，漏斗完全空出来(left_quota==capacity，单位秒)</p>
+<p>我们来看漏桶的一个python实现。每个漏桶</p>
+<ol>
+<li>会存一个上一次漏水时间；</li>
+<li>每次有请求过来就得到<code>新增资格数=(计算当前时间-上次漏水时间)*每秒加入资格数</code>，加到剩余空间上，但要保证剩余空间不大于capacity</li>
+<li>剩余空间减掉请求的空间，并更新上次漏水时间</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Funnel</span><span class="params">(object)</span>:</span></span><br><span class="line">	<span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, capacity, leaking_rate)</span>:</span></span><br><span class="line">		self.capacity = capacity <span class="comment"># 漏斗容量</span></span><br><span class="line">		self.leaking_rate = leaking_rate <span class="comment"># 漏嘴流水速率</span></span><br><span class="line">		self.left_quota = capacity <span class="comment"># 漏斗剩余空间</span></span><br><span class="line">		self.leaking_ts = time.time() <span class="comment"># 上一次漏水时间</span></span><br><span class="line">	<span class="function"><span class="keyword">def</span> <span class="title">make_space</span><span class="params">(self)</span>:</span></span><br><span class="line">		now_ts = time.time()</span><br><span class="line">		delta_ts = now_ts - self.leaking_ts <span class="comment"># 距离上一次漏水过去了多久</span></span><br><span class="line">		delta_quota = delta_ts * self.leaking_rate <span class="comment"># 又可以腾出不少空间了</span></span><br><span class="line">		<span class="keyword">if</span> delta_quota &lt; <span class="number">1</span>: <span class="comment"># 腾的空间太少，那就等下次吧</span></span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		self.left_quota += delta_quota <span class="comment"># 增加剩余空间</span></span><br><span class="line">		self.leaking_ts = now_ts <span class="comment"># 记录漏水时间</span></span><br><span class="line">		<span class="keyword">if</span> self.left_quota &gt; self.capacity: <span class="comment"># 剩余空间不得高于容量</span></span><br><span class="line">			self.left_quota = self.capacity</span><br><span class="line">	<span class="function"><span class="keyword">def</span> <span class="title">watering</span><span class="params">(self, quota)</span>:</span></span><br><span class="line">		self.make_space()</span><br><span class="line">		<span class="keyword">if</span> self.left_quota &gt;= quota: <span class="comment"># 判断剩余空间是否足够</span></span><br><span class="line">			self.left_quota -= quota</span><br><span class="line">			<span class="keyword">return</span> <span class="keyword">True</span></span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">False</span></span><br><span class="line"></span><br><span class="line">funnels = &#123;&#125; <span class="comment"># 所有的漏斗</span></span><br><span class="line"><span class="comment"># capacity 漏斗容量</span></span><br><span class="line"><span class="comment"># leaking_rate 漏嘴流水速率 quota/s</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">is_action_allowed</span><span class="params">(user_id, action_key, capacity, leaking_rate)</span>:</span></span><br><span class="line">	key = <span class="string">'%s:%s'</span> % (user_id, action_key)</span><br><span class="line">	funnel = funnels.get(key)</span><br><span class="line">	<span class="keyword">if</span> <span class="keyword">not</span> funnel:</span><br><span class="line">		funnel = Funnel(capacity, leaking_rate)</span><br><span class="line">		funnels[key] = funnel</span><br><span class="line">	<span class="keyword">return</span> funnel.watering(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">20</span>):</span><br><span class="line">	<span class="keyword">print</span> is_action_allowed(<span class="string">'laoqian'</span>, <span class="string">'reply'</span>, <span class="number">15</span>, <span class="number">0.5</span>)</span><br></pre></td></tr></table></figure>
+<h1 id="GeoHash-附近的人"><a href="#GeoHash-附近的人" class="headerlink" title="GeoHash 附近的人"></a>GeoHash 附近的人</h1><p>业务中经常有判断两个地址是否靠近，寻找某个地址周边的餐厅或超市，类似这样的需求。请求量不大时，我们可以用mysql解决，用一个半径圈出范围：<br><code>select id from positions where x0-r &lt; x &lt; x0+r and y0-r &lt; y &lt; y0+r</code><br>请求量比较大时，我们就要借助redis 3.2以后的GeoHash的指令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">// 添加地址</span><br><span class="line">geoadd company 116.48105 39.996794 juejin</span><br><span class="line">geoadd company 116.489033 40.007669 meituan</span><br><span class="line">// 列出地址</span><br><span class="line">geodist company juejin meituan km</span><br><span class="line">// 列出某个地址周围20km的最近三个地址</span><br><span class="line">georadiusbymember company juejin 20 km count 3 asc</span><br><span class="line">// 列出某个经纬度附近的三个地址</span><br><span class="line">georadius company 116.514202 39.905409 20 km withdist count 3 asc</span><br></pre></td></tr></table></figure></p>
+<p>实际上，GeoHash内部是一个zset，score是经纬度映射到一维后的一个数字。平面上靠的越近，zset中score值也会越接近。那么要怎么做这种映射呢？数学上有很多二位空间到一维空间的映射，参见<br><a href="https://halfrost.com/go_spatial_search/" target="_blank" rel="noopener">https://halfrost.com/go_spatial_search/</a><br><a href="https://www.jianshu.com/p/2fd0cf12e5ba" target="_blank" rel="noopener">https://www.jianshu.com/p/2fd0cf12e5ba</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Redis/" rel="tag">#Redis</a>
+          
+            <a href="/tags/中间件/" rel="tag">#中间件</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/08/18/cpp-11-4/" rel="next" title="[C++]C++ 11/14 笔记（四）">
+                <i class="fa fa-chevron-left"></i> [C++]C++ 11/14 笔记（四）
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zMDAxOS82NTg0"></div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.jpeg"
+               alt="吕子恒" />
+          <p class="site-author-name" itemprop="name">吕子恒</p>
+          <p class="site-description motion-element" itemprop="description">互联网 | NLP方向 | 喜欢制作所有东西 | INTJ</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">38</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">50</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chestnutheng" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/lu-zi-heng-91" target="_blank" title="ZhiHu">
+                  
+                    <i class="fa fa-fw fa-zhihu"></i>
+                  
+                  ZhiHu
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://cn.linkedin.com/in/子恒-吕-a52bba10a" target="_blank" title="Linkedin">
+                  
+                    <i class="fa fa-fw fa-linkedin"></i>
+                  
+                  Linkedin
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-block">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              Links
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://wangbicong.cn/" title="可爱的聪聪" target="_blank">可爱的聪聪</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://easonzero.cn/" title="可爱的小一" target="_blank">可爱的小一</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://wangzhpp.org/" title="可爱的弱弱" target="_blank">可爱的弱弱</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://shawnzeng.com/" title="可爱的帅帅" target="_blank">可爱的帅帅</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#分布式锁"><span class="nav-number">1.</span> <span class="nav-text">分布式锁</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#简单加锁"><span class="nav-number">1.1.</span> <span class="nav-text">简单加锁</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#处理set之后进程崩溃的死锁问题"><span class="nav-number">1.2.</span> <span class="nav-text">处理set之后进程崩溃的死锁问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#处理非原子性问题"><span class="nav-number">1.3.</span> <span class="nav-text">处理非原子性问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#处理超时问题"><span class="nav-number">1.4.</span> <span class="nav-text">处理超时问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#获得不了锁的处理"><span class="nav-number">1.5.</span> <span class="nav-text">获得不了锁的处理</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#消息队列"><span class="nav-number">2.</span> <span class="nav-text">消息队列</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#多次消费"><span class="nav-number">2.1.</span> <span class="nav-text">多次消费</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#延时队列"><span class="nav-number">2.2.</span> <span class="nav-text">延时队列</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis-Stream"><span class="nav-number">2.3.</span> <span class="nav-text">Redis Stream</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#hyperloglog-做基数-UV-统计"><span class="nav-number">3.</span> <span class="nav-text">hyperloglog 做基数(UV)统计</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#位图和布隆过滤器"><span class="nav-number">4.</span> <span class="nav-text">位图和布隆过滤器</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#位图"><span class="nav-number">4.1.</span> <span class="nav-text">位图</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#setbit-getbit"><span class="nav-number">4.1.1.</span> <span class="nav-text">setbit/getbit</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bitcount"><span class="nav-number">4.1.2.</span> <span class="nav-text">bitcount</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#布隆过滤器"><span class="nav-number">4.2.</span> <span class="nav-text">布隆过滤器</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#限流"><span class="nav-number">5.</span> <span class="nav-text">限流</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#简单限流"><span class="nav-number">5.1.</span> <span class="nav-text">简单限流</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#漏桶限流-Redis-Cell"><span class="nav-number">5.2.</span> <span class="nav-text">漏桶限流 Redis-Cell</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#GeoHash-附近的人"><span class="nav-number">6.</span> <span class="nav-text">GeoHash 附近的人</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2015 - 
+  <span itemprop="copyrightYear">2021</span> 
+  <span class="author" itemprop="copyrightHolder">吕子恒</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span>Hosted by <a href="https://pages.coding.me" style="font-weight: bold">Coding Pages</a></span>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/jquery/2.1.3/jquery.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/jquery_lazyload/1.9.7/jquery.lazyload.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/velocity/1.2.1/velocity.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/velocity/1.2.1/velocity.ui.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("0iVbAi6uVJSkvkk710Xk357P-gzGzoHsz", "GCWjnKs6J6DzdbJSP7KSqckD");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+<script src="/live2dw/lib/L2Dwidget.min.js?0c58a1486de42ac6cc1c59c7d98ae887"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/hijiki.model.json"},"display":{"position":"left","width":100,"height":200},"mobile":{"show":false},"log":false});</script></body>
+</html>
