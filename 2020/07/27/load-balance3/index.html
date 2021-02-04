@@ -105,7 +105,7 @@
 <meta property="og:description" content="负载均衡是集群中一个重要的组成部分。这个模块一般集成了名字服务、负载均衡、过载保护、限流等功能。第二部分是针对限流算法和实现的介绍。">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb3_1.jpg">
-<meta property="og:updated_time" content="2021-02-04T10:22:21.000Z">
+<meta property="og:updated_time" content="2020-07-27T09:28:37.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="[后台]负载均衡 （三）限流篇">
 <meta name="twitter:description" content="负载均衡是集群中一个重要的组成部分。这个模块一般集成了名字服务、负载均衡、过载保护、限流等功能。第二部分是针对限流算法和实现的介绍。">
@@ -339,8 +339,9 @@
 <li>资源类型：能限流什么？QPS，连接数，并发数</li>
 <li>全局限流/单机限流：多个服务的实例共享一个全局的流量限额，比如所有机器共享1000QPS。或者单个实例的限流，比如被调限定每台机器不超过1000QPS</li>
 <li>限流阈值：单位时间内的最大配额数。是按照每秒种一次，还是按照每分钟60次？</li>
-<li>限流处理：客户端如何处理超出限额的请求？超额后直接拒绝，还是超额后进行排队？<br>抽象出一个方案<br>接口级别限流：每个接口分配一个appid和key，各自计算各自的配额<br>多维度限流：支持每秒N次、每分钟N次、每天N次等维度<br>匀速防刷：假设配置了每分钟60次，依然可能出现第一秒访问了60次用光了配额。匀速防刷可以匀速消耗配额，解决这个问题<br>多级限流：支持不同的限流规则，并有采用的优先级，采用优先级最高的方案进行限流</li>
+<li>限流处理：客户端如何处理超出限额的请求？超额后直接拒绝，还是超额后进行排队？</li>
 </ol>
+<p>抽象出一个方案<br>接口级别限流：每个接口分配一个appid和key，各自计算各自的配额<br>多维度限流：支持每秒N次、每分钟N次、每天N次等维度<br>匀速防刷：假设配置了每分钟60次，依然可能出现第一秒访问了60次用光了配额。匀速防刷可以匀速消耗配额，解决这个问题<br>多级限流：支持不同的限流规则，并有采用的优先级，采用优先级最高的方案进行限流</p>
 <h1 id="限流算法"><a href="#限流算法" class="headerlink" title="限流算法"></a>限流算法</h1><h2 id="固定窗口"><a href="#固定窗口" class="headerlink" title="固定窗口"></a>固定窗口</h2><p>固定窗口是在一段时间内可以限制访问次数的方法。</p>
 <ul>
 <li>将时间划分为多个窗口</li>
