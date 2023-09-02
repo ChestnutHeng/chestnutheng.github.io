@@ -1,0 +1,180 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>算法 - Tag - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/tags/%E7%AE%97%E6%B3%95/</link>
+        <description>算法 - Tag - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Wed, 06 May 2020 20:24:30 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/tags/%E7%AE%97%E6%B3%95/" rel="self" type="application/rss+xml" /><item>
+    <title>[后台]负载均衡 （一）算法篇</title>
+    <link>http://chestnutheng.github.io/load_balance/</link>
+    <pubDate>Wed, 06 May 2020 20:24:30 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/load_balance/</guid>
+    <description><![CDATA[当单机的访问压力很大时，就需要引入集群。集群一个很重要的事情就是把请求均匀地分配在各个机器上，这就是负载均衡的雏形。
+有基于MAC地址的二层负载均衡和基于IP地址的三层负载均衡。 二层负载均衡会通过一个虚拟MAC地址接收请求，然后再分配到真实的MAC地址；三层负载均衡会通过一个虚拟IP地址接收请求，然后再分配到真实的IP地址；
+四层通过虚拟IP+端口接收请求，然后再分配到真实的服务器（比如LVS，F5）；七层通过虚拟的URL或主机名接收请求，然后再分配到真实的服务器（Haproxy和Nginx）。
+四层和七层是最常见的负载均衡模型。
+**四层：**以常见的TCP为例，负载均衡设备在接收到第一个来自客户端的SYN请求时，通过负载均衡算法选择服务器，并对报文中目标IP地址进行修改（改为后端服务器IP），直接转发给该服务器。TCP的连接建立，即三次握手是客户端和服务器直接建立的，负载均衡设备只是起到一个类似路由器的转发动作。在某些部署情况下，为保证服务器回包可以正确返回给负载均衡设备，在转发报文的同时可能还会对报文原来的源地址进行修改。
+**七层：**以常见的TCP为例，负载均衡设备如果要根据真正的应用层内容再选择服务器，只能先代理最终的服务器和客户端建立连接(三次握手)后，才可能接受到客户端发送的真正应用层内容的报文，然后再根据该报文中的特定字段，再加上设置的负载均衡算法，选择内部某台服务器。负载均衡设备在这种情况下，更类似于一个代理服务器。负载均衡和前端的客户端以及后端的服务器会分别建立TCP连接。所以从这个技术原理上来看，七层负载均衡明显的对负载均衡设备的要求更高，处理七层的能力也必然会低于四层模式的部署方式。
+参考资料：四层和七层负载均衡的区别
+nginx用的负载均衡算法 Nginx可以作为HTTP反向代理，把访问本机的HTTP请求，均分到后端集群的若干台服务器上。负载均衡的核心就是负载均衡所使用的平衡算法，适用于各种场景。
+Nginx的负载均衡算法
+Nginx目前提供的负载均衡模块：
+ngx_http_upstream_round_robin，加权轮询，可均分请求，是默认的HTTP负载均衡算法，集成在框架中。
+ngx_http_upstream_ip_hash_module，IP哈希，可保持会话。
+ngx_http_upstream_least_conn_module，最少连接数，可均分连接。适用于链接数体现资源的服务，比如FTP。
+ngx_http_upstream_hash_module，一致性哈希，可减少缓存数据的失效。
+随机访问 在介绍nginx的模式前，先介绍下普通的负载均衡方法。假设有7个请求，我们给A、B、C三个节点分别4、2、1的权重。最朴素的负载均衡方式有下面几种：
+完全轮询：访问完A去访问B，访问完B去访问C，再去访问A。缺点是没有权重，不能根据负载调节。 列表轮询：构造一个数组[A, A, A, A, B, B, C]，每次pop出去一个访问。缺点是pop出去的元素太随机，可能一次集中访问A ，而且占用内存太大，对于几万的权重范围不合适。 随机数：我们按照A、B、C的权重划分好区间，A（0、1、2、3），B（4、5），C（6），然后取一个随机数，模余7，看看最后的结果在哪个区间内，就取哪个节点。缺点是完全随机，无法避免集中访问。 加权轮询 假设有7个请求，我们给A、B、C三个节点分别4、2、1的权重。如果随机按照概率来选，那么很可能出现连续四个请求都在A上面的情况，这样只能保证结果看起来均衡，但是时间段内不均衡。Nginx采用了一种平滑的加权平均算法来选取节点（Weighted Round Robin）。
+先引入三个概念，都用来描述服务器节点的权重：
+$W$ : weight 我们指定的权重，就是上面例子中的4、2、1。 $W_{ew}$: effective_weight 有效权重，初始值为$W$。用来对故障节点降权。
+如果通信中有错误产生，就减小effective_weight。（故障降权）
+此后有新的请求过来时，再逐步增加effective_weight，最终又恢复到weight。（自动恢复） $W_{cw}$ : current_weight 当前真实权重，每次都会选到最大的真实权重的节点去请求 真实权重$W_{cw}$计算方式：
+初始化：$W_{cw}$ 起始值为0 获得实时权重：请求到来后，给每个节点的真实权重加上有效权重，即$每个节点 W_{cw} = W_{cw} + W_{ew}$ 选出最大权重：选择真实权重最大的节点最为本次请求的目标 回避刚选的节点：最选择的节点的实时权重减去所有节点（包括自己）的有效权重和。即$选中节点 W_{cw} = W_{cw} - (W_{ew1} + W_{ew2} + &hellip; + W_{ewn})$ 来看一个具体的例子：
+假设A、B、C三个节点的权重分别为4、2、1。]]></description>
+</item>
+<item>
+    <title>[数据结构]深入理解红黑树</title>
+    <link>http://chestnutheng.github.io/rbtree/</link>
+    <pubDate>Wed, 20 Mar 2019 23:00:25 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/rbtree/</guid>
+    <description><![CDATA[平衡树 在谈红黑树之前，可以先看看红黑树的根源，234树。234树也是一种平衡树。
+平衡树的原型都是二叉查找树，即左面的节点比他小，右边的节点比他大。但是在二叉查找树的过程中，很有可能变成树朝一边严重倾斜的情况。为了解决这个问题，设计了如下变种：
+avl：严格控制树的平衡，左右树的高度差不大于1。所以查找性能是logn。在插入和删除操作时，最差的情况是每一级的父节点都会旋转。时间复杂度都是O(logn)。 红黑树：红黑树的左右子树最高差时，一个子树是另一个子树的一倍。最坏查找性能是2logn。在插入操作时，最差旋转2次，删除操作最差旋转三次，可以减少avl的平衡操作，但是依然是O(logn)的复杂度（在找到节点的插入位置就要花费logn时间）。 splay：插入删除复杂度也是O(logn)，可以用数组实现，不需要额外维护树的节点信息。但在最坏情况下他会退化成一条链。而且只读操作也会影响树的结构，在多线程环境访问下比较复杂。 替罪羊树：在查找树不平衡的时候，找到最高的一个节点（满足左右子树不差0.7倍的平衡点），重构整个子树 查找问题还可以用哈希表解决。哈希表是无序的，而且会耗费大块的内存。
+一些常见的面试题：常见面试题-cnblog
+各种树的性能
+2-3-4树 2-3-4树-CSDN
+234树是红黑树的等价变种。先来看看2-3树，这种树有两种节点，2节点和3节点。
+2-节点：普通节点，有两个子连接
+3-节点：有两个值A、B，三个连接（分别指向小于A，介于AB之间，大于B的儿子）
+2-3树可以保证插入的时候所有叶子到根节点的距离是相同的。我们看看他如何插入：
+(1) 如果值插入2节点，把他扩充成一个3节点。
+(2) 如果插入插入3节点
+A. 整个树只有一个3节点：把他扩展成4-节点，然后分解4-节点，然后将分解后的新树的父节点融入到2-节点的父节点中去。
+B. 3-节点有一个2-节点的父节点，此时的操作是，3-节点扩充为4-节点，然后分解4-节点，然后将分解后的新树的父节点融入到2-节点的父节点中去。
+C. 3-节点有一个3-节点的父节点，此时操作是：3-节点扩充为4-节点，然后分解4-节点，新树父节点向上融合，上面的3-节点继续扩充，融合，分解，新树继续向上融合，直到父节点为2-节点为止，如果向上到根节点都是3-节点，将根节点扩充为4-节点，然后分解为新树，至此，整个树增加一层，仍然保持平衡。
+23树的流程比较复杂，而且涉及不同节点的转换，所以出现了红黑树来简化操作。我们把3节点的两个元素红色连接连起来。这时候红色连接出去的那个节点就成了红黑树的红节点，其余的都是黑节点。如果你将红黑树中所有的红色链接放平，那么它所有的叶子节点到根节点的距离都是相同的，所以是一个完美的黑色平衡。
+所以，红黑树的另一种定义是满足下列条件的二叉查找树：
+⑴ 红链接均为左链接。
+⑵ 没有任何一个结点同时和两条红链接相连。(这样会出现4-节点)
+⑶ 该树是完美黑色平衡的，即任意空链接到根结点的路径上的黑链接数量相同。
+红黑树 github红黑树(有比较好的图解)
+cnblog红黑树流程详解
+红黑树的五条性质：
+1）每个结点要么是红的，要么是黑的。
+2）根结点是黑的。
+3）每个叶结点（叶结点即指树尾端NIL指针或NULL结点）是黑的。
+4）如果一个结点是红的，那么它的俩个儿子都是黑的。
+5）对于任一结点而言，其到叶结点树尾端NIL指针的每一条路径都包含相同数目的黑结点。
+如果我们插入一个节点，并把他染红，则树的1235项原则都不会被破坏。如何保证原则4呢？调整的原则是把红色问题向上修正到根节点，最后把根节点染黑，来达到平衡。
+我们先把插入的节点染红，然后进行修正操作：
+插入修复情况1：当前结点的父结点是红色且叔叔结点是红色。
+将当前结点的父结点和叔叔结点涂黑，祖父结点涂红。在以祖父节点为新的当前结点再做一遍。
+A. 为了解决本节点和父节点都是红色，把父节点染黑。
+B. 但是父节点的在子树多了个黑色，所以要把叔叔也染黑来平衡。
+C. 此时爷爷节点的子树也多了个黑色，所以把他染红。
+D. 爷爷节点被染红了上面的节点曾爷爷有可能是红的，在做一次。
+插入修复情况2：当前结点的父结点是红色,叔叔结点是黑色，当前结点是其父结点的右子
+对策：当前结点的父结点做为新的当前结点，以新当前结点为支点左旋。左旋后，本节点上移，把问题向上修正。可以转化到情况3
+插入修复情况3：当前结点的父结点是红色,叔叔结点是黑色，当前结点是其父结点的左子
+解法：父结点变为黑色，祖父结点变为红色，在祖父结点为支点右旋
+A. 为了解决本节点和父节点都为红，把父节点染黑
+B. 为了解决父节点在的子树多了一个黑色，把叔叔染红并右旋解决]]></description>
+</item>
+<item>
+    <title>[普林斯顿算法公开课]双向队列和随机队列</title>
+    <link>http://chestnutheng.github.io/princeton_pa2_deque/</link>
+    <pubDate>Tue, 15 Nov 2016 13:38:03 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/princeton_pa2_deque/</guid>
+    <description><![CDATA[思路 这次的内容是写一个双向队列和随机队列, 双向队列自不必说, 用链表即可, 注意一下表头表尾的操作以及只有一个元素时的删除操作.
+随机队列实现随机的时候需要查询具体下标的元素, 是一个O(1)操作, 所以使用自增长内存池实现.
+刷到满分的过程中逐步解决的一些问题:
+1. 对题目要求的每一个Exception都要抛出.否则会有以下问题:
+case test 失败 测试中断:
+Warning: the grading output was truncated due to excessive length. 2. 删除的节点和数组需要置null释放, 比如Deque出队的节点, RandomizedQueue出队的元素, 否则会报
+- loitering observed during 71 of 100 deletions 3. 注意RandomizedQueue的capacity大小调节的时机, 在size到达capacity一半时扩大, 在size到达capacity四分之一时减小.否则会有以下问题:
+不缩小capacity: 会导致内存测试失败 调节时机不对: 会导致一半的时间测试失败, 或者测试中断:
+Warning: the grading output was truncated due to excessive length. size 不为正数的边界情况: 数组越界 = =这个capacity大小要求过于严格了, 导致我用自己习惯的增长方式没有AC&hellip;
+Deque.java 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 /** * Created by chestnutheng on 16-11-14.]]></description>
+</item>
+<item>
+    <title>[普林斯顿算法公开课]并查集解决渗透问题</title>
+    <link>http://chestnutheng.github.io/princeton_pa1_percolation/</link>
+    <pubDate>Tue, 08 Nov 2016 13:39:00 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/princeton_pa1_percolation/</guid>
+    <description><![CDATA[Percolation.java 题目见 渗透问题
+运用题目给出的API来解决问题.
+第一个文件是Percolation.java, 用来编写解决单个渗透问题相关代码.
+API:
+1 2 3 4 5 6 7 8 9 public class Percolation { public Percolation(int n) // create n-by-n grid, with all sites blocked public void open(int row, int col) // open site (row, col) if it is not open already public boolean isOpen(int row, int col) // is site (row, col) open? public boolean isFull(int row, int col) // is site (row, col) full?]]></description>
+</item>
+<item>
+    <title>[算法]最大值栈和最大值队列</title>
+    <link>http://chestnutheng.github.io/max_stack_and_max_queue/</link>
+    <pubDate>Mon, 26 Oct 2015 19:26:00 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/max_stack_and_max_queue/</guid>
+    <description><![CDATA[最大值栈和最大值队列(Tsinghua OJ,PA2) 最大值栈 要求 以O(1)的时间查询栈中的最大值.
+思路 维护一个最大值栈，在原栈中数据发生改变时最大值栈也跟着改变。
+每次输入一个数据，若最大值栈为空，则比较最大值栈栈顶和当前元素，如果当前元素较大或相等，就把当前元素推入栈中，反之出栈时，如果出栈元素和当前元素相等，则把最大值栈中元素也推出栈。
+实现 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 template &lt;typename T&gt; class MaxStack { private: Stack &lt;T&gt; max_stack; Stack &lt;T&gt; _data; public: T max(){ return max_stack.top(); } void push(T ele){ _data.push(ele); if(max_stack.empty() || ele &gt;= max_stack.top()){ max_stack.push(ele); } } T pop(){ T tmp = _data.top(); if(_data.]]></description>
+</item>
+<item>
+    <title>[算法]逆序对计算的思考</title>
+    <link>http://chestnutheng.github.io/reversed_order/</link>
+    <pubDate>Wed, 07 Oct 2015 20:33:00 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/reversed_order/</guid>
+    <description><![CDATA[逆序对计算的思考(Tsinghua OJ,PA1) 题目出自清华DSA的Programming Assignment作业灯塔(LightHouse)．
+描述 海上有许多灯塔，为过路船只照明。
+如图一所示，每个灯塔都配有一盏探照灯，照亮其东北、西南两个对顶的直角区域。探照灯的功率之大，足以覆盖任何距离。灯塔本身是如此之小，可以假定它们不会彼此遮挡。
+若灯塔A、B均在对方的照亮范围内，则称它们能够照亮彼此。比如在图二的实例中，蓝、红灯塔可照亮彼此，蓝、绿灯塔则不是，红、绿灯塔也不是。
+现在，对于任何一组给定的灯塔，请计算出其中有多少对灯塔能够照亮彼此。
+输入 共n+1行。
+第1行为1个整数n，表示灯塔的总数。
+第2到n+1行每行包含2个整数x, y，分别表示各灯塔的横、纵坐标。
+输出 1个整数，表示可照亮彼此的灯塔对的数量。
+样例 Input:
+1 2 3 4 3 2 2 4 3 5 1 Output:
+1 1 限制 对于90%的测例：1 ≤ n ≤ 3×10^5
+对于95%的测例：1 ≤ n ≤ 10^6
+全部测例：1 ≤ n ≤ 4×10^6
+灯塔的坐标x, y是整数，且不同灯塔的x, y坐标均互异
+1 ≤ x, y ≤ 10^8
+时间：2 sec
+内存：256 MB
+提示 注意机器中整型变量的范围，C/C++中的int类型通常被编译成32位整数，其范围为[-231, 231 - 1]，不一定足够容纳本题的输出。
+思考 我们把灯塔坐标抽象为坐标结构体
+1 typedef struct pos{	long x,y; }Pos; 照亮的情况为一个灯塔在另一个灯塔的一四象限，即$tower1.]]></description>
+</item>
+<item>
+    <title>[算法]DP解决钢条切割问题</title>
+    <link>http://chestnutheng.github.io/max_iron_len/</link>
+    <pubDate>Mon, 01 Jun 2015 16:05:00 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/max_iron_len/</guid>
+    <description><![CDATA[DP解决钢条切割问题 （原题见算法导论·动态规划）
+对长度为n的钢条进行切割，对应的切割长度和价格对应如下：
+int cost[] = {0, 1, 5, 8, 9, 10, 17, 17, 20, 24, 30};
+比如1对应价值1,10对应价值30。即相应的下标和值的对应。现求切割所得最大效益mx。
+递归算法 1 2 3 4 5 6 7 8 9 int cut_rod(int *cost,int n) { if(n == 0) return 0; int limit = MIN(n,10); //分割第一条的上限 int mx = -1; for(int i = 1;i &lt;= limit; ++i) mx = maxnum(mx,cost[i]+cut_rod(cost,n-i)); //取当前值于递归值的最大值 return mx; } 由于对相同子问题的重复求解，T(n) = 2^n
+递归标记数组算法（自顶而下）（DFS） 1 2 3 4 5 6 7 8 9 10 11 12 int mem_cut_rod(int *cost,int n,int *mem) //mem数组长度为n,所有元素须在其他函数中初始化为-1 { int mx; if (mem[n] &gt;= 0) return mem[n]; //对于求过的问题，直接返回存储的值 if (n == 0) mx = 0; else mx = -1; int limit = MIN(n,10); for(int i = 1;i &lt;= limit; ++i) mx = maxnum(mx,cost[i]+mem_cut_rod(cost,n-i,mem)); //后面的内容和递归型是一样的 mem[n] = mx; //储存计算出的新值 return mx; } 逆拓扑序DP（自底向上） 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 int bottom_cut_rod(int *cost,int n) { int mem[MEM_LEN+1]; //MEM_LEN = n，设置标记数组 mem[0] = 0; //i,j将从1开始，这里收益是0 for(int i = 1; i &lt;= n; ++i) //从第一个问题开始求解 { int mx = -1; int limit = MIN(i,10); for(int j = 1;j &lt;= limit; ++j) mx = maxnum(mx,cost[j] + mem[i-j]); //求解最小的问题 mem[i] = mx; } return mem[n]; } 我们可以看到，2,3 的解法复杂度均为O(n^2)。]]></description>
+</item>
+<item>
+    <title>[BigData]大数据算法</title>
+    <link>http://chestnutheng.github.io/drafts/big_data_1/</link>
+    <pubDate>Mon, 01 Jan 0001 00:00:00 &#43;0000</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/drafts/big_data_1/</guid>
+    <description><![CDATA[水库抽样 问题描述 Input：一组数据
+Output：这组数据的K个均匀抽样
+要求： 扫描一次 空间复杂度o(k) 扫描到前n个数字时，保存当前数据的均匀抽样 实现
+收到第i个元素t时，以k/i的概率随机替换抽样数组ans[]中的元素 证明
+均匀：
+$$\frac{k}{i}\times(1-\frac{1}{i+1})\times(1-\frac{1}{i+2})\times\dots\times(1-\frac{1}{n})=\frac{k}{n}$$ 实现代码 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 #include &lt;iostream&gt; #include &lt;cstdlib&gt; #include &lt;ctime&gt; using namespace std; int random(int min ,int max) { return (min+(rand()%(max-min+1))); } int main() { srand(unsigned(time(0))); int k; int i; cout &lt;&lt; &#34;Input k:&#34; ; cin &gt;&gt; k; double *ans = new double[k+1]; double input; cout &lt;&lt; &#34;Input k numbers:&#34; &lt;&lt; endl; for(i = 1;i &lt;= k; ++i) { cin &gt;&gt; ans[i]; } cout &lt;&lt; &#34;Input stream numbers:(q to quit)&#34; &lt;&lt; endl; while(true) { int j = random(1,i); if(!]]></description>
+</item>
+</channel>
+</rss>

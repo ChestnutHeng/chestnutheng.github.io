@@ -1,0 +1,77 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>AUPE - Tag - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/tags/aupe/</link>
+        <description>AUPE - Tag - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Thu, 31 Oct 2019 17:25:36 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/tags/aupe/" rel="self" type="application/rss+xml" /><item>
+    <title>[Linux]文件和零拷贝</title>
+    <link>http://chestnutheng.github.io/linux_io/</link>
+    <pubDate>Thu, 31 Oct 2019 17:25:36 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/linux_io/</guid>
+    <description><![CDATA[文件 文件描述符 文件描述符：在Linux中，所有的文件都是通过文件描述符引用。fd是一个非负整数。按照惯例，标准输入的fd是0，标准输出的fd是1，标准错误的fd是2。分别作为STDIN_FILENO、STDOUT_FILENO、STDERR_FILENO定义在unistd中。 文件描述符的上限：fd的范围是 0 ~ OEPN_MAX-1 。OPEN_MAX一般是20或者64。这代表一个进程最多打开19或63个文件。 文件内核API 文件的打开：int open(const char *pathname, int flags)参数填上要打开的文件的名字（甚至可以不存在），会返回打开的fd。下面是一些常用的选项： 1 2 3 4 5 6 O_APPEND 文件将以追加模式打开，每次写操作之前，文件偏移量都会置于文件末尾。 O_CREAT 创建文件。如果文件已经存在，则会直接打开。 O_EXCL 和上面的O_CREAT联用时，表示如果文件已经存在，就会失败。可以保证多进程同时创建文件的原子操作。 O_SYNC 打开文件用于同步I/O。在数据写到磁盘之前写操作不会完成；一般的读操作已是同步的，所以这个标志对读操作没有影响。 O_NONBLOCK 如果可以，文件将在非阻塞模式下打开。任何其它操作都不会使该进程在I/O中阻塞。这种情况可能只用于FIFO。 O_DIRECT 打开文件用于直接I/O。将会绕过缓冲区操作。 文件的关闭：int close(int fd) 关闭一个文件会释放上面所有的记录锁。一个进程终止后，内核会自动关闭它打开的所有文件。 文件定位： off_t lseek(int fd, off_t offset, int whence) 参数whence指定了偏移地址（开始点SEEK_SET 当前点SEEK_CUR 结束点SEET_END），另一个参数offset是从参考点开始的偏移量（可正可负）。返回新的偏移地址。 空洞文件：如果写入一部分之后lseek到后面去写入，中间就会产生一个空洞，实际不占用磁盘大小。 文件读取：ssize_t read(int fd, void *buf, size_t nbytes) 返回读取到的字节数。下面的情况可能使得读取到的字节数少于需要的字节数： 1)再读这么多就到了文件尾 2)读网络缓冲区读完 3)读FIFO管道包含的字节少于需要的长度 4)读终端设备，一次一行 文件写入：ssize_t write(int fd, const void* buf, size_t nbytes) 返回写入的字节数。一般和nbytes相同。 文件属性编辑：int fcntl(int fd, int cmd, .]]></description>
+</item>
+<item>
+    <title>[Linux]Linux socket API</title>
+    <link>http://chestnutheng.github.io/socket/</link>
+    <pubDate>Mon, 21 Oct 2019 17:45:09 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/socket/</guid>
+    <description><![CDATA[创建和关闭 int socket(int domain, int type, int protocol) 创建一个socket。
+domain 指定了通信的特性。AF_UNIX Unix域，AF_INET IPv4域。 AF_INET6 IPv6域。
+type 指定了连接的类型。
+SOCK_STREAM 有序、可靠、双向、面向连接的字节流 TCP
+SOCK_DGRAM 不可靠、无连接、固定长度的报文 UDP
+SOCK_SEQPACKET 固定长度、有序、可靠、双向、面向连接的字节流
+protocol 为0时，选择指定域的默认协议。AF_INET域的SOCK_STREAM默认的协议为TCP，SOCK_DGRAM则为UDP。还有IPPROTO_ICMP、IPPROTO_IP、IPPROTO_RAW等。SOCK_STREAM提供字节流服务，所以程序分不出报文的界限。
+int shutdown(int socketfd, int how) 关闭一个socket。
+套接字函数是双向的。可以用这个函数关闭套接字的某个方向的IO。 how是SHUT_RD表示关闭读端，无法从套接字读取数据。SHUT_WR是关闭写端，无法向套接字写入数据。SHUT_RDWR无法读也无法写。 close()是一个fd的通用释放函数。他和shutdown有何不同？1) close要等所有的活动引用关闭后才释放套接字。这使得dup之后的套接字必须等待所有的引用释放。但是shutdown和引用fd数量无关。2)shutdown可以方便地关闭读写的任何一端。 网络地址 地址的结构体 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 // Linux 套接字 // 这是Linux定义的一个通用结构。所有地址都可以强转为这个结构体，比如IPV4、IPV6等，便于使用。 struct sockaddr { u_short sa_family; /* address family */ char sa_data[14]; /* up to 14 bytes of direct address */ }; // IPv4 地址 // 1.]]></description>
+</item>
+<item>
+    <title>[Linux]进程间通信</title>
+    <link>http://chestnutheng.github.io/ipc/</link>
+    <pubDate>Thu, 01 Aug 2019 20:26:09 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/ipc/</guid>
+    <description><![CDATA[管道 管道是进程间通信的最古老方式。它通过共享文件来完成进程间的通信。它有两个局限性：
+它是半双工的。数据只能从一个进程流向另一个进程。 通信的进程之间必须另一个进程是fork出来的。通常，一个进程会创建一个管道，然后执行fork，这样管道就会在两个进程之间共享。
+FIFO解决了第一种局限性，Unix域套接字解决了第二种。我们先来看管道。 int pipe(int pipefd[2]);管道由pipe函数创建。
+参数pipefd是一个两个元素的数组。pipefd[0]用来读，pipefd[1]用来写。 成功返回0 。失败返回-1并设置errno。 单进程的管道没有任何用处。在这个函数之后一般会fork，然后一个进程来写pipefd[1]，一个进程来读pipefd[0]。他们的另一个fd元素将会被关闭。 下面是一段实例, 父进程通过管道向子进程传递了信息，子进程接收并把他们输出：
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 #include &#34;apue.h&#34; int main(void) { int	n; int	fd[2]; pid_t	pid; char	line[MAXLINE]; if (pipe(fd) &lt; 0) err_sys(&#34;pipe error&#34;); if ((pid = fork()) &lt; 0) { err_sys(&#34;fork error&#34;); } else if (pid &gt; 0) {	/* parent */ close(fd[0]); write(fd[1], &#34;hello world\n&#34;, 12); } else {	/* child */ close(fd[1]); n = read(fd[0], line, MAXLINE); write(STDOUT_FILENO, line, n); } exit(0); } FILE *popen(const char *command, const char *type) 函数popen执行一个命令，然后返回这个命令的文件指针。]]></description>
+</item>
+<item>
+    <title>[Linux]高级IO</title>
+    <link>http://chestnutheng.github.io/linux_epoll/</link>
+    <pubDate>Wed, 31 Jul 2019 20:20:43 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/linux_epoll/</guid>
+    <description><![CDATA[如果有多个IO需要处理 当一个描述符读，然后又写到另一个描述符时，可以用循环的方式访问阻塞io：
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 #include &lt;stdio.h&gt; #include &lt;unistd.h&gt; #define BUF_SIZE 128 int main(){ char buf[BUF_SIZE]; int n; while ( n = read(STDIN_FILENO, buf, BUF_SIZE) &gt; 0) { if (write(STDOUT_FILENO, buf, n) != n){ fprintf(stderr, &#34;%s\n&#34;, &#34;write error!&#34;); break; } } return 0; } 但是如果要从两个fd读的时候，就不能用阻塞io去读了。因为进程阻塞在某个fd的时候，另一个fd即使输入了数据也无法处理。
+比如一个telnet程序的输出有两个来源，用户输入回显和远端回包。如果阻塞在等待远端回包，用户输入就不会有回显了。解决这个问题就几种思路：
+再fork一个进程，每个进程处理一个fd。这看起来很好，但是处理EOF却成了问题。如果子进程先读到EOF，那么子进程终止，返回SIGCHLD给父进程，然后父进程终止。如果父进程读到EOF，父进程就需要通知子进程结束，此时需要额外的信号（如SIGUSER1）. 用两个线程来处理，每个线程一个fd。同样的，处理线程之间的同步也会变的比较复杂。 用非阻塞的io来轮询。先read一个fd，如果没数据立即返回，然后等待若干时间，然后再read下一个fd，直到某个fd有数据读为止。这个方法有两个缺点，一是频繁的read调用浪费了cpu时间，但是大部分时间是没数据读的。二是每次read返回后等待的时间不好确定，太久会读取不及时，太短会使得cpu更加繁忙。 使用异步IO。当fd归属的设备准备好的时候，用信号通知处理进程。这个方法有两个缺点，一是信号在不同的系统上实现不同，移植性较差。二是进程收到的信号只有一种（SIGPOLL或者SIGIO），进程无法分辨是哪个fd。 有没有比较完善的方案？io多路复用来了。这种方案会记录一个我们需要的fd的列表，然后我们去查询，当这个列表中有fd有数据时，查询就会返回这个fd。
+IO多路复用：select int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout); select 函数提供了查询fd状态的能力。我们传入希望监听的fd，内核告诉我们哪些fd已经有事件发生并返回。]]></description>
+</item>
+<item>
+    <title>[Linux]并行编程：进程、线程和同步</title>
+    <link>http://chestnutheng.github.io/pthread/</link>
+    <pubDate>Thu, 25 Jul 2019 15:45:04 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/pthread/</guid>
+    <description><![CDATA[如何进行并行编程？本文给了一些pthead库基本的多进程、多线程API，和详细的样例帮助理解这些API。
+本教程基于AUPE 2013、 perfbook
+Shell中的并行 后台执行 &amp; 通过&amp;符号指定实例在后台运行，然后统一等待结束。
+1 2 3 4 compute_it 1 &gt; 1.out &amp; compute_it 2 &gt; 2.out &amp; wait cat 1.out 2.out 管道 | 对于一个足够大的输入文件来说，grep模式匹配将与sed编辑和sort处理并行运行。
+1 grep &#34;$pattern&#34; | sed -e &#34;s/a/b/&#34; | sort POSIX多进程 下面给出的程序中建立了一个进程，然后修改了x的值并打印，最后父进程等待子进程结束。
+fork int fork()马上创建一个当前进程的子进程。子进程会复制(而不是共享)父进程的堆栈、数据空间、fd。
+如果是父进程，fork返回子进程的pid。如果是子进程，fork返回0。一般用这个区分不同的分支。 fork返回负数表示失败。失败的原因可能有：系统有了太多的进程；系统中用户进程数超过了CHILD_MAX。此时返回负数。 fork后如果不需要父进程的存储空间会立马调用exec。 使用fork一般有两个目的。父进程希望复制自己，或者想执行另外的程序（调用exec） 为了避免拷贝成本，出现了写时拷贝技术(Copy-On-Write, COW)，子进程创建后分享父进程的数据，并把内存区域设置为只读。当需要写数据时再为这块数据创建副本。 vfork int vfork()创建一个子进程，但分享(不复制)父进程的数据。当执行exec时父进程才退出休眠。专为了避免fork的拷贝成本设计。因为share父进程的数据有很大风险，所以man手册里明确说明vfork()之后，子进程只应该调用_exit()或者exec函数族。
+exit void exit(int)退出当前进程。不像return会析构局部变量，弹栈，回到上级函数。如果在子进程的main中调用了return，main会返回两次，导致程序出错。exit不会有这个问题。
+wait pid_t wait(int &amp;status) 阻塞等待任意一个子进程结束
+a)如果子进程都在运行则阻塞
+b)如果一个子进程已经终止，内核向父进程发出了SIGCHLD信号，则获得终止状态并立即返回
+c)成功了返回pid，没有子进程，立即出错返回-1
+d)子进程状态status可以用四个返回bool的宏 WIFEXITED(int)、WIFEXITSIGNALED(int)、WIFSTOPPED(int)、WIFCONTINUED(int)、来判断属于正常、异常、暂停、暂停后继续的状态。此外还有对应的WEIXTSTATUS(int)返回子进程exit函数的参数、WTERMSIG(int)返回信号编号、WCOREDUMP(int）返回是否生成coredump等。
+pid_t waitpid(pid_t pid, int &amp;status, int option)等待指定的pid的子进程结束。]]></description>
+</item>
+</channel>
+</rss>

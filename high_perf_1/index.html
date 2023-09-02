@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>[后台]服务端高性能架构之道（系统和服务篇） - 子恒的博客</title><meta name="Description" content="能不能扛得住xx流量？能不能P99达到x毫秒？某操作能不能立即生效？某服务CPU飙升了，某服务OOM了，某服务超时率暴涨了？这些灵魂的质问，其实就是在保障服务端的高并发、高性能、高可用、高一致性等等，是我们服务端同学必备的扎实基本功。"><meta property="og:title" content="[后台]服务端高性能架构之道（系统和服务篇）" />
+<meta property="og:description" content="能不能扛得住xx流量？能不能P99达到x毫秒？某操作能不能立即生效？某服务CPU飙升了，某服务OOM了，某服务超时率暴涨了？这些灵魂的质问，其实就是在保障服务端的高并发、高性能、高可用、高一致性等等，是我们服务端同学必备的扎实基本功。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://chestnutheng.github.io/high_perf_1/" /><meta property="og:image" content="http://chestnutheng.github.io/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-09-28T21:13:08+08:00" />
+<meta property="article:modified_time" content="2021-09-28T21:13:12+08:00" /><meta property="og:site_name" content="子恒的博客" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="http://chestnutheng.github.io/logo.png"/>
+
+<meta name="twitter:title" content="[后台]服务端高性能架构之道（系统和服务篇）"/>
+<meta name="twitter:description" content="能不能扛得住xx流量？能不能P99达到x毫秒？某操作能不能立即生效？某服务CPU飙升了，某服务OOM了，某服务超时率暴涨了？这些灵魂的质问，其实就是在保障服务端的高并发、高性能、高可用、高一致性等等，是我们服务端同学必备的扎实基本功。"/>
+<meta name="application-name" content="我的网站">
+<meta name="apple-mobile-web-app-title" content="我的网站"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://chestnutheng.github.io/high_perf_1/" /><link rel="prev" href="http://chestnutheng.github.io/go/" /><link rel="next" href="http://chestnutheng.github.io/%E5%B9%BF%E5%91%8A%E4%B8%9A%E5%8A%A1%E7%9A%84%E5%89%8D%E4%B8%96%E4%BB%8A%E7%94%9F/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[后台]服务端高性能架构之道（系统和服务篇）",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/chestnutheng.github.io\/high_perf_1\/"
+        },"genre": "posts","keywords": "后台, 服务端高性能架构之道","wordcount":  760 ,
+        "url": "http:\/\/chestnutheng.github.io\/high_perf_1\/","datePublished": "2021-09-28T21:13:08+08:00","dateModified": "2021-09-28T21:13:12+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "子恒"
+            },"description": "能不能扛得住xx流量？能不能P99达到x毫秒？某操作能不能立即生效？某服务CPU飙升了，某服务OOM了，某服务超时率暴涨了？这些灵魂的质问，其实就是在保障服务端的高并发、高性能、高可用、高一致性等等，是我们服务端同学必备的扎实基本功。"
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="子恒的博客">子恒的博客</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/"> 主页 </a><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/freinds/"> 友链 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="子恒的博客">子恒的博客</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        Cancel
+                    </a>
+                </div><a class="menu-item" href="/" title="">主页</a><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/freinds/" title="">友链</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><div class="search-dropdown desktop">
+        <div id="search-dropdown-desktop"></div>
+    </div>
+    <div class="search-dropdown mobile">
+        <div id="search-dropdown-mobile"></div>
+    </div><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">[后台]服务端高性能架构之道（系统和服务篇）</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="about" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>子恒</a></span>&nbsp;<span class="post-category">included in <a href="/categories/%E5%90%8E%E5%8F%B0/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>后台</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2021-09-28">2021-09-28</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;760 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;4 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#克服系统瓶颈">克服系统瓶颈</a>
+      <ul>
+        <li><a href="#零拷贝">零拷贝</a>
+          <ul>
+            <li><a href="#使用mmap">使用mmap</a></li>
+            <li><a href="#使用sendfilesplice">使用sendfile/splice</a></li>
+            <li><a href="#对于我们的启发">对于我们的启发</a></li>
+          </ul>
+        </li>
+        <li><a href="#无锁">无锁</a>
+          <ul>
+            <li><a href="#无锁的替代方案">无锁的替代方案</a>
+              <ul>
+                <li><a href="#单线程">单线程</a></li>
+                <li><a href="#乐观锁">乐观锁</a></li>
+                <li><a href="#无锁结构">无锁结构</a></li>
+              </ul>
+            </li>
+            <li><a href="#更小的锁粒度">更小的锁粒度</a>
+              <ul>
+                <li><a href="#原子操作">原子操作</a></li>
+                <li><a href="#细粒度锁">细粒度锁</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li><a href="#序列化">序列化</a>
+          <ul>
+            <li><a href="#序列化的类型">序列化的类型</a></li>
+            <li><a href="#性能">性能</a>
+              <ul>
+                <li><a href="#字节大小">字节大小</a></li>
+                <li><a href="#速度和资源损耗">速度和资源损耗</a></li>
+              </ul>
+            </li>
+            <li><a href="#选型">选型</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li><a href="#结合服务特性">结合服务特性</a>
+      <ul>
+        <li><a href="#池化-预先分配和复用">池化-预先分配和复用</a>
+          <ul>
+            <li><a href="#内存池">内存池</a>
+              <ul>
+                <li><a href="#go的内存池">Go的内存池</a></li>
+                <li><a href="#bigcache的内存池">Bigcache的内存池</a></li>
+                <li><a href="#对于我们的启发-1">对于我们的启发</a></li>
+              </ul>
+            </li>
+            <li><a href="#对象池">对象池</a></li>
+            <li><a href="#连接池">连接池</a></li>
+            <li><a href="#线程池">线程池</a></li>
+          </ul>
+        </li>
+        <li><a href="#缓存-空间换时间">缓存-空间换时间</a></li>
+        <li><a href="#异步-同时执行">异步-同时执行</a>
+          <ul>
+            <li><a href="#业务流程">业务流程</a></li>
+            <li><a href="#并发模型">并发模型</a>
+              <ul>
+                <li><a href="#共享内存">共享内存</a></li>
+                <li><a href="#actor模型">Actor模型</a></li>
+                <li><a href="#csp">CSP</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><p>如果你在服务端的工区，常常会听到同学们激烈的讨论，包括能不能扛得住xx流量？能不能P99达到x毫秒？某操作能不能立即生效？某服务CPU飙升了，某服务OOM了，某服务超时率暴涨了？<br>
+这些灵魂的质问，其实就是在保障服务端的高并发、高性能、高可用、高一致性等等，是我们服务端同学必备的扎实基本功。</p>
+<h1 id="克服系统瓶颈">克服系统瓶颈</h1>
+<p>服务端的代码都跑在各种版本的Linux之上，所以高性能的第一步要和操作系统打交道。我们的服务需要通过操作系统进行I/O、CPU、内存等等设备的使用，同时在使用各种系统调用时避免各种资源的开销过大。</p>
+<h2 id="零拷贝">零拷贝</h2>
+<p>认识零拷贝之前，我们先要对Linux系统I/O机制有一定的了解。当我们执行一个<a href="https://man7.org/linux/man-pages/man2/write.2.html" target="_blank" rel="noopener noreffer ">write(2)</a>或者<a href="https://man7.org/linux/man-pages/man2/read.2.html" target="_blank" rel="noopener noreffer ">read(2)</a>的时候（或者recv和send），什么时候操作系统会执行读写操作？什么时候又最终会落到磁盘上？<br>
+以一个简单的echo服务器为例，我们模拟下每天都在发生的请求和回包：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="n">sockfd</span> <span class="o">=</span> <span class="nf">socket</span><span class="p">(...);</span> 					<span class="c1">//打开socket
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">buffer</span> <span class="o">=</span> <span class="n">new</span> <span class="nf">buffer</span><span class="p">(...);</span> 				<span class="c1">//创建buffer 
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">while</span><span class="p">((</span><span class="n">clientfd</span> <span class="o">=</span> <span class="nf">accept</span><span class="p">(</span><span class="n">socketfd</span><span class="p">...)){</span>	<span class="c1">// 接收一个请求
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nf">read</span><span class="p">(</span><span class="n">clientfd</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="p">...);</span>        <span class="c1">//从文件内容读到buffer中 
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nf">write</span><span class="p">(</span><span class="n">clientfd</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="p">...);</span>       <span class="c1">//将buffer中的内容发送到网络
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>	
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>看一下这段代码的拷贝流程（下图）：</p>
+<ol>
+<li>数据包到达网卡，网卡进行DMA操作，把网卡寄存器的数据拷贝到内核缓冲区</li>
+<li>CPU把内核缓冲区的数据拷贝到用户空间的缓冲区</li>
+<li>用户空间处理buffer中的数据（此处不处理）</li>
+<li>CPU把用户空间的缓冲区的数据拷贝到内核缓冲区</li>
+<li>网卡进行DMA操作，把内核缓冲区的数据拷贝到网卡寄存器，发送出去</li>
+</ol>
+<p>整个过程触发了4次拷贝（2次CPU，2次DMA），2次系统调用（对应4次上下文切换）<br>
+（注：DMA(Direct Memory Access)， I/O 设备直接访问内存的一个通道，可以完成数据拷贝，使得CPU 不再参与任何拷贝相关的事情，现在几乎所有的设备都有DMA）</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/zerocopy1.jpg"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/zerocopy1.jpg, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/zerocopy1.jpg 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/zerocopy1.jpg 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/zerocopy1.jpg"
+        title="norm copy" /></p>
+<h3 id="使用mmap">使用mmap</h3>
+<p>mmap可以把用户空间的内存地址映射到内核空间，这样对用户空间的数据操作可以反映到内核空间，省去了用户空间的一次拷贝：</p>
+<ol>
+<li>应用调用mmap，和内核共享缓冲区（只需一次）</li>
+<li>数据包到达网卡，网卡进行DMA操作，把网卡寄存器的数据拷贝到内核缓冲区</li>
+<li>CPU把接收到的内核缓冲区的数据拷贝到发送的内核缓冲区</li>
+<li>网卡进行DMA操作，把内核缓冲区的数据拷贝到网卡寄存器，发送出去</li>
+</ol>
+<p>整个过程触发了<strong>3次拷贝</strong>（1次CPU，2次DMA），2次系统调用（对应4次上下文切换）<br>
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/zerocopy2.jpg"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/zerocopy2.jpg, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/zerocopy2.jpg 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/zerocopy2.jpg 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/zerocopy2.jpg"
+        title="norm copy" /></p>
+<h3 id="使用sendfilesplice">使用sendfile/splice</h3>
+<p>Linux 内核版本 2.1 中实现了一个函数<code>sendfile(2)</code>：</p>
+<ol>
+<li>他把<code>read(2)</code>和<code>write(2)</code>合二为一，成为一次系统调用，实现了把一个文件读取并写到另一个文件的语义</li>
+<li>系统调用中不再切换回用户态，而是在内核空间中直接把数据拷贝过去（2.4 之后这一步支持了DMA拷贝，实现了CPU零拷贝）</li>
+</ol>
+<p>我门看下使用sendfile之后的流程：<br>
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/zerocopy3_2.jpg"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/zerocopy3_2.jpg, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/zerocopy3_2.jpg 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/zerocopy3_2.jpg 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/zerocopy3_2.jpg"
+        title="norm copy" /><br>
+整个过程触发了<strong>3次拷贝</strong>（0次CPU，3次DMA），<strong>1次系统调用</strong>（对应2次上下文切换）</p>
+<p>Linux 内核版本 2.6 中实现了一个函数<code>splice(2)</code>，类似sendfile，但是接收/发送方必须有一个文件是管道，通过管道的方式连接发送方和接收方的内核缓冲区，不再需要拷贝（0次CPU，2次DMA，1次系统调用）</p>
+<p>transferTo（内部调用sendfile）的性能对比：<br>
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/zerocopy_prof.jpeg"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/zerocopy_prof.jpeg, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/zerocopy_prof.jpeg 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/zerocopy_prof.jpeg 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/zerocopy_prof.jpeg"
+        title="copy" /></p>
+<h3 id="对于我们的启发">对于我们的启发</h3>
+<ol>
+<li>零拷贝能带来显著的性能提升，目前kafka，nginx默认都开启了零拷贝（大文件传输可以提升60%以上）</li>
+<li>部分场景对时效性或者拷贝次数有严格的要求时（比如数据库、消息队列的实现），可以考虑用mmap或者直接I/O，配合自己实现的缓存替代操作系统的缓存方案</li>
+<li>拷贝很可能是CPU消耗的主要原因，比如业务代码中的大结构体复制，所以我们要谨慎控制复制操作，尽量使用指针或者引用类型</li>
+</ol>
+<h2 id="无锁">无锁</h2>
+<p>多线程、多协程、多机器、多地部署是我们服务端实现高并发和强容灾的必备解决方案，这些方案都有一个共性，把数据或者过程分而治之。问题在于，几乎所有的并发场景都会涉及到数据竞争，涉及到共享数据的地方就会涉及到锁，协程有锁，线程有锁，多机部署的服务有分布式锁。<br>
+服务中的锁会带来很多问题，随着并发数量的加大，会带来更大的上下文切换、用户态切换的开销，出现CPU飙升且都在做一些无用功的现象，也会导致性能快速下降，甚至还不如单线程模型的效率高。除此以外，各种锁还会带来很高的复杂度，和并发的复杂度相叠加，非常容易出现死锁和各种并发问题。</p>
+<p>因此，我们使用锁一定是去解决某种问题而去用的，能无锁就无锁，能轻量级就轻量级。</p>
+<h3 id="无锁的替代方案">无锁的替代方案</h3>
+<h4 id="单线程">单线程</h4>
+<p>最简单的方案就是单线程reactor模式，redis、nginx都用了这种方式来避免加锁带来的损耗和复杂性，适用于功能简单的场景。<br>
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/redissingle.png"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/redissingle.png, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/redissingle.png 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/redissingle.png 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/redissingle.png"
+        title="redis " /><br>
+如图，redis的单线程模型有这么几个部分：</p>
+<ol>
+<li>通过I/O多路复用组件来接收请求</li>
+<li>把请求解析为任务放入一个串行的任务队列（队列是无锁的）</li>
+<li>事件分派器分发事件，若干个处理/回复/应答的事件处理器会处理</li>
+</ol>
+<p>如果把事件分派器设计成多消费者模型呢？这时候队列就要加锁了</p>
+<h4 id="乐观锁">乐观锁</h4>
+<p>CAS机制：<br>
+三个变量：进行比较的原值A，需要读写的内存位置V，拟写入的新值B</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">CompareAndSwapInt64</span><span class="p">(</span><span class="nx">addr</span> <span class="o">*</span><span class="kt">int64</span><span class="p">,</span> <span class="nx">old</span><span class="p">,</span> <span class="nx">new</span> <span class="kt">int64</span><span class="p">)</span> <span class="p">(</span><span class="nx">swapped</span> <span class="kt">bool</span><span class="p">)</span> 
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>如果内存位置V的值与预期原值A相匹配，那么处理器会自动将该位置值更新为新值B。否则处理器不做任何操作。<br>
+需要注意的是，CAS失败的时候需要重试，相当于在用户态自旋，所以在频繁写入的场景CAS并不适合，会有较高的性能损耗</p>
+<p><strong>例子1</strong>：数据库乐观锁</p>
+<ol>
+<li>取出记录时，获取当前version</li>
+<li>更新时，带上这个version并校验，version不相等则失败，version相等则更新业务字段并给version+1<br>
+<code>update table set name = 'Aron', version = version + 1 where id = #{id} and version = #{version};</code></li>
+</ol>
+<p><strong>例子2</strong>：netpoll的轻量级锁，是朴素的if锁的加强版</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// 有bug的轻量级锁
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">if</span> <span class="nx">locker</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">locker</span> <span class="p">=</span> <span class="mi">1</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">do</span> <span class="nx">somthing</span><span class="o">...</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// netpoll的轻量级锁
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">type</span> <span class="nx">locker</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">   <span class="c1">// keychain use for lock/unlock/stop operation by who.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>   <span class="c1">// 0 means unlock, 1 means locked
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>   <span class="nx">keychain</span> <span class="p">[</span><span class="nx">total</span><span class="p">]</span><span class="kt">int32</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">l</span> <span class="o">*</span><span class="nx">locker</span><span class="p">)</span> <span class="nf">lock</span><span class="p">(</span><span class="nx">k</span> <span class="nx">key</span><span class="p">)</span> <span class="p">(</span><span class="nx">success</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">   <span class="k">return</span> <span class="nx">atomic</span><span class="p">.</span><span class="nf">CompareAndSwapInt32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">l</span><span class="p">.</span><span class="nx">keychain</span><span class="p">[</span><span class="nx">k</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">l</span> <span class="o">*</span><span class="nx">locker</span><span class="p">)</span> <span class="nf">unlock</span><span class="p">(</span><span class="nx">k</span> <span class="nx">key</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">   <span class="nx">atomic</span><span class="p">.</span><span class="nf">StoreInt32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">l</span><span class="p">.</span><span class="nx">keychain</span><span class="p">[</span><span class="nx">k</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">l</span> <span class="o">*</span><span class="nx">locker</span><span class="p">)</span> <span class="nf">isUnlock</span><span class="p">(</span><span class="nx">k</span> <span class="nx">key</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">   <span class="k">return</span> <span class="nx">atomic</span><span class="p">.</span><span class="nf">LoadInt32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">l</span><span class="p">.</span><span class="nx">keychain</span><span class="p">[</span><span class="nx">k</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="无锁结构">无锁结构</h4>
+<p>开源社区用CAS、搭建了很多无锁的数据结构，包括无锁链表，无锁跳表，无锁队列，无锁的map，无锁的LRU，ringbuffer等等。</p>
+<ul>
+<li>MemSQL, RocksDB 用Lock Free Skip List做索引</li>
+<li>SQL SERVER用Lock Free B+ Tree做索引</li>
+<li>OceanBase 用了大量的无锁queue，无锁容器（B+tree，slide window，hashmap）</li>
+</ul>
+<p>除此之外，还有很多近似无锁的结构，大部分情况下都是不需要加锁的：</p>
+<ul>
+<li>go的sync.Map</li>
+<li>java的新版cocurrent map</li>
+</ul>
+<p>我们用一个例子来感受下无锁结构的思维：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// 一个无锁队列的入队操作
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">void</span> <span class="nf">queue_enqueue</span><span class="p">(</span><span class="n">Queue</span> <span class="o">*</span><span class="n">q</span><span class="p">,</span> <span class="n">gpointer</span> <span class="n">data</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">Node</span> <span class="o">*</span><span class="n">node</span><span class="p">,</span> <span class="o">*</span><span class="n">tail</span><span class="p">,</span> <span class="o">*</span><span class="n">next</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">node</span> <span class="o">=</span> <span class="nf">g_slice_new</span><span class="p">(</span><span class="n">Node</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">node</span><span class="o">-&gt;</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">node</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="c1">// 实际上就做了两步：
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">// tail-&gt;next = node
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">// q-&gt;tail = node
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">while</span> <span class="p">(</span><span class="n">TRUE</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">tail</span> <span class="o">=</span> <span class="n">q</span><span class="o">-&gt;</span><span class="n">tail</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">next</span> <span class="o">=</span> <span class="n">tail</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">tail</span> <span class="o">!=</span> <span class="n">q</span><span class="o">-&gt;</span><span class="n">tail</span><span class="p">)</span>   <span class="c1">// tail被修改，重试
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>            <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">next</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>    <span class="c1">// next被其他线程增加了新节点，更新tail并重试
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>            <span class="nf">CAS</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">tail</span><span class="p">,</span> <span class="n">tail</span><span class="p">,</span> <span class="n">next</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">            <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="nf">CAS</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tail</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">,</span> <span class="n">null</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>   <span class="c1">// node被添加到队尾，成功
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">CAS</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">tail</span><span class="p">,</span> <span class="n">tail</span><span class="p">,</span> <span class="n">node</span><span class="p">);</span>    <span class="c1">// 给队尾赋值
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>有兴趣可以看看《C++ Concurrency In Action》里面有无锁结构的入门。还有一些论文可以参考<br>
+<a href="https://www.codeproject.com/Articles/153898/Yet-another-implementation-of-a-lock-free-circul" target="_blank" rel="noopener noreffer ">Yet another implementation of a lock-free circular array queue</a></p>
+<h3 id="更小的锁粒度">更小的锁粒度</h3>
+<h4 id="原子操作">原子操作</h4>
+<p>很多原子操作是CPU指令集直接支持的，大部分语言都会支持一些原子原语，所以会比加锁要快一些（约10%-20%），比如Go里面的：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// 加减
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="nf">AddInt32</span><span class="p">(</span><span class="nx">addr</span> <span class="o">*</span><span class="kt">int32</span><span class="p">,</span> <span class="nx">delta</span> <span class="kt">int32</span><span class="p">)</span> <span class="p">(</span><span class="nx">new</span> <span class="kt">int32</span><span class="p">){}</span>
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">AddUintptr</span><span class="p">(</span><span class="nx">addr</span> <span class="o">*</span><span class="kt">uintptr</span><span class="p">,</span> <span class="nx">delta</span> <span class="kt">uintptr</span><span class="p">)</span> <span class="p">(</span><span class="nx">new</span> <span class="kt">uintptr</span><span class="p">){}</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// CAS
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="nf">CompareAndSwapInt64</span><span class="p">(</span><span class="nx">addr</span> <span class="o">*</span><span class="kt">int64</span><span class="p">,</span> <span class="nx">old</span><span class="p">,</span> <span class="nx">new</span> <span class="kt">int64</span><span class="p">)</span> <span class="p">(</span><span class="nx">swapped</span> <span class="kt">bool</span><span class="p">){}</span>
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">CompareAndSwapPointer</span><span class="p">(</span><span class="nx">addr</span> <span class="o">*</span><span class="nx">unsafe</span><span class="p">.</span><span class="nx">Pointer</span><span class="p">,</span> <span class="nx">old</span><span class="p">,</span> <span class="nx">new</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nx">Pointer</span><span class="p">)</span> <span class="p">(</span><span class="nx">swapped</span> <span class="kt">bool</span><span class="p">){}</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// Load/Store
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="nf">LoadInt64</span><span class="p">(</span><span class="nx">addr</span> <span class="o">*</span><span class="kt">int64</span><span class="p">)</span> <span class="p">(</span><span class="nx">val</span> <span class="kt">int64</span><span class="p">){}</span>
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">LoadPointer</span><span class="p">(</span><span class="nx">addr</span> <span class="o">*</span><span class="nx">unsafe</span><span class="p">.</span><span class="nx">Pointer</span><span class="p">)</span> <span class="p">(</span><span class="nx">val</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nx">Pointer</span><span class="p">){}</span>
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">StoreInt64</span><span class="p">(</span><span class="nx">addr</span> <span class="o">*</span><span class="kt">int64</span><span class="p">,</span> <span class="nx">val</span> <span class="kt">int64</span><span class="p">){}</span>
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">StorePointer</span><span class="p">(</span><span class="nx">addr</span> <span class="o">*</span><span class="nx">unsafe</span><span class="p">.</span><span class="nx">Pointer</span><span class="p">,</span> <span class="nx">val</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nx">Pointer</span><span class="p">){}</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// atomic.Value
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">var</span> <span class="nx">config</span> <span class="nx">atomic</span><span class="p">.</span><span class="nx">Value</span>
+</span></span><span class="line"><span class="cl"><span class="nx">config</span><span class="p">.</span><span class="nf">Store</span><span class="p">(</span><span class="nf">loadConfig</span><span class="p">())</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="细粒度锁">细粒度锁</h4>
+<p>以一个场景举例：有一些用户信息放在一个很大的内存hashmap里，大约有100w条数据，会不断有请求对这些用户信息读，偶尔写<br>
+设计1：（map + lock）插入/更新/读取的时候对整个hashmap加锁<br>
+设计2：（shard map+lock）hashmap按照用户id的区间分为10个子hashmap，各自持有一把读写锁，每次操作只锁一个子hashmap<br>
+设计3：（cocurrent map）只有哈希冲突发生的时候才会对某个哈希桶加锁，没发生冲突的时候用CAS插入头结点<br>
+设计4：（sync.Map）两份存储，一份只使用原子操作的数据，和一份冗余了只读数据的加锁数据，实现一定程度上的读写分离，使得大多数读操作和更新操作是原子操作，写入新数据才加锁</p>
+<p>类似mysql的行锁、页锁、表锁，不同的粒度会带来不同的性能，粒度越大，性能越差，粒度越小，实现越复杂</p>
+<h2 id="序列化">序列化</h2>
+<p>序列化是服务端经常用到的操作，无论是数据存储还是数据交互，都需要对对象进行序列化或者反序列化之后才可以使用。同时，序列化也带来了很多的性能问题，序列化较多的服务中约有10~20的CPU消耗在序列化上，所以，序列化的选型也非常重要。</p>
+<h3 id="序列化的类型">序列化的类型</h3>
+<ol>
+<li><strong>语言内置类型</strong>，比如java的 <code>java.io.Serializable</code> ，go的<code>encoding/gob</code>，python的<code>pickle</code> 。这种方法非常方便,可以用很少的额外代码实现内存对象的保存与恢复，且性能非常高。这种方法有几个问题
+<ul>
+<li>与特定的编程语言深度绑定，没办法做到通用，其他语言不可读</li>
+<li>解码过程会把字符串直接实例化为类，会带来安全问题</li>
+<li>数据的版本控制/编解码效率/结构大小往往时候才考虑，不规范</li>
+</ul>
+</li>
+<li><strong>可读的文本类型</strong>，比如json，csv和xml。这些编码是文本格式，所以可以直接阅读，在和外部项目组交流的时候非常直观，容易达成共识。同样的，这些方法也有一些问题：
+<ul>
+<li>没有固定数据格式，有很多歧义，xml和csv不能区分字符串和数字, json不能区分整数和浮点数</li>
+<li>不支持二进制数据，只能通过base64支持，会增大编码大小</li>
+<li>太占地方，不够紧凑</li>
+</ul>
+</li>
+<li><strong>二进制类型</strong>， 比如thrift，protobuf，msgpack。这些编码都需要一个模式定义文档（IDL）,用于约束数据类型和数据的行为。这些方法有一些很好的特性：
+<ul>
+<li>IDL本身就是很好的理解数据格式的文档，而且容易实现版本控制，确保大家用最新的协议</li>
+<li>IDL可以用来生成静态代码，这样就可以在编译时进行类型检查，鲁棒性更高</li>
+<li>IDL中可以写详细的验证规则，比如正则匹配，范围匹配</li>
+<li>更紧凑，字段名只有编号</li>
+</ul>
+</li>
+</ol>
+<h3 id="性能">性能</h3>
+<h4 id="字节大小">字节大小</h4>
+<p>json编码，81个字节</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">     <span class="nt">&#34;userName&#34;</span><span class="p">:</span> <span class="s2">&#34;Martin&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="nt">&#34;favoriteNumber&#34;</span><span class="p">:</span> <span class="mi">1337</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="nt">&#34;interests&#34;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&#34;daydreaming&#34;</span><span class="p">,</span> <span class="s2">&#34;hacking&#34;</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>thrift IDL：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-thrift" data-lang="thrift"><span class="line"><span class="cl"><span class="kd">struct</span><span class="w"> </span><span class="nc">Person</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="mi">1</span><span class="p">:</span><span class="w"> </span><span class="k">required</span><span class="w"> </span><span class="kt">string</span><span class="w">       </span><span class="n">userName</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="mi">2</span><span class="p">:</span><span class="w"> </span><span class="k">optional</span><span class="w"> </span><span class="kt">i64</span><span class="w">          </span><span class="n">favoriteNumber</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="mi">3</span><span class="p">:</span><span class="w"> </span><span class="k">optional</span><span class="w"> </span><span class="kt">list</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span><span class="w"> </span><span class="n">interests</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">}</span><span class="w">
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>thrift编码，34字节<br>
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/marshal1.jpg"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/marshal1.jpg, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/marshal1.jpg 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/marshal1.jpg 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/marshal1.jpg"
+        title="marshal1" /></p>
+<ol>
+<li>没有字段名，字段名用编号来表示</li>
+<li>字段类型和标签号只占用了开头的1个字节</li>
+<li>数据都是采用数据长度+数据内容的表示方式，这样-64~63只用一个字节，-8192~8191只占用一个字节，以此类推</li>
+</ol>
+<h4 id="速度和资源损耗">速度和资源损耗</h4>
+<p>速度 protobuf &gt; thrift &gt; json<br>
+资源损耗  protobuf &lt; thrift &lt; json<br>
+参考benchmark结果：<br>
+<a href="https://github.com/smallnest/gosercomp" target="_blank" rel="noopener noreffer ">https://github.com/smallnest/gosercomp</a><br>
+<a href="https://github.com/alecthomas/go_serialization_benchmarks" target="_blank" rel="noopener noreffer ">https://github.com/alecthomas/go_serialization_benchmarks</a></p>
+<h3 id="选型">选型</h3>
+<p>一般会有三种情况会使用数据的编解码：</p>
+<ol>
+<li>数据库或者其他需要持久化的时候，会把内存对象编码后落入磁盘</li>
+<li>RPC和REST API，客户端对请求编码，服务器对请求解码、响应并进行编码，再由客户端解码</li>
+<li>使用消息队列等异步消息传递的时候，生产者需要编码，消费者需要解码</li>
+</ol>
+<p>我们要考虑几个问题：</p>
+<ol>
+<li>可读性：编码是否要求易读？是否有手动编写编码的情况？是否要在日志中简便打印？是否有多个团队需要理解编码方式？</li>
+<li>性能：是否有频繁的编码行为？编码的对象是不是很大？</li>
+<li>可扩展性：编码是否需要经常修改删除，并向前向后兼容？是否需要支持版本控制？</li>
+<li>跨语言支持：客户端是否可能会是不同的语言和操作系统？</li>
+</ol>
+<p>举例：</p>
+<ol>
+<li>抖音用户的视频点赞消息，每天有上亿条</li>
+<li>抖音某业务需要在数据库中存储extra字段，作为配置信息</li>
+<li>服务端需要提供一个给前端用来查个人主页详情的RPC接口</li>
+</ol>
+<p>除了序列化方式之外呢？</p>
+<ol>
+<li>序列化/反序列化非常耗时，且重复率高的对象可以缓存起来</li>
+<li>即使是json，也有各种针对json场景的极致优化的开源仓库，有时候并不亚于thrift，所以选择lib库很重要</li>
+<li>代码中不要做重复的序列化，业务流程上一个优化远远大于基础库的性能优化</li>
+</ol>
+<h1 id="结合服务特性">结合服务特性</h1>
+<h2 id="池化-预先分配和复用">池化-预先分配和复用</h2>
+<p>大家一定都用过很多种池子，线程池、协程池、内存池、对象池、连接池等等，其实都是一类思想，就是预先创造并锁定一批资源，在随后的业务过程中不断复用。就像我们作为工程师，在PM眼里也是一个开发池；预先招好一定人数定好一个方向，组成一个池子，然后不断复用我们去接一个一个需求（类似任务队列），这样减少了招人成本（类似线程/链接/内存创建销毁）。</p>
+<h3 id="内存池">内存池</h3>
+<p>内存分配的系统调用malloc/new和内存释放的系统调用free/delete，会带来很大的性能损耗，重复分配和释放内存会带来很多的消耗和内存碎片。所以，一些需要手动管理内存的语言（C/C++）发展出了tcmalloc等内存池，自动管理内存的语言或者中间件更是直接内置了内存池的实现，如go，java，memcached等等。</p>
+<h4 id="go的内存池">Go的内存池</h4>
+<p>我们以go的内存管理中内存池的部分为例，看看内存池有哪些思路：<br>
+<a href="https://draveness.me/golang/docs/part3-runtime/ch07-memory/golang-memory-allocator/" target="_blank" rel="noopener noreffer ">Go内存管理</a><br>
+<a href="https://segmentfault.com/a/1190000020338427" target="_blank" rel="noopener noreffer ">Go内存分配那些事</a></p>
+<p>分配者按大小分级：</p>
+<ol>
+<li>Page：操作系统内页的整数倍，一般Page大小是8KB。</li>
+<li>Span：一组连续的Page被称为Span（2^n个），内存管理的基本单位。</li>
+<li>ThreadCache：线程内部的cache，不需要加锁，每种大小的空闲内存块以链表的形式连在一起</li>
+<li>CentralCache：所有线程共享的缓存，和ThreadCache结构相同，但是需要加锁</li>
+<li>PageHeap：PageHeap是堆内存的抽象，PageHeap存的也是若干链表，链表保存的是Span，当CentralCache没有内存的时，会从PageHeap取，把1个Span拆成若干内存块，添加到对应大小的链表中，当CentralCache内存多的时候，会放回PageHeap</li>
+</ol>
+<p>申请者按大小分级：按大小分为</p>
+<ul>
+<li>微对象	(0, 16B)</li>
+<li>小对象	[16B, 32KB]</li>
+<li>大对象	(32KB, +∞)</li>
+</ul>
+<p>小对象：计算对象大小，对应到span class，存入span的空闲内存中。如果内存不够，像CentralCache申请，如果还不够，向PageHeap申请<br>
+大对象：直接向PageHeap申请，如果不够像操作系统申请<br>
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/gomem.png"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/gomem.png, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/gomem.png 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/gomem.png 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/gomem.png"
+        title="mem" /></p>
+<p>总结：Go内存管理的核心在于分级管理（线程本地、线程共用、堆内存、系统内存逐级申请）和分对象管理（对微对象，小对象，大对象做不同的策略），大而全的完成了语言级内存池的任务</p>
+<h4 id="bigcache的内存池">Bigcache的内存池</h4>
+<p>我们在优化内存申请/释放时间的时候，如果是针对有内存管理的语言，其实也是在优化gc效率。下面通过Bigcache看下内存池的另一种思路：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">// cacheShard可以被认为是一个map的一个分片
+</span></span><span class="line"><span class="cl">type cacheShard struct {
+</span></span><span class="line"><span class="cl">  hashmap     map[uint64]uint32        // key对应的value在entries中的起始位置
+</span></span><span class="line"><span class="cl">  entries     queue.BytesQueue         // 实际是[]byte，新数据来了后copy到尾部
+</span></span><span class="line"><span class="cl">}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>这里面有几个点：</p>
+<ol>
+<li>每个<code>cacheShard</code>都是一个map中的一个分片，加锁的时候对分片上读写锁</li>
+<li>属性<code>hashmap</code>存放的是key对应的值的偏移量，而不是值的指针（避免被gc扫描，性能能快出40倍）</li>
+<li><code>entries</code>是一个非常大的byte数组，存放了map中所有的元素。新加的元素会被放置在byte数组尾部</li>
+<li>删除元素后<code>entries</code>里会有很多空洞</li>
+</ol>
+<h4 id="对于我们的启发-1">对于我们的启发</h4>
+<p>如果我们在Go里面需要设计一个内存缓存，即便是语言层面给我们提供了兜底的内存池，但是还是需要结合使用场景进行缜密的考虑和设计：</p>
+<ol>
+<li>直接用go的map：实现最简单，性能最差</li>
+<li>改造go的map：改成shard map+读写锁的方式，实现复杂，性能一般</li>
+<li>使用sync.Map：开箱即用，实现简单，但是性能和shard map+读写锁差距不明显</li>
+<li>使用bigcache或者groupcache：能兼顾锁粒度、gc等多方面的损耗，性能较高</li>
+</ol>
+<h3 id="对象池">对象池</h3>
+<p>go提供了语言级对象池<code>sync.Pool</code> ，可以将暂时不用的对象缓存起来，待下次需要的时候直接使用，不用再次经过内存分配，复用对象的内存，减轻 GC 的压力，提升系统的性能。一般用于多协程需要重复构建的对象，new的代价非常大的时候，我们会使用对象池做对象级的缓存。<br>
+一些使用了对象池的组件：</p>
+<ol>
+<li><code>fmt</code>包和<code>encoding/json</code>包</li>
+<li>开源框架<code>gin</code>中的<code>context</code></li>
+<li>RPC框架<code>kitex</code>，比如里面的<code>RPCInfo</code></li>
+</ol>
+<p>以gin为例，看看他是如何复用对象的：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">engine</span><span class="p">.</span><span class="nx">pool</span><span class="p">.</span><span class="nx">New</span> <span class="p">=</span> <span class="kd">func</span><span class="p">()</span> <span class="kd">interface</span><span class="p">{}</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">engine</span><span class="p">.</span><span class="nf">allocateContext</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">engine</span> <span class="o">*</span><span class="nx">Engine</span><span class="p">)</span> <span class="nf">allocateContext</span><span class="p">()</span> <span class="o">*</span><span class="nx">Context</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">Context</span><span class="p">{</span><span class="nx">engine</span><span class="p">:</span> <span class="nx">engine</span><span class="p">,</span> <span class="nx">KeysMutex</span><span class="p">:</span> <span class="o">&amp;</span><span class="nx">sync</span><span class="p">.</span><span class="nx">RWMutex</span><span class="p">{}}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// ServeHTTP conforms to the http.Handler interface.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">engine</span> <span class="o">*</span><span class="nx">Engine</span><span class="p">)</span> <span class="nf">ServeHTTP</span><span class="p">(</span><span class="nx">w</span> <span class="nx">http</span><span class="p">.</span><span class="nx">ResponseWriter</span><span class="p">,</span> <span class="nx">req</span> <span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">c</span> <span class="o">:=</span> <span class="nx">engine</span><span class="p">.</span><span class="nx">pool</span><span class="p">.</span><span class="nf">Get</span><span class="p">().(</span><span class="o">*</span><span class="nx">Context</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">c</span><span class="p">.</span><span class="nx">writermem</span><span class="p">.</span><span class="nf">reset</span><span class="p">(</span><span class="nx">w</span><span class="p">)</span>    <span class="c1">//复用对象要清空
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">c</span><span class="p">.</span><span class="nx">Request</span> <span class="p">=</span> <span class="nx">req</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">c</span><span class="p">.</span><span class="nf">reset</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">engine</span><span class="p">.</span><span class="nf">handleHTTPRequest</span><span class="p">(</span><span class="nx">c</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">engine</span><span class="p">.</span><span class="nx">pool</span><span class="p">.</span><span class="nf">Put</span><span class="p">(</span><span class="nx">c</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>要点：</p>
+<ol>
+<li>放入pool的对象会直接复用，gc很高的时候可以用来减少gc负担，rpc收发包的场景有奇效</li>
+<li>get到的对象有可能是新的，有可能是老的，要么get之后清空，要么put之前清空</li>
+<li>用完后一定要put，有存入才有得对象用</li>
+</ol>
+<p>初次之外，redis和java都有常量池、unity中也有用于对物体和动画复用的对象池，这种模式还是比较常见的。</p>
+<h3 id="连接池">连接池</h3>
+<p>连接池广泛用于解决连接的创建/销毁的成本，现在几乎都默认在可以需要长连接的场景中，包括各种数据库的中间件，rpc的长连接，没有特殊的理由，能用就用。自己实现一个连接池是不推荐的，里面还是有不少细节。<br>
+我们以<code>database/sql</code>中的连接池为例，看下需要考虑哪些内容：</p>
+<ol>
+<li>获取连接
+<ul>
+<li>如果连接池不为空，则直接从池子里面获取连接使用即可</li>
+<li>如果连接池为空，且当前连接数&gt;maxConn，则把任务放入等待队列并设置超时时间。</li>
+<li>如果连接池为空，且当前连接数&lt;maxConn，则新建一个新连接。</li>
+</ul>
+</li>
+<li>释放连接
+<ul>
+<li>如果等待队列有任务，把连接交给等待的任务，并pop出来</li>
+<li>等待队列没任务则放回连接池</li>
+</ul>
+</li>
+<li>连接超时
+<ul>
+<li>连接到达maxLifeTime后，连接close掉</li>
+</ul>
+</li>
+<li>连接有效性检测和保活
+<ul>
+<li>每次使用前检测连接是否被关闭，被关闭则重连</li>
+<li>到达mysql的8小时超时连接后，重连</li>
+</ul>
+</li>
+</ol>
+<p>这里面涉及到三个参数：</p>
+<ul>
+<li><code>SetMaxOpenConns</code> 最大连接数，默认无穷大</li>
+<li><code>SetMaxIdleConns</code> 最大空闲连接数，默认为2，就是没任务的时候还会有2个链接空闲等待</li>
+<li><code>SetConnMaxLifeTime</code> 最大链接生存时间</li>
+</ul>
+<h3 id="线程池">线程池</h3>
+<p>线程也是一种创建和销毁非常消耗资源的结构。因为线程池大家都很熟悉，就不详细展开，想讨论的是一个优秀的线程池应该优化哪些方向。我们看看GMP在Go 1.0时候的版本，非常朴素，和我们手写的第一版线程池非常类似（G是routine，M是工作线程）：<br>
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/gmp0.png"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/gmp0.png, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/gmp0.png 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/gmp0.png 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/gmp0.png"
+        title="redis" /></p>
+<ul>
+<li>单一全局互斥锁和集中状态存储的存在，导致所有 goroutine 相关操作，如创建、重新调度等都要上锁；</li>
+<li>routine 传递问题，M 经常在 M 之间传递可运行的 goroutine，这导致调度延迟增大以及额外的性能损耗（比如M&rsquo;创建了G&rsquo;，G&rsquo;是从G中分出来的，G在M上跑，那最好把G&rsquo;传给M，不然局部性很差，需要拷贝内存）；</li>
+<li>M之间的切换，会带来很多阻塞线程和取消阻塞的系统调用，开销很大</li>
+</ul>
+<p>思考：看到过很多同学的做法，我们在routinue调度器上面套一层协程池，把协程抽象为工作线程，把函数抽象为job，这和第一代GMP是非常相似的，比如：<br>
+<a href="https://github.com/panjf2000/ants" target="_blank" rel="noopener noreffer ">https://github.com/panjf2000/ants</a></p>
+<h2 id="缓存-空间换时间">缓存-空间换时间</h2>
+<p>单独作为一节</p>
+<h2 id="异步-同时执行">异步-同时执行</h2>
+<h3 id="业务流程">业务流程</h3>
+<p>业务流程的异步，核心就一句话，有严格先后调用关系的服务保持顺序执行，对于能够同步执行的所有服务均采用异步化方式处理。这种方法应该从设计之初就注意，确保一个流程的执行时间等于最长同步流程的耗时：<br>
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/async_sale.jpg"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/async_sale.jpg, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/async_sale.jpg 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/async_sale.jpg 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/async_sale.jpg"
+        title="async_sale" /><br>
+上图介绍了一个简单的售后换货的流程。从商家操作，web页面调用换货接口开始，我们把换货记为四个独立的过程，每个过程都可以并行执行；所有过程执行结束后，返回发货结果。这样，这个接口的耗时就等于处理时间最长的四个过程之一的耗时。<br>
+除此之外，其他重要性较低的业务逻辑，统一放在异步流程里执行。我们会发送订单状态转换消息、发货消息、售后单状态转换消息来通知所有有关的下游，让他们去自行消费。</p>
+<h3 id="并发模型">并发模型</h3>
+<h4 id="共享内存">共享内存</h4>
+<p>Java、C++、或者Python，他们线程间通信都是通过共享内存的方式来进行的。非常典型的方式就是，在访问共享数据（例如数组、Map、或者某个结构体或对象）的时候，通过锁来访问，因此，在很多时候，衍生出一种方便操作的数据结构，叫做“线程安全的数据结构”。</p>
+<h4 id="actor模型">Actor模型</h4>
+<p>Actor是erlang采用的并发模型。它的基本思想是，每个Actor都有一个专用的MailBox来接收消息。当一个Actor实例向另外一个Actor发消息的时候，并非直接调用Actor的方法，而是把消息传递到对应的MailBox里，就好像邮递员，并不是把邮件直接送到收信人手里，而是放进每家的邮箱，这样邮递员就可以快速的进行下一项工作。</p>
+<ol>
+<li>Actor用消息取代了函数调用，天生异步</li>
+<li>Actor内部无锁，Actor之间物理隔离，互相不影响，只通过消息通信</li>
+<li>Actor是一个简单的对象，占用资源很少，万量级的Actor没有问题<br>
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/actor.jpeg"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/actor.jpeg, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/actor.jpeg 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/actor.jpeg 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2021/actor.jpeg"
+        title="actor" /></li>
+</ol>
+<h4 id="csp">CSP</h4>
+<p>CSP（communicating sequential processes）并发模型是Go使用的一种并发模型。它提倡“不要以共享内存的方式来通信，相反，要通过通信来共享内存”，在Go中的实现就是routine和channel。<br>
+Go用到了 CSP 理论中的 Process/Channel（对应到语言中的 goroutine/channel）：这两个并发原语之间没有从属关系， Process 可以订阅任意个 Channel，Channel 也并不关心是哪个 Process 在利用它进行通信；Process 围绕 Channel 进行读写，形成一套有序阻塞和可预测的并发模型。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">Worker1 --&gt; Channel --&gt; Worker2
+</span></span></code></pre></td></tr></table>
+</div>
+</div></div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2021-09-28</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/high_perf_1/index.md" target="_blank">Read Markdown</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="http://chestnutheng.github.io/high_perf_1/" data-title="[后台]服务端高性能架构之道（系统和服务篇）" data-hashtags="后台,服务端高性能架构之道"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="http://chestnutheng.github.io/high_perf_1/" data-hashtag="后台"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Hacker News" data-sharer="hackernews" data-url="http://chestnutheng.github.io/high_perf_1/" data-title="[后台]服务端高性能架构之道（系统和服务篇）"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="http://chestnutheng.github.io/high_perf_1/" data-title="[后台]服务端高性能架构之道（系统和服务篇）"><i data-svg-src="/lib/simple-icons/icons/line.min.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="http://chestnutheng.github.io/high_perf_1/" data-title="[后台]服务端高性能架构之道（系统和服务篇）" data-ralateuid="2461859532"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw" aria-hidden="true"></i>&nbsp;<a href="/tags/%E5%90%8E%E5%8F%B0/">后台</a>,&nbsp;<a href="/tags/%E6%9C%8D%E5%8A%A1%E7%AB%AF%E9%AB%98%E6%80%A7%E8%83%BD%E6%9E%B6%E6%9E%84%E4%B9%8B%E9%81%93/">服务端高性能架构之道</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/go/" class="prev" rel="prev" title="[Go]Go语言的设计和坑"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>[Go]Go语言的设计和坑</a>
+            <a href="/%E5%B9%BF%E5%91%8A%E4%B8%9A%E5%8A%A1%E7%9A%84%E5%89%8D%E4%B8%96%E4%BB%8A%E7%94%9F/" class="next" rel="next" title="[互联网]广告业务的前世今生">[互联网]广告业务的前世今生<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
+</div>
+<div id="comments"><div id="giscus" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://giscus.app">Giscus</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.118.2">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2015 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="about" target="_blank">子恒</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/lightgallery/css/lightgallery-bundle.min.css"><link rel="stylesheet" href="/lib/katex/katex.min.css"><script type="text/javascript" src="/lib/autocomplete/autocomplete.min.js"></script><script type="text/javascript" src="/lib/lunr/lunr.min.js"></script><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/lightgallery/lightgallery.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/thumbnail/lg-thumbnail.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/zoom/lg-zoom.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript" src="/lib/sharer/sharer.min.js"></script><script type="text/javascript" src="/lib/katex/katex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/auto-render.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/copy-tex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{"giscus":{"category":"Announcements","categoryId":"DIC_kwDOA9ikP84CQT5Y","darkTheme":"dark","emitMetadata":"0","inputPosition":"bottom","lang":"en","lazyLoading":true,"lightTheme":"light","mapping":"pathname","reactionsEnabled":"1","repo":"chestnutheng/chestnutheng.github.io","repoId":"MDEwOlJlcG9zaXRvcnk2NDUyOTQ3MQ=="}},"lightgallery":true,"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":true,"left":"\\begin{equation}","right":"\\end{equation}"},{"display":true,"left":"\\begin{equation*}","right":"\\end{equation*}"},{"display":true,"left":"\\begin{align}","right":"\\end{align}"},{"display":true,"left":"\\begin{align*}","right":"\\end{align*}"},{"display":true,"left":"\\begin{alignat}","right":"\\end{alignat}"},{"display":true,"left":"\\begin{alignat*}","right":"\\end{alignat*}"},{"display":true,"left":"\\begin{gather}","right":"\\end{gather}"},{"display":true,"left":"\\begin{CD}","right":"\\end{CD}"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"highlightTag":"em","lunrIndexURL":"/index.json","maxResultLength":10,"noResultsFound":"No results found","snippetLength":50,"type":"lunr"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Drafts on 子恒的博客</title>
+    <link>http://chestnutheng.github.io/drafts/</link>
+    <description>Recent content in Drafts on 子恒的博客</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <managingEditor>1085912251@qq.com (子恒)</managingEditor>
+    <webMaster>1085912251@qq.com (子恒)</webMaster><atom:link href="http://chestnutheng.github.io/drafts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title></title>
+      <link>http://chestnutheng.github.io/drafts/docs/wudao-money-%E8%AE%BE%E8%AE%A1%E6%96%87%E6%A1%A3/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <author>1085912251@qq.com (子恒)</author>
+      <guid>http://chestnutheng.github.io/drafts/docs/wudao-money-%E8%AE%BE%E8%AE%A1%E6%96%87%E6%A1%A3/</guid>
+      <description>数据输入 支付宝账头（16）
+交易号 商家订单号 交易创建时间 付款时间 最近修改时间 交易来源地 类型 交易对方 商品名称 金额（元） 收/支 交易状态 服务费（元） 成功退款（元） 备注 资金状态 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 2023053122001420431448709679 visionpayF57BE6520BB10FD2D6878368 2023-05-3115:15:28 2023-05-3115:15:30 2023-05-3115:15:30 其他（包括阿里巴巴和外部商家） 即时到账交易 友宝 智能货柜消费 2.10 支出 交易成功 0.00 0.00 微信账头（11）
+交易时间 交易类型 交易对方 商品 收/支 金额(元) 支付方式 当前状态 交易单号 商户单号 备注 0 1 2 3 4 5 6 7 8 9 10 2023-05-31 14:55:08 商户消费 easyopen &amp;ldquo;easyopen充值&amp;rdquo; 支出 ¥10.</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>http://chestnutheng.github.io/drafts/docs/wudao_money_readme/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <author>1085912251@qq.com (子恒)</author>
+      <guid>http://chestnutheng.github.io/drafts/docs/wudao_money_readme/</guid>
+      <description>功能 - 你会获得什么？ 记账自动分类，将你的 使用 解压后，寻找自己的操作系统对应的版本。注意不要把配置json删除 1 2 3 4 5 -rwxr-xr-x 1 chestnutheng staff 6.0M 6 28 19:59 GoldenKey_Linux_amd64 -rwxr-xr-x 1 chestnutheng staff 5.9M 6 28 19:59 GoldenKey_Mac_amd64 -rwxr-xr-x 1 chestnutheng staff 5.8M 6 28 19:59 GoldenKey_Windows_386.exe -rwxr-xr-x 1 chestnutheng staff 6.1M 6 28 19:59 GoldenKey_Windows_amd64.exe -rw-r--r-- 1 chestnutheng staff 3.7K 6 28 19:59 golden_conf.json 使用解压好的文件。直接双击或者命令行运行 1 2 Ξ money/ ▶ ./GoldenKey_Mac_amd64 2023/06/28 20:41:26 导入记录为0。请将导入的支付宝或者微信账单文件放在同目录！ 如果需要解析账单，需要把账单文件放入文件夹。 微信下载账单： 支付宝下载账单：https://consumeprod.alipay.com/record/standard.htm 个人版 - 选择开始日期到1月1日 - 下载明细 解压下载好的zip文件，和GoldenKey放入同级文件夹，如下图 1 2 3 4 5 6 7 Ξ tiny_projects/money ▶ tree .</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>http://chestnutheng.github.io/drafts/latex/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <author>1085912251@qq.com (子恒)</author>
+      <guid>http://chestnutheng.github.io/drafts/latex/</guid>
+      <description>$$
+\lim_{n \to \infty}
+\sum_{k=1}^n \frac{1}{k^2}
+= \frac{\pi^2}{6} \qquad {for,all\quad }x\in \mathbb{R} $$
+$\heartsuit$
+$$\sqrt[3]
+{2+3}$$
+$$\underbrace{a+b+\cdots+z}_{26}$$
+$$\widehat{adfdsfsaf}$$
+$$\hat{x}\overline{x}$$
+$$[\overline{x} - \frac{1.96s}{\sqrt{T}}]$$
+$$y&amp;rsquo;&amp;rsquo;&amp;rsquo;&amp;rsquo;&amp;rsquo;&amp;rsquo; = 4 \csc\sinh \inf \ \liminf_{x \rightarrow 0} \liminf$$
+$$x^{1/2} \frac{yy}{xx} \binom{n}{k}C^m_k $$
+$$\mathrm{C}^m_k $$
+$$\sum_{n=0}^k \prod_{i=1}^n$$
+$$x{\Big{\frac{\frac{1}{2}}{x}\Big}y}^3$$
+$$\left| \begin{array}{}
+x_{11} &amp;amp; x_{12} &amp;amp; \ldots \
+x_{21} &amp;amp; x_{22} &amp;amp; \ldots \
+\vdots &amp;amp; \vdots &amp;amp; \ddots
+\end{array} \right|$$
+$$\displaystyle ddd\scriptstyle ttt\scriptscriptstyle aa$$
+$$\times \leq \geq &amp;gt; &amp;lt; \sim \subset \subseteq \supset \in \notin \Leftrightarrow \pm \div \approx \cdot$$</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>http://chestnutheng.github.io/drafts/lock_free/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <author>1085912251@qq.com (子恒)</author>
+      <guid>http://chestnutheng.github.io/drafts/lock_free/</guid>
+      <description>队列是最方便的线程间传递信息的方式。线程间传递信息，难免会引入锁，锁又会带来效率的大幅降低。我们从一个简单的队列开始，看看lock-free的思维如何解决问题。
+加锁的队列 api回顾 回顾一下互斥锁和条件变量的用法：
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 // 锁：是互斥的。一个线程加锁后其他线程如果试图加锁，会陷入等待。 pthread_mutex_t mutex; //锁 // 给互斥体变量加锁，其他线程执行这里时会卡住 pthread_mutex_lock(&amp;amp;mutex); // 给互斥体变量解除锁 phtread_mutex_unlock(&amp;amp;mutex); // 条件变量：用条件控制线程是否继续。条件变量不是卡别人的，使用条件卡自己的，等待别人告诉自己可以继续。 pthread_cond_t qready = PTHREAD_COND_INITIALIZER; pthread_mutex_t qlock = PTHREAD_MUTEX_INITIALIZER; // wait用来等待条件就绪。如果陷入wait，只能通过别的线程被唤醒。一般情况下，wait会配合while和需要wait的条件使用，避免假死和资源竞争等问题 pthread_cond_wait(&amp;amp;qready, &amp;amp;mutex); // signal可以通知一个线程条件已经就绪 pthread_cond_signal(&amp;amp;qready) // broadcast会通知所有线程就绪。这种通知是顺序进行的，因为只有一个线程可以拿到wait时指定的锁，然后执行完自己的操作，最后unlock，把锁让给下一个线程 pthread_cond_broadcast(&amp;amp;qready) 我们可以根据这个用法写一个模板：
+1 2 3 4 5 6 7 void thread1(){ pthread_mutex_lock(&amp;amp;lock); while(不满足条件，比如队列为空、文件未就绪) pthread_cond_wait(&amp;amp;cond, &amp;amp;lock); // ... 得到条件了，做一些事情，比如操作文件、推出队列的东西 pthread_mutex_unlock(&amp;amp;lock); } 加锁队列的实现 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 // 是否为空 template &amp;lt;typename T&amp;gt; bool BlockingQueue&amp;lt;T&amp;gt;::IsEmpty(){ bool rv; g_mutex_lock(m_mutex); rv = m_theQueue.</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>http://chestnutheng.github.io/drafts/plant-uml-%E7%A4%BA%E4%BE%8B/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <author>1085912251@qq.com (子恒)</author>
+      <guid>http://chestnutheng.github.io/drafts/plant-uml-%E7%A4%BA%E4%BE%8B/</guid>
+      <description>时序图
+状态机
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 @startuml 待补贴 --&amp;gt; 待一审 : 设置补贴 [*] --&amp;gt; 待一审 : 设置补贴 待一审 : [强]保存货补记录 待一审 : [弱]更新ES数据 待一审 : [强]占用预算 待一审 --&amp;gt; 补贴成功 : 审核通过a 补贴成功 : [强]保存货补记录 补贴成功 : [弱]更新ES数据（仅a） 补贴成功 : [强]通知报名审核成功（仅a） 待一审 --&amp;gt; 待高阶审核: 发起高阶审核 待高阶审核 : [强]保存货补记录 待高阶审核 : [弱]更新ES数据 待高阶审核 : [强]发起bpm审核 待高阶审核 --&amp;gt; 待补贴: 高阶审核拒绝 待一审 --&amp;gt; 待补贴: 审核拒绝 待补贴 : [强]保存货补记录 待补贴 : [弱]更新ES数据 待补贴 : [强]释放预算信息 待补贴 : [强]通知报名审核拒绝 待一审 --&amp;gt; 已取消: 报名系统取消 待补贴 --&amp;gt; 已取消: 报名系统取消 待高阶审核 --&amp;gt; 已取消: 报名系统取消 补贴成功 --&amp;gt; 已取消: 报名系统取消 已取消 : [强]保存货补记录 已取消 : [弱]更新ES数据 已取消 : [强]释放预算信息 已取消 : [强]通知报名审核取消 已取消 : [强]取消高阶审核bpm 补贴成功 --&amp;gt; 补贴成功: 修改报名信息b 补贴成功 --&amp;gt; 补贴成功: 修改补贴/修改库存c 补贴成功 : [强]释放预算信息（仅c） @enduml </description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>http://chestnutheng.github.io/drafts/push-x/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <author>1085912251@qq.com (子恒)</author>
+      <guid>http://chestnutheng.github.io/drafts/push-x/</guid>
+      <description>设计理念
+构建一套事件监测、规则匹配、发送的系统 HK0700到达卖出点 -&amp;gt; 发送邮件消息
+触发器cron：分钟级扫描 值组件：price1=GetStockPrice(code1) 发射器：sendEmail() 规则引擎：if price1 &amp;gt; conf1 : sendEmail() 聚合引擎：当日不再发 flight到达低点or日报 -&amp;gt; 发送邮件消息
+触发器cron：早晚扫描
+值组件：priceList=GetFlight(A, B, day)
+发射器：sendEmail()
+规则引擎：if priceList0 &amp;lt; conf1 : sendEmail()
+cron表达式： */10 * * * *
+执行动作：getFlight
+参数列表：杭州 北京 2023-08-08
+规则：price[0] &amp;lt; 1000
+发射器： sendEmail
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 { &amp;#34;rule_name&amp;#34; : &amp;#34;杭州-北京flights监控&amp;#34;, &amp;#34;crontab&amp;#34; : &amp;#34;*/10 * * * *&amp;#34;, &amp;#34;event&amp;#34; : &amp;#34;getFlight&amp;#34;, &amp;#34;params&amp;#34; : [&amp;#34;杭州&amp;#34;,&amp;#34;北京&amp;#34;,&amp;#34;2023-08-08&amp;#34;], &amp;#34;rule&amp;#34; : { &amp;#34;key&amp;#34; : &amp;#34;min_price&amp;#34;, &amp;#34;val&amp;#34; : &amp;#34;1000&amp;#34;, &amp;#34;op&amp;#34; : &amp;#34;&amp;lt;&amp;#34; }, &amp;#34;action&amp;#34; : &amp;#34;sendEmail&amp;#34; } // getFlight回包 { &amp;#34;min_price&amp;#34; : 1000.</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>http://chestnutheng.github.io/drafts/%E5%85%AC%E8%B7%AF%E8%BD%A6%E5%90%8D%E8%AF%8D/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <author>1085912251@qq.com (子恒)</author>
+      <guid>http://chestnutheng.github.io/drafts/%E5%85%AC%E8%B7%AF%E8%BD%A6%E5%90%8D%E8%AF%8D/</guid>
+      <description> 车架 轮组 变速套件 组成 变速系统1：手变/指拨，前拨变速器，后拨变速器 传动系统2：牙盘，中轴，飞轮，链条 制动系统3：花鼓，刹车 小套（变速）中套（变速+传动）大套（变速+传动+制动） 品牌 禧玛诺shimano（最大） 速联sram campagnolo 牙盘：靠近脚的齿轮
+飞轮：靠近后轮的齿轮
+齿比：齿比=牙盘齿轮数/飞轮齿轮数=蹬一圈走几圈
+9速为例
+场景 小牙盘1 中牙盘2 大牙盘3 齿比 陡坡 1-2 ❎ ❎ 0.7~0.8 普通坡 3-5 2-3 ❎ 0.9~1.2 平路 5 3-6 3-5 1.3~2.1 下坡 ❎ ❎ 5-7 2.4~3.1 禧玛诺
+系列 定位 型号 速度 重量 价格 备注 Claris 入门 R2000 8速 2942g 2000+ 4爪牙盘 双盘、三盘 SORA 娱乐 R3000 9速 2787g 3000+ 4爪牙盘、一体式中轴 TIAGR 娱乐入门 R4600 R4700 10速 2840g 4000+ 105级套件 比赛入门 R7000 11速 2576g 6000+ 一步到位 Ultegra 比赛 R8000 11速 2376g 15000+ 油压碟刹/Di2电子变速 Dura-Ace 专业比赛 R9000 11速 2011g 30000+ 圈刹/碟刹/机械变速/Di2电子变速 </description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>http://chestnutheng.github.io/drafts/%E5%88%86%E5%B8%83%E5%BC%8F%E8%AE%A1%E6%95%B0%E5%99%A8/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <author>1085912251@qq.com (子恒)</author>
+      <guid>http://chestnutheng.github.io/drafts/%E5%88%86%E5%B8%83%E5%BC%8F%E8%AE%A1%E6%95%B0%E5%99%A8/</guid>
+      <description>增加
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 local key = KEYS[1] local val = tonumber(ARGV[1]) local upper = tonumber(ARGV[2]) local expireAt = tonumber(ARGV[3]) local cur = redis.call(&amp;#39;get&amp;#39;,key) if(cur == false) then cur = 0 else cur = tonumber(cur) end if(cur &amp;gt;= upper) then return 0 end local new = cur + val if(new &amp;gt; upper) then new = upper end redis.</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>http://chestnutheng.github.io/drafts/%E5%B9%82%E7%AD%89/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <author>1085912251@qq.com (子恒)</author>
+      <guid>http://chestnutheng.github.io/drafts/%E5%B9%82%E7%AD%89/</guid>
+      <description>幂等处理 作用 幂等的作用：防止重复操作导致的脏数据
+前端防抖 接口超时重试 消息重试 我们的upsert、分布式锁、乐观锁、for update、唯一索引、状态机其实都有幂等的功能，会在请求重复的时候报错。我们主要讨论在这些机制之外，用户自定义幂等键的时候的情形
+维度 接口维度的幂等：幂等的控制交给下游，由下游保证自己的请求是可以幂等/不被幂等的。比如下游直接传一个md5sum(req)作为幂等键进来（其他常用的包括req里的核心参数、reqid、时间戳、消息id）
+幂等键一致：直接幂等。问题：下游可能传错了，不幂等的也结果被幂等，比如批量请求、同一个请求里发起多次请求等 幂等键不一致：不幂等，这个不会出错 数据维度的幂等：采用数据库的uniq key+幂等键联合判断
+uk一致，幂等键不一致：说明用户希望再次操作同一个数据实体，不幂等 uk不一致，幂等键一致：说明用户希望再次操作其他数据实体，不幂等 uk、幂等键都一致：直接幂等 uk、幂等建都不一致：不幂等 实现 实现方法：
+方法一：令牌发放，服务端/客户端生成一个token（幂等键），给客户端用，客户端带着token前来请求，token是一次性的，用过就直接幂等 方法二：mysql的数据表里加一列幂等键，这个表一般是操作流水表，用来记操作。每次来请求的时候从流水表查幂等键存不存在，存在则直接幂等 方法三：redis里存幂等key，用setnx+幂等key+超时时间控制 其他要注意的：
+如果接口要加锁，幂等判断是要被分布式锁锁住的。因为幂等的实现是要查数据库数据的话，是可能会有变化的 </description>
+    </item>
+    
+    <item>
+      <title>[BigData]大数据算法</title>
+      <link>http://chestnutheng.github.io/drafts/big_data_1/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <author>1085912251@qq.com (子恒)</author>
+      <guid>http://chestnutheng.github.io/drafts/big_data_1/</guid>
+      <description>水库抽样 问题描述 Input：一组数据
+Output：这组数据的K个均匀抽样
+要求： 扫描一次 空间复杂度o(k) 扫描到前n个数字时，保存当前数据的均匀抽样 实现
+收到第i个元素t时，以k/i的概率随机替换抽样数组ans[]中的元素 证明
+均匀：
+$$\frac{k}{i}\times(1-\frac{1}{i+1})\times(1-\frac{1}{i+2})\times\dots\times(1-\frac{1}{n})=\frac{k}{n}$$ 实现代码 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 #include &amp;lt;iostream&amp;gt; #include &amp;lt;cstdlib&amp;gt; #include &amp;lt;ctime&amp;gt; using namespace std; int random(int min ,int max) { return (min+(rand()%(max-min+1))); } int main() { srand(unsigned(time(0))); int k; int i; cout &amp;lt;&amp;lt; &amp;#34;Input k:&amp;#34; ; cin &amp;gt;&amp;gt; k; double *ans = new double[k+1]; double input; cout &amp;lt;&amp;lt; &amp;#34;Input k numbers:&amp;#34; &amp;lt;&amp;lt; endl; for(i = 1;i &amp;lt;= k; ++i) { cin &amp;gt;&amp;gt; ans[i]; } cout &amp;lt;&amp;lt; &amp;#34;Input stream numbers:(q to quit)&amp;#34; &amp;lt;&amp;lt; endl; while(true) { int j = random(1,i); if(!</description>
+    </item>
+    
+  </channel>
+</rss>

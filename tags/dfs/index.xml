@@ -1,0 +1,21 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>DFS - Tag - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/tags/dfs/</link>
+        <description>DFS - Tag - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Mon, 01 Jun 2015 16:05:00 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/tags/dfs/" rel="self" type="application/rss+xml" /><item>
+    <title>[算法]DP解决钢条切割问题</title>
+    <link>http://chestnutheng.github.io/max_iron_len/</link>
+    <pubDate>Mon, 01 Jun 2015 16:05:00 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/max_iron_len/</guid>
+    <description><![CDATA[DP解决钢条切割问题 （原题见算法导论·动态规划）
+对长度为n的钢条进行切割，对应的切割长度和价格对应如下：
+int cost[] = {0, 1, 5, 8, 9, 10, 17, 17, 20, 24, 30};
+比如1对应价值1,10对应价值30。即相应的下标和值的对应。现求切割所得最大效益mx。
+递归算法 1 2 3 4 5 6 7 8 9 int cut_rod(int *cost,int n) { if(n == 0) return 0; int limit = MIN(n,10); //分割第一条的上限 int mx = -1; for(int i = 1;i &lt;= limit; ++i) mx = maxnum(mx,cost[i]+cut_rod(cost,n-i)); //取当前值于递归值的最大值 return mx; } 由于对相同子问题的重复求解，T(n) = 2^n
+递归标记数组算法（自顶而下）（DFS） 1 2 3 4 5 6 7 8 9 10 11 12 int mem_cut_rod(int *cost,int n,int *mem) //mem数组长度为n,所有元素须在其他函数中初始化为-1 { int mx; if (mem[n] &gt;= 0) return mem[n]; //对于求过的问题，直接返回存储的值 if (n == 0) mx = 0; else mx = -1; int limit = MIN(n,10); for(int i = 1;i &lt;= limit; ++i) mx = maxnum(mx,cost[i]+mem_cut_rod(cost,n-i,mem)); //后面的内容和递归型是一样的 mem[n] = mx; //储存计算出的新值 return mx; } 逆拓扑序DP（自底向上） 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 int bottom_cut_rod(int *cost,int n) { int mem[MEM_LEN+1]; //MEM_LEN = n，设置标记数组 mem[0] = 0; //i,j将从1开始，这里收益是0 for(int i = 1; i &lt;= n; ++i) //从第一个问题开始求解 { int mx = -1; int limit = MIN(i,10); for(int j = 1;j &lt;= limit; ++j) mx = maxnum(mx,cost[j] + mem[i-j]); //求解最小的问题 mem[i] = mx; } return mem[n]; } 我们可以看到，2,3 的解法复杂度均为O(n^2)。]]></description>
+</item>
+</channel>
+</rss>

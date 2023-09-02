@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>[Python]Python性能分析工具 - 子恒的博客</title><meta name="Description" content="Python性能分析工具介绍, 包括内存和时间"><meta property="og:title" content="[Python]Python性能分析工具" />
+<meta property="og:description" content="Python性能分析工具介绍, 包括内存和时间" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://chestnutheng.github.io/python_profile/" /><meta property="og:image" content="http://chestnutheng.github.io/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2016-08-09T13:04:30+08:00" />
+<meta property="article:modified_time" content="2016-08-09T13:04:35+08:00" /><meta property="og:site_name" content="子恒的博客" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="http://chestnutheng.github.io/logo.png"/>
+
+<meta name="twitter:title" content="[Python]Python性能分析工具"/>
+<meta name="twitter:description" content="Python性能分析工具介绍, 包括内存和时间"/>
+<meta name="application-name" content="我的网站">
+<meta name="apple-mobile-web-app-title" content="我的网站"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://chestnutheng.github.io/python_profile/" /><link rel="prev" href="http://chestnutheng.github.io/machine_learning_procetron/" /><link rel="next" href="http://chestnutheng.github.io/princeton_pa1_percolation/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[Python]Python性能分析工具",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/chestnutheng.github.io\/python_profile\/"
+        },"genre": "posts","keywords": "Python, prof","wordcount":  599 ,
+        "url": "http:\/\/chestnutheng.github.io\/python_profile\/","datePublished": "2016-08-09T13:04:30+08:00","dateModified": "2016-08-09T13:04:35+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "子恒"
+            },"description": "Python性能分析工具介绍, 包括内存和时间"
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="子恒的博客">子恒的博客</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/"> 主页 </a><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/freinds/"> 友链 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="子恒的博客">子恒的博客</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        Cancel
+                    </a>
+                </div><a class="menu-item" href="/" title="">主页</a><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/freinds/" title="">友链</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><div class="search-dropdown desktop">
+        <div id="search-dropdown-desktop"></div>
+    </div>
+    <div class="search-dropdown mobile">
+        <div id="search-dropdown-mobile"></div>
+    </div><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">[Python]Python性能分析工具</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="about" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>子恒</a></span>&nbsp;<span class="post-category">included in <a href="/categories/python/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>Python</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2016-08-09">2016-08-09</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;599 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;3 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#时间分析">时间分析</a>
+          <ul>
+            <li><a href="#time-命令">time 命令</a></li>
+            <li><a href="#profile和cprofile">profile和cProfile</a></li>
+            <li><a href="#line_profiler-按行查看">line_profiler: 按行查看</a></li>
+          </ul>
+        </li>
+        <li><a href="#内存分析">内存分析</a>
+          <ul>
+            <li><a href="#memory_profiler">memory_profiler</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="时间分析">时间分析</h2>
+<h3 id="time-命令">time 命令</h3>
+<p>用*nix自带的系统命令</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">$ time python3 reg.py 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">real	0m1.617s
+</span></span><span class="line"><span class="cl">user	0m1.504s
+</span></span><span class="line"><span class="cl">sys	0m0.112s
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><code>sys</code> 系统调用时间<br>
+<code>user</code> 用户空间花费时间<br>
+<code>real</code> 实际时间<br>
+如果<code>user + sys &lt; real</code> 说明时间被花费在IO上。</p>
+<h3 id="profile和cprofile">profile和cProfile</h3>
+<p>python自带了两个函数时间分析工具，cProfile和profile。cProfile是纯C写的，所以用起来快了很多。<br>
+查看帮助:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">$ python3 -m cProfile -h
+</span></span><span class="line"><span class="cl">Usage: cProfile.py [-o output_file_path] [-s sort] scriptfile [arg] ...
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Options:
+</span></span><span class="line"><span class="cl">  -h, --help            show this help message and exit
+</span></span><span class="line"><span class="cl">  -o OUTFILE, --outfile=OUTFILE
+</span></span><span class="line"><span class="cl">                        Save stats to &lt;outfile&gt;
+</span></span><span class="line"><span class="cl">  -s SORT, --sort=SORT  Sort order when printing to stdout, based on
+</span></span><span class="line"><span class="cl">                        pstats.Stats class
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>-o 输出的文件只能给pstats.Stats类使用。<br>
+-s 是对结果按照关键字排序，关键字有<br>
+<code>calls, cumulative, file, line, module, name, nfl, pcalls, stdname, time</code></p>
+<p>尝试分析一个测正则匹配次数的小程序：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">$ python3 -m cProfile -s time exp.py
+</span></span><span class="line"><span class="cl">         4899025 function calls in 3.879 seconds
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">   Ordered by: internal time
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+</span></span><span class="line"><span class="cl">        1    1.583    1.583    3.879    3.879 exp.py:1(&lt;module&gt;)
+</span></span><span class="line"><span class="cl">        1    0.777    0.777    0.859    0.859 {method &#39;readlines&#39; of &#39;_io._IOBase&#39; objects}
+</span></span><span class="line"><span class="cl">  2415450    0.720    0.000    0.720    0.000 {method &#39;search&#39; of &#39;_sre.SRE_Pattern&#39; objects}
+</span></span><span class="line"><span class="cl">  2415450    0.717    0.000    0.717    0.000 {method &#39;strip&#39; of &#39;str&#39; objects}
+</span></span><span class="line"><span class="cl">    33967    0.048    0.000    0.048    0.000 {built-in method _codecs.utf_8_decode}
+</span></span><span class="line"><span class="cl">    33967    0.033    0.000    0.082    0.000 codecs.py:318(decode)
+</span></span><span class="line"><span class="cl">        1    0.000    0.000    0.000    0.000 {built-in method builtins.print}
+</span></span><span class="line"><span class="cl">        1    0.000    0.000    0.000    0.000 {built-in method io.open}
+</span></span><span class="line"><span class="cl">        1    0.000    0.000    0.000    0.000 sre_parse.py:491(_parse)
+</span></span><span class="line"><span class="cl">        1    0.000    0.000    0.000    0.000 sre_compile.py:412(_compile_info)
+</span></span><span class="line"><span class="cl">        1    0.000    0.000    0.000    0.000 sre_compile.py:531(compile)
+</span></span><span class="line"><span class="cl">        1    0.000    0.000    0.000    0.000 re.py:278(_compile)
+</span></span><span class="line"><span class="cl">        1    0.000    0.000    0.000    0.000 sre_parse.py:167(getwidth)
+</span></span><span class="line"><span class="cl">        1    0.000    0.000    0.000    0.000 sre_compile.py:64(_compile)
+</span></span><span class="line"><span class="cl">       15    0.000    0.000    0.000    0.000 sre_parse.py:226(__next)
+</span></span><span class="line"><span class="cl">       65    0.000    0.000    0.000    0.000 {method &#39;append&#39; of &#39;list&#39; objects}
+</span></span><span class="line"><span class="cl">        1    0.000    0.000    0.000    0.000 sre_compile.py:391(_generate_overlap_table)
+</span></span><span class="line"><span class="cl">       14    0.000    0.000    0.000    0.000 sre_parse.py:247(get)
+</span></span><span class="line"><span class="cl">        1    0.000    0.000    0.000    0.000 sre_parse.py:819(parse)
+</span></span><span class="line"><span class="cl">       14    0.000    0.000    0.000    0.000 sre_parse.py:165(append)
+</span></span><span class="line"><span class="cl">        1    0.000    0.000    0.000    0.000 sre_parse.py:217(__init__)
+</span></span><span class="line"><span class="cl">        1    0.000    0.000    0.000    0.000 sre_parse.py:429(_parse_sub)
+</span></span><span class="line"><span class="cl">       26    0.000    0.000    0.000    0.000 {built-in method builtins.len}
+</span></span><span class="line"><span class="cl">...
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>对结果做了运行时间的排序。输出的表格中<br>
+<code>ncalls</code>为函数运行次数<br>
+<code>tottime</code>为函数自身运行时间(不包括内部其他函数)<br>
+<code>percall</code>为 <code>tottime/ncalls</code><br>
+<code>cumtime</code>为函数总运行时间（包括其他函数、递归）<br>
+<code>percall</code>为 <code>cumtime/ncalls</code></p>
+<h3 id="line_profiler-按行查看">line_profiler: 按行查看</h3>
+<p>安装:<br>
+<code>pip3 install line_profiler</code></p>
+<p>安装后便可以使用kernprof分析性能, 先在要分析的函数上加修饰器<code>@profile</code>，然后运行:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">$ python3 -m kernprof -l -v exp.py 
+</span></span><span class="line"><span class="cl">10
+</span></span><span class="line"><span class="cl">Wrote profile results to exp.py.lprof
+</span></span><span class="line"><span class="cl">Timer unit: 1e-06 s
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Total time: 6.26415 s
+</span></span><span class="line"><span class="cl">File: exp.py
+</span></span><span class="line"><span class="cl">Function: main at line 1
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Line #      Hits         Time  Per Hit   % Time  Line Contents
+</span></span><span class="line"><span class="cl">==============================================================
+</span></span><span class="line"><span class="cl">     1                                           @profile
+</span></span><span class="line"><span class="cl">     2                                           def main():
+</span></span><span class="line"><span class="cl">     3         1            6      6.0      0.0      import re
+</span></span><span class="line"><span class="cl">     4         1          673    673.0      0.0      reg = re.compile(r&#39;DO_PATH_REPLAN&#39;)
+</span></span><span class="line"><span class="cl">     5         1            1      1.0      0.0      count = 0
+</span></span><span class="line"><span class="cl">     6         1           45     45.0      0.0      with open(&#39;log.46.log&#39;) as f:
+</span></span><span class="line"><span class="cl">     7   2415451      2370592      1.0     37.8          for line in f.readlines():
+</span></span><span class="line"><span class="cl">     8   2415450      1674712      0.7     26.7              line = line.strip()
+</span></span><span class="line"><span class="cl">     9   2415450      2218037      0.9     35.4              if reg.search(line) is not None:
+</span></span><span class="line"><span class="cl">    10        10            6      0.6      0.0                  count += 1
+</span></span><span class="line"><span class="cl">    11         1           79     79.0      0.0          print(count)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="内存分析">内存分析</h2>
+<h3 id="memory_profiler">memory_profiler</h3>
+<p>安装:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">pip3 install memory_profiler
+</span></span><span class="line"><span class="cl">pip3 install psutil
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>同样，先在要分析的函数上加修饰器<code>@profile</code>，然后运行:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">$ python3 -m memory_profiler exp.py
+</span></span><span class="line"><span class="cl">10
+</span></span><span class="line"><span class="cl">Filename: exp.py
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Line #    Mem usage    Increment   Line Contents
+</span></span><span class="line"><span class="cl">================================================
+</span></span><span class="line"><span class="cl">     1   14.891 MiB    0.000 MiB   @profile
+</span></span><span class="line"><span class="cl">     2                             def main():
+</span></span><span class="line"><span class="cl">     3   14.891 MiB    0.000 MiB       import re
+</span></span><span class="line"><span class="cl">     4   14.891 MiB    0.000 MiB       reg = re.compile(r&#39;DO_PATH_REPLAN&#39;)
+</span></span><span class="line"><span class="cl">     5   14.891 MiB    0.000 MiB       count = 0
+</span></span><span class="line"><span class="cl">     6   14.891 MiB    0.000 MiB       with open(&#39;log.46.log&#39;) as f:
+</span></span><span class="line"><span class="cl">     7  428.734 MiB  413.844 MiB           for line in f.readlines():
+</span></span><span class="line"><span class="cl">     8  428.734 MiB    0.000 MiB               line = line.strip()
+</span></span><span class="line"><span class="cl">     9  428.734 MiB    0.000 MiB               if reg.search(line) is not None:
+</span></span><span class="line"><span class="cl">    10  428.734 MiB    0.000 MiB                   count += 1
+</span></span><span class="line"><span class="cl">    11   15.250 MiB -413.484 MiB           print(count)
+</span></span></code></pre></td></tr></table>
+</div>
+</div></div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2016-08-09</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/python_profile/index.md" target="_blank">Read Markdown</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="http://chestnutheng.github.io/python_profile/" data-title="[Python]Python性能分析工具" data-hashtags="Python,prof"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="http://chestnutheng.github.io/python_profile/" data-hashtag="Python"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Hacker News" data-sharer="hackernews" data-url="http://chestnutheng.github.io/python_profile/" data-title="[Python]Python性能分析工具"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="http://chestnutheng.github.io/python_profile/" data-title="[Python]Python性能分析工具"><i data-svg-src="/lib/simple-icons/icons/line.min.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="http://chestnutheng.github.io/python_profile/" data-title="[Python]Python性能分析工具" data-ralateuid="2461859532"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw" aria-hidden="true"></i>&nbsp;<a href="/tags/python/"> Python</a>,&nbsp;<a href="/tags/prof/">prof</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/machine_learning_procetron/" class="prev" rel="prev" title="[机器学习]感知机"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>[机器学习]感知机</a>
+            <a href="/princeton_pa1_percolation/" class="next" rel="next" title="[普林斯顿算法公开课]并查集解决渗透问题">[普林斯顿算法公开课]并查集解决渗透问题<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
+</div>
+<div id="comments"><div id="giscus" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://giscus.app">Giscus</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.118.2">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2015 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="about" target="_blank">子恒</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/lightgallery/css/lightgallery-bundle.min.css"><link rel="stylesheet" href="/lib/katex/katex.min.css"><script type="text/javascript" src="/lib/autocomplete/autocomplete.min.js"></script><script type="text/javascript" src="/lib/lunr/lunr.min.js"></script><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/lightgallery/lightgallery.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/thumbnail/lg-thumbnail.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/zoom/lg-zoom.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript" src="/lib/sharer/sharer.min.js"></script><script type="text/javascript" src="/lib/katex/katex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/auto-render.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/copy-tex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{"giscus":{"category":"Announcements","categoryId":"DIC_kwDOA9ikP84CQT5Y","darkTheme":"dark","emitMetadata":"0","inputPosition":"bottom","lang":"en","lazyLoading":true,"lightTheme":"light","mapping":"pathname","reactionsEnabled":"1","repo":"chestnutheng/chestnutheng.github.io","repoId":"MDEwOlJlcG9zaXRvcnk2NDUyOTQ3MQ=="}},"lightgallery":true,"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":true,"left":"\\begin{equation}","right":"\\end{equation}"},{"display":true,"left":"\\begin{equation*}","right":"\\end{equation*}"},{"display":true,"left":"\\begin{align}","right":"\\end{align}"},{"display":true,"left":"\\begin{align*}","right":"\\end{align*}"},{"display":true,"left":"\\begin{alignat}","right":"\\end{alignat}"},{"display":true,"left":"\\begin{alignat*}","right":"\\end{alignat*}"},{"display":true,"left":"\\begin{gather}","right":"\\end{gather}"},{"display":true,"left":"\\begin{CD}","right":"\\end{CD}"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"highlightTag":"em","lunrIndexURL":"/index.json","maxResultLength":10,"noResultsFound":"No results found","snippetLength":50,"type":"lunr"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

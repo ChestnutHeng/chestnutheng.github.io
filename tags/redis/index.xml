@@ -1,0 +1,17 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>Redis - Tag - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/tags/redis/</link>
+        <description>Redis - Tag - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Thu, 24 Sep 2020 15:57:27 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/tags/redis/" rel="self" type="application/rss+xml" /><item>
+    <title>[Redis]Redis 应用篇</title>
+    <link>http://chestnutheng.github.io/redis_1/</link>
+    <pubDate>Thu, 24 Sep 2020 15:57:27 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/redis_1/</guid>
+    <description><![CDATA[分布式锁 简单加锁 1 2 3 4 5 // 思想：利用setnx检测有没有set过，如果set过就表示没有抢到锁 &gt; setnx locker true OK // ... do somthing ... &gt; del locker 处理set之后进程崩溃的死锁问题 1 2 3 4 5 6 // 思想：给锁加上过期时间，即使set之后进程挂掉，也不会死锁 &gt; setnx locker true OK &gt; expire locker 5 // ... do somthing ... &gt; del locker 处理非原子性问题 setnx之后，expire之前，进程挂了，也会死锁。怎么处理这种情况？
+使用redis事务吗？事务里没有if else，要么全部执行，要么全部不执行。需求是setnx成功才执行expire，有依赖关系，没法用事务 使用新的原子命令，如下 1 2 3 4 &gt; set locker true ex5 nx OK // ... do somthing ... &gt; del locker 处理超时问题 上面的方案设定了超时时间。但是如果少数操作的时间超过了超时时间怎么办？有两个问题：]]></description>
+</item>
+</channel>
+</rss>

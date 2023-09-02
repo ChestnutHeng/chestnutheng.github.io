@@ -1,0 +1,23 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>prof - Tag - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/tags/prof/</link>
+        <description>prof - Tag - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Tue, 09 Aug 2016 13:04:30 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/tags/prof/" rel="self" type="application/rss+xml" /><item>
+    <title>[Python]Python性能分析工具</title>
+    <link>http://chestnutheng.github.io/python_profile/</link>
+    <pubDate>Tue, 09 Aug 2016 13:04:30 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/python_profile/</guid>
+    <description><![CDATA[时间分析 time 命令 用*nix自带的系统命令
+1 2 3 4 5 $ time python3 reg.py real	0m1.617s user	0m1.504s sys	0m0.112s sys 系统调用时间
+user 用户空间花费时间
+real 实际时间
+如果user + sys &lt; real 说明时间被花费在IO上。
+profile和cProfile python自带了两个函数时间分析工具，cProfile和profile。cProfile是纯C写的，所以用起来快了很多。
+查看帮助:
+1 2 3 4 5 6 7 8 9 $ python3 -m cProfile -h Usage: cProfile.py [-o output_file_path] [-s sort] scriptfile [arg] ... Options: -h, --help show this help message and exit -o OUTFILE, --outfile=OUTFILE Save stats to &lt;outfile&gt; -s SORT, --sort=SORT Sort order when printing to stdout, based on pstats.]]></description>
+</item>
+</channel>
+</rss>

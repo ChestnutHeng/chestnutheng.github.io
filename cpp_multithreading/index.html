@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>[C&#43;&#43;]C&#43;&#43;多线程基础 - 子恒的博客</title><meta name="Description" content="技术|思考"><meta property="og:title" content="[C&#43;&#43;]C&#43;&#43;多线程基础" />
+<meta property="og:description" content="各种锁的基本概念以及在C&#43;&#43;里的使用，还有C的一个生产消费模型。
+操作系统的知识 概念 临界区：访问和操作共享数据的代码段
+避免死锁：嵌套加锁时按顺序加锁, 防止发生饥饿
+原子操作：atomic_t
+自旋锁 自旋锁：请求该锁的线程在等待时自旋（特别耗费处理器时间），所以只能轻量级加锁（一般锁的时间小于上下文切换的开销）。
+注意：对数据而不是对代码加锁。
+读写自旋锁：读时(允许读，不允许写)，写时（不允许读，不允许写）。
+注意：不能把读锁升级为写锁，不然会死锁。读写操作要清晰地分开。
+信号量 信号量：请求锁的进程在等待时加入等待队列并睡眠。一般用于长时间加锁（唤醒、睡眠、加入队列都是很大的开销）。
+通过P/V或者down()/up()操作来控制允许同时进行的线程数。信号量减一就等同与获取一个锁，锁为负数时线程就会进入等待队列。
+0/1信号量（互斥信号量）：只允许同时一个线程执行。
+计数信号量：允许同时多个线程执行。
+读写信号量：互斥信号量的一种。
+互斥体 互斥体(mutex): 可以睡眠的强制互斥锁。比信号量更加首选。
+mutex和自旋锁的区别：
+需求 加锁方法 低开销加锁 优先自旋锁 短期加锁 优先自旋锁 长期加锁 优先mutex 中断上下文加锁 只能自旋锁 持有锁时需要睡眠 只能mutex C&#43;&#43;11 的线程库 std::thread std::thread用于创建一个执行的线程实例，所以它是一切并发编程的基础，使用时需要包含头文件，它提供了很多基本的线程操作，例如get_id()来获取所创建线程的线程 ID，例如使用join()来加入一个线程等。
+std::mutex, std::unique_lock, std::lock_guard 使用std::mutex创建互斥体，std::unique_lock上锁。由于C&#43;&#43;保证了所有栈对象在声明周期结束时会被销毁，所以这样的代码是异常安全的。无论发生异常还是正常结束，都会自动调用unlock()。
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 #include &lt;iostream&gt; #include &lt;thread&gt; #include &lt;mutex&gt; std::mutex mtx; void block_area() { std::unique_lock&lt;std::mutex&gt; lock(mtx); //." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://chestnutheng.github.io/cpp_multithreading/" /><meta property="og:image" content="http://chestnutheng.github.io/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2017-04-03T13:58:53+08:00" />
+<meta property="article:modified_time" content="2017-04-03T13:58:57+08:00" /><meta property="og:site_name" content="子恒的博客" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="http://chestnutheng.github.io/logo.png"/>
+
+<meta name="twitter:title" content="[C&#43;&#43;]C&#43;&#43;多线程基础"/>
+<meta name="twitter:description" content="各种锁的基本概念以及在C&#43;&#43;里的使用，还有C的一个生产消费模型。
+操作系统的知识 概念 临界区：访问和操作共享数据的代码段
+避免死锁：嵌套加锁时按顺序加锁, 防止发生饥饿
+原子操作：atomic_t
+自旋锁 自旋锁：请求该锁的线程在等待时自旋（特别耗费处理器时间），所以只能轻量级加锁（一般锁的时间小于上下文切换的开销）。
+注意：对数据而不是对代码加锁。
+读写自旋锁：读时(允许读，不允许写)，写时（不允许读，不允许写）。
+注意：不能把读锁升级为写锁，不然会死锁。读写操作要清晰地分开。
+信号量 信号量：请求锁的进程在等待时加入等待队列并睡眠。一般用于长时间加锁（唤醒、睡眠、加入队列都是很大的开销）。
+通过P/V或者down()/up()操作来控制允许同时进行的线程数。信号量减一就等同与获取一个锁，锁为负数时线程就会进入等待队列。
+0/1信号量（互斥信号量）：只允许同时一个线程执行。
+计数信号量：允许同时多个线程执行。
+读写信号量：互斥信号量的一种。
+互斥体 互斥体(mutex): 可以睡眠的强制互斥锁。比信号量更加首选。
+mutex和自旋锁的区别：
+需求 加锁方法 低开销加锁 优先自旋锁 短期加锁 优先自旋锁 长期加锁 优先mutex 中断上下文加锁 只能自旋锁 持有锁时需要睡眠 只能mutex C&#43;&#43;11 的线程库 std::thread std::thread用于创建一个执行的线程实例，所以它是一切并发编程的基础，使用时需要包含头文件，它提供了很多基本的线程操作，例如get_id()来获取所创建线程的线程 ID，例如使用join()来加入一个线程等。
+std::mutex, std::unique_lock, std::lock_guard 使用std::mutex创建互斥体，std::unique_lock上锁。由于C&#43;&#43;保证了所有栈对象在声明周期结束时会被销毁，所以这样的代码是异常安全的。无论发生异常还是正常结束，都会自动调用unlock()。
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 #include &lt;iostream&gt; #include &lt;thread&gt; #include &lt;mutex&gt; std::mutex mtx; void block_area() { std::unique_lock&lt;std::mutex&gt; lock(mtx); //."/>
+<meta name="application-name" content="我的网站">
+<meta name="apple-mobile-web-app-title" content="我的网站"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://chestnutheng.github.io/cpp_multithreading/" /><link rel="prev" href="http://chestnutheng.github.io/cpp11_3/" /><link rel="next" href="http://chestnutheng.github.io/cpp_threadpool/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[C++]C++多线程基础",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/chestnutheng.github.io\/cpp_multithreading\/"
+        },"genre": "posts","keywords": "c\u002b\u002b,  c\u002b\u002b11,  操作系统","wordcount":  394 ,
+        "url": "http:\/\/chestnutheng.github.io\/cpp_multithreading\/","datePublished": "2017-04-03T13:58:53+08:00","dateModified": "2017-04-03T13:58:57+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "子恒"
+            },"description": ""
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="子恒的博客">子恒的博客</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/"> 主页 </a><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/freinds/"> 友链 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="子恒的博客">子恒的博客</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        Cancel
+                    </a>
+                </div><a class="menu-item" href="/" title="">主页</a><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/freinds/" title="">友链</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><div class="search-dropdown desktop">
+        <div id="search-dropdown-desktop"></div>
+    </div>
+    <div class="search-dropdown mobile">
+        <div id="search-dropdown-mobile"></div>
+    </div><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">[C++]C++多线程基础</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="about" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>子恒</a></span>&nbsp;<span class="post-category">included in <a href="/categories/c++/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>C++</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2017-04-03">2017-04-03</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;394 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;2 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li>
+          <ul>
+            <li><a href="#操作系统的知识">操作系统的知识</a>
+              <ul>
+                <li><a href="#概念">概念</a></li>
+                <li><a href="#自旋锁">自旋锁</a></li>
+                <li><a href="#信号量">信号量</a></li>
+                <li><a href="#互斥体">互斥体</a></li>
+              </ul>
+            </li>
+            <li><a href="#c11-的线程库">C++11 的线程库</a>
+              <ul>
+                <li><a href="#stdthread">std::thread</a></li>
+                <li><a href="#stdmutex-stdunique_lock-stdlock_guard">std::mutex, std::unique_lock, std::lock_guard</a></li>
+              </ul>
+            </li>
+            <li><a href="#c加锁示例生产消费模型">C加锁示例：生产/消费模型</a>
+              <ul>
+                <li><a href="#consumerc">consumer.c</a></li>
+                <li><a href="#producerc">producer.c</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><p>各种锁的基本概念以及在C++里的使用，还有C的一个生产消费模型。</p>
+<!-- more -->
+<h3 id="操作系统的知识">操作系统的知识</h3>
+<h4 id="概念">概念</h4>
+<p>临界区：访问和操作共享数据的代码段<br>
+避免死锁：嵌套加锁时按顺序加锁, 防止发生饥饿</p>
+<p>原子操作：atomic_t</p>
+<h4 id="自旋锁">自旋锁</h4>
+<p>自旋锁：请求该锁的线程在等待时自旋（特别耗费处理器时间），所以只能轻量级加锁（一般锁的时间小于上下文切换的开销）。<br>
+注意：对数据而不是对代码加锁。</p>
+<p>读写自旋锁：读时(允许读，不允许写)，写时（不允许读，不允许写）。<br>
+注意：不能把读锁升级为写锁，不然会死锁。读写操作要清晰地分开。</p>
+<h4 id="信号量">信号量</h4>
+<p>信号量：请求锁的进程在等待时加入等待队列并睡眠。一般用于长时间加锁（唤醒、睡眠、加入队列都是很大的开销）。<br>
+通过P/V或者down()/up()操作来控制允许同时进行的线程数。信号量减一就等同与获取一个锁，锁为负数时线程就会进入等待队列。<br>
+0/1信号量（互斥信号量）：只允许同时一个线程执行。<br>
+计数信号量：允许同时多个线程执行。<br>
+读写信号量：互斥信号量的一种。</p>
+<h4 id="互斥体">互斥体</h4>
+<p>互斥体(mutex): 可以睡眠的强制互斥锁。比信号量更加首选。</p>
+<p>mutex和自旋锁的区别：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">需求</th>
+<th style="text-align:left">加锁方法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">低开销加锁</td>
+<td style="text-align:left">优先自旋锁</td>
+</tr>
+<tr>
+<td style="text-align:left">短期加锁</td>
+<td style="text-align:left">优先自旋锁</td>
+</tr>
+<tr>
+<td style="text-align:left">长期加锁</td>
+<td style="text-align:left">优先mutex</td>
+</tr>
+<tr>
+<td style="text-align:left">中断上下文加锁</td>
+<td style="text-align:left">只能自旋锁</td>
+</tr>
+<tr>
+<td style="text-align:left">持有锁时需要睡眠</td>
+<td style="text-align:left">只能mutex</td>
+</tr>
+</tbody>
+</table>
+<h3 id="c11-的线程库">C++11 的线程库</h3>
+<h4 id="stdthread">std::thread</h4>
+<p><code>std::thread</code>用于创建一个执行的线程实例，所以它是一切并发编程的基础，使用时需要包含头文件，它提供了很多基本的线程操作，例如<code>get_id()</code>来获取所创建线程的线程 ID，例如使用<code>join()</code>来加入一个线程等。</p>
+<h4 id="stdmutex-stdunique_lock-stdlock_guard">std::mutex, std::unique_lock, std::lock_guard</h4>
+<p>使用std::mutex创建互斥体，std::unique_lock上锁。由于C++保证了所有栈对象在声明周期结束时会被销毁，所以这样的代码是异常安全的。无论发生异常还是正常结束，都会自动调用unlock()。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;thread&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;mutex&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">mtx</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">block_area</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">std</span><span class="o">::</span><span class="n">unique_lock</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">mtx</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">//...临界区
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">std</span><span class="o">::</span><span class="kr">thread</span> <span class="n">thd1</span><span class="p">(</span><span class="n">block_area</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">thd1</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="c加锁示例生产消费模型">C加锁示例：生产/消费模型</h3>
+<p>需求是两个进程维护一片共享内存，里面存十个产品（抽象为长度为10的一个循环队列）。生产者负责生产产品，注意队列满了就不能生产了，这时候进程陷入沉睡；消费者负责消费产品，消费完了队列的产品之后也要陷入沉睡。<br>
+Linux端代码如下：</p>
+<h4 id="consumerc">consumer.c</h4>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp"><span class="line"><span class="cl"><span class="cp">#define   __LIBRARY__
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;sys/stat.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;sys/types.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;fcntl.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;semaphore.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;sys/ipc.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;sys/shm.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="cp">#define   Total        500
+</span></span></span><span class="line"><span class="cl"><span class="cp">#define   BUFFERSIZE   10
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">id</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">get_pos</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="o">*</span><span class="n">add</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sem_t</span> <span class="o">*</span><span class="n">empty</span><span class="p">,</span> <span class="o">*</span><span class="n">full</span><span class="p">,</span> <span class="o">*</span><span class="n">mutex</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">empty</span> <span class="o">=</span> <span class="p">(</span><span class="n">sem_t</span> <span class="o">*</span><span class="p">)</span><span class="n">sem_open</span><span class="p">(</span><span class="s">&#34;empty&#34;</span><span class="p">,</span> <span class="n">O_CREAT</span><span class="p">,</span> <span class="mo">0777</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>  <span class="c1">//存货&gt;10锁死(锁生产者)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">full</span>  <span class="o">=</span> <span class="p">(</span><span class="n">sem_t</span> <span class="o">*</span><span class="p">)</span><span class="n">sem_open</span><span class="p">(</span><span class="s">&#34;full&#34;</span><span class="p">,</span> <span class="n">O_CREAT</span><span class="p">,</span> <span class="mo">0777</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>    <span class="c1">//存货&lt;0锁死(锁消费者)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">mutex</span> <span class="o">=</span> <span class="p">(</span><span class="n">sem_t</span> <span class="o">*</span><span class="p">)</span><span class="n">sem_open</span><span class="p">(</span><span class="s">&#34;mutex&#34;</span><span class="p">,</span><span class="n">O_CREAT</span><span class="p">,</span> <span class="mo">0777</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>    <span class="c1">//锁共享内存(都要锁)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="n">id</span> <span class="o">=</span> <span class="n">shmget</span><span class="p">(</span> <span class="mi">555204</span><span class="p">,</span> <span class="n">BUFFERSIZE</span><span class="o">*</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">),</span> <span class="n">IPC_CREAT</span><span class="o">|</span><span class="mo">0666</span> <span class="p">);</span><span class="c1">//获得共享内存id
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	
+</span></span><span class="line"><span class="cl">    <span class="n">add</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span><span class="n">shmat</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>                         <span class="c1">//获得对应id的内存的真实地址
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	
+</span></span><span class="line"><span class="cl">    <span class="k">for</span><span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">Total</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">        <span class="n">sem_wait</span><span class="p">(</span><span class="n">full</span><span class="p">);</span>     <span class="c1">//拿取前看产品还够不够，如果够，产品-1，不够就睡眠
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="n">sem_wait</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>    <span class="c1">//操作前锁内存
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;%d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">add</span><span class="p">[</span><span class="n">get_pos</span><span class="p">]);</span>
+</span></span><span class="line"><span class="cl">        <span class="n">fflush</span><span class="p">(</span><span class="n">stdout</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="n">get_pos</span> <span class="o">=</span> <span class="p">(</span> <span class="n">get_pos</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">)</span> <span class="o">%</span> <span class="n">BUFFERSIZE</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">sem_post</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>    <span class="c1">//解锁内存
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="n">sem_post</span><span class="p">(</span><span class="n">empty</span><span class="p">);</span>    <span class="c1">//消费完，产品-1
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">sem_unlink</span><span class="p">(</span><span class="s">&#34;empty&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sem_unlink</span><span class="p">(</span><span class="s">&#34;full&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sem_unlink</span><span class="p">(</span><span class="s">&#34;mutex&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="producerc">producer.c</h4>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp"><span class="line"><span class="cl"><span class="cp">#define   __LIBRARY__
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;sys/stat.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;sys/types.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;fcntl.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;semaphore.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;sys/ipc.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;sys/shm.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;sys/sem.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="cp">#define   Total        500
+</span></span></span><span class="line"><span class="cl"><span class="cp">#define   BUFFERSIZE   10
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">id</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">put_pos</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="o">*</span><span class="n">add</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sem_t</span> <span class="o">*</span><span class="n">empty</span><span class="p">,</span> <span class="o">*</span><span class="n">full</span><span class="p">,</span> <span class="o">*</span><span class="n">mutex</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">empty</span> <span class="o">=</span> <span class="p">(</span><span class="n">sem_t</span> <span class="o">*</span><span class="p">)</span><span class="n">sem_open</span><span class="p">(</span><span class="s">&#34;empty&#34;</span><span class="p">,</span> <span class="n">O_CREAT</span><span class="p">,</span> <span class="mo">0777</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">full</span>  <span class="o">=</span> <span class="p">(</span><span class="n">sem_t</span> <span class="o">*</span><span class="p">)</span><span class="n">sem_open</span><span class="p">(</span><span class="s">&#34;full&#34;</span><span class="p">,</span> <span class="n">O_CREAT</span><span class="p">,</span> <span class="mo">0777</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">mutex</span> <span class="o">=</span> <span class="p">(</span><span class="n">sem_t</span> <span class="o">*</span><span class="p">)</span><span class="n">sem_open</span><span class="p">(</span><span class="s">&#34;mutex&#34;</span><span class="p">,</span><span class="n">O_CREAT</span><span class="p">,</span> <span class="mo">0777</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">    <span class="n">id</span> <span class="o">=</span> <span class="n">shmget</span><span class="p">(</span> <span class="mi">555204</span><span class="p">,</span> <span class="n">BUFFERSIZE</span><span class="o">*</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">),</span> <span class="n">IPC_CREAT</span><span class="o">|</span><span class="mo">0666</span><span class="p">);</span>  
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">    <span class="n">add</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span><span class="n">shmat</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">    <span class="k">for</span><span class="p">(</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span> <span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">Total</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">            <span class="n">sem_wait</span><span class="p">(</span><span class="n">empty</span><span class="p">);</span>    <span class="c1">//生产前看满了没有
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>            <span class="n">sem_wait</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>    <span class="c1">//锁共享内存
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">            <span class="n">add</span><span class="p">[</span><span class="n">put_pos</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="n">put_pos</span> <span class="o">=</span> <span class="p">(</span> <span class="n">put_pos</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">)</span> <span class="o">%</span> <span class="n">BUFFERSIZE</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">            <span class="n">sem_post</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>    <span class="c1">//解锁共享内存
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>            <span class="n">sem_post</span><span class="p">(</span><span class="n">full</span><span class="p">);</span>     <span class="c1">//生产完，产品数量+1
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div></div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2017-04-03</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/cpp_multithreading/index.md" target="_blank">Read Markdown</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="http://chestnutheng.github.io/cpp_multithreading/" data-title="[C&#43;&#43;]C&#43;&#43;多线程基础" data-hashtags="c&#43;&#43;, c&#43;&#43;11, 操作系统"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="http://chestnutheng.github.io/cpp_multithreading/" data-hashtag="c&#43;&#43;"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Hacker News" data-sharer="hackernews" data-url="http://chestnutheng.github.io/cpp_multithreading/" data-title="[C&#43;&#43;]C&#43;&#43;多线程基础"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="http://chestnutheng.github.io/cpp_multithreading/" data-title="[C&#43;&#43;]C&#43;&#43;多线程基础"><i data-svg-src="/lib/simple-icons/icons/line.min.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="http://chestnutheng.github.io/cpp_multithreading/" data-title="[C&#43;&#43;]C&#43;&#43;多线程基础" data-ralateuid="2461859532"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw" aria-hidden="true"></i>&nbsp;<a href="/tags/c&#43;&#43;/">c&#43;&#43;</a>,&nbsp;<a href="/tags/c&#43;&#43;11/"> c&#43;&#43;11</a>,&nbsp;<a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/"> 操作系统</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/cpp11_3/" class="prev" rel="prev" title="[C&#43;&#43;]C&#43;&#43; 11/14 笔记（三）"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>[C++]C++ 11/14 笔记（三）</a>
+            <a href="/cpp_threadpool/" class="next" rel="next" title="[C&#43;&#43;]C&#43;&#43; 100行实现线程池">[C++]C++ 100行实现线程池<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
+</div>
+<div id="comments"><div id="giscus" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://giscus.app">Giscus</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.118.2">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2015 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="about" target="_blank">子恒</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/lightgallery/css/lightgallery-bundle.min.css"><link rel="stylesheet" href="/lib/katex/katex.min.css"><script type="text/javascript" src="/lib/autocomplete/autocomplete.min.js"></script><script type="text/javascript" src="/lib/lunr/lunr.min.js"></script><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/lightgallery/lightgallery.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/thumbnail/lg-thumbnail.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/zoom/lg-zoom.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript" src="/lib/sharer/sharer.min.js"></script><script type="text/javascript" src="/lib/katex/katex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/auto-render.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/copy-tex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{"giscus":{"category":"Announcements","categoryId":"DIC_kwDOA9ikP84CQT5Y","darkTheme":"dark","emitMetadata":"0","inputPosition":"bottom","lang":"en","lazyLoading":true,"lightTheme":"light","mapping":"pathname","reactionsEnabled":"1","repo":"chestnutheng/chestnutheng.github.io","repoId":"MDEwOlJlcG9zaXRvcnk2NDUyOTQ3MQ=="}},"lightgallery":true,"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":true,"left":"\\begin{equation}","right":"\\end{equation}"},{"display":true,"left":"\\begin{equation*}","right":"\\end{equation*}"},{"display":true,"left":"\\begin{align}","right":"\\end{align}"},{"display":true,"left":"\\begin{align*}","right":"\\end{align*}"},{"display":true,"left":"\\begin{alignat}","right":"\\end{alignat}"},{"display":true,"left":"\\begin{alignat*}","right":"\\end{alignat*}"},{"display":true,"left":"\\begin{gather}","right":"\\end{gather}"},{"display":true,"left":"\\begin{CD}","right":"\\end{CD}"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"highlightTag":"em","lunrIndexURL":"/index.json","maxResultLength":10,"noResultsFound":"No results found","snippetLength":50,"type":"lunr"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

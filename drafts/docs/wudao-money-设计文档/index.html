@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title> - 子恒的博客</title><meta name="Description" content="技术|思考"><meta property="og:title" content="" />
+<meta property="og:description" content="数据输入 支付宝账头（16）
+交易号 商家订单号 交易创建时间 付款时间 最近修改时间 交易来源地 类型 交易对方 商品名称 金额（元） 收/支 交易状态 服务费（元） 成功退款（元） 备注 资金状态 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 2023053122001420431448709679 visionpayF57BE6520BB10FD2D6878368 2023-05-3115:15:28 2023-05-3115:15:30 2023-05-3115:15:30 其他（包括阿里巴巴和外部商家） 即时到账交易 友宝 智能货柜消费 2.10 支出 交易成功 0.00 0.00 微信账头（11）
+交易时间 交易类型 交易对方 商品 收/支 金额(元) 支付方式 当前状态 交易单号 商户单号 备注 0 1 2 3 4 5 6 7 8 9 10 2023-05-31 14:55:08 商户消费 easyopen &ldquo;easyopen充值&rdquo; 支出 ¥10." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://chestnutheng.github.io/drafts/docs/wudao-money-%E8%AE%BE%E8%AE%A1%E6%96%87%E6%A1%A3/" /><meta property="og:image" content="http://chestnutheng.github.io/logo.png"/><meta property="article:section" content="drafts" />
+
+<meta property="og:site_name" content="子恒的博客" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="http://chestnutheng.github.io/logo.png"/>
+
+<meta name="twitter:title" content=""/>
+<meta name="twitter:description" content="数据输入 支付宝账头（16）
+交易号 商家订单号 交易创建时间 付款时间 最近修改时间 交易来源地 类型 交易对方 商品名称 金额（元） 收/支 交易状态 服务费（元） 成功退款（元） 备注 资金状态 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 2023053122001420431448709679 visionpayF57BE6520BB10FD2D6878368 2023-05-3115:15:28 2023-05-3115:15:30 2023-05-3115:15:30 其他（包括阿里巴巴和外部商家） 即时到账交易 友宝 智能货柜消费 2.10 支出 交易成功 0.00 0.00 微信账头（11）
+交易时间 交易类型 交易对方 商品 收/支 金额(元) 支付方式 当前状态 交易单号 商户单号 备注 0 1 2 3 4 5 6 7 8 9 10 2023-05-31 14:55:08 商户消费 easyopen &ldquo;easyopen充值&rdquo; 支出 ¥10."/>
+<meta name="application-name" content="我的网站">
+<meta name="apple-mobile-web-app-title" content="我的网站"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://chestnutheng.github.io/drafts/docs/wudao-money-%E8%AE%BE%E8%AE%A1%E6%96%87%E6%A1%A3/" /><link rel="prev" href="http://chestnutheng.github.io/drafts/docs/wudao_money_readme/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/chestnutheng.github.io\/drafts\/docs\/wudao-money-%E8%AE%BE%E8%AE%A1%E6%96%87%E6%A1%A3\/"
+        },"genre": "drafts","wordcount":  146 ,
+        "url": "http:\/\/chestnutheng.github.io\/drafts\/docs\/wudao-money-%E8%AE%BE%E8%AE%A1%E6%96%87%E6%A1%A3\/","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "子恒"
+            },"description": ""
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="子恒的博客">子恒的博客</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/"> 主页 </a><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/freinds/"> 友链 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="子恒的博客">子恒的博客</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        Cancel
+                    </a>
+                </div><a class="menu-item" href="/" title="">主页</a><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/freinds/" title="">友链</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><div class="search-dropdown desktop">
+        <div id="search-dropdown-desktop"></div>
+    </div>
+    <div class="search-dropdown mobile">
+        <div id="search-dropdown-mobile"></div>
+    </div><main class="main">
+                <div class="container"><div class="page single special"><h1 class="single-title animate__animated animate__pulse animate__faster"></h1><div class="content" id="content"><h1 id="数据输入">数据输入</h1>
+<p>支付宝账头（16）</p>
+<table>
+<thead>
+<tr>
+<th>交易号</th>
+<th>商家订单号</th>
+<th>交易创建时间</th>
+<th>付款时间</th>
+<th>最近修改时间</th>
+<th>交易来源地</th>
+<th>类型</th>
+<th>交易对方</th>
+<th>商品名称</th>
+<th>金额（元）</th>
+<th>收/支</th>
+<th>交易状态</th>
+<th>服务费（元）</th>
+<th>成功退款（元）</th>
+<th>备注</th>
+<th>资金状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+<td>4</td>
+<td>5</td>
+<td>6</td>
+<td>7</td>
+<td>8</td>
+<td>9</td>
+<td>10</td>
+<td>11</td>
+<td>12</td>
+<td>13</td>
+<td>14</td>
+<td>15</td>
+</tr>
+<tr>
+<td>2023053122001420431448709679</td>
+<td>visionpayF57BE6520BB10FD2D6878368</td>
+<td>2023-05-3115:15:28</td>
+<td>2023-05-3115:15:30</td>
+<td>2023-05-3115:15:30</td>
+<td>其他（包括阿里巴巴和外部商家）</td>
+<td>即时到账交易</td>
+<td>友宝</td>
+<td>智能货柜消费</td>
+<td>2.10</td>
+<td>支出</td>
+<td>交易成功</td>
+<td>0.00</td>
+<td>0.00</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>微信账头（11）</p>
+<table>
+<thead>
+<tr>
+<th>交易时间</th>
+<th>交易类型</th>
+<th>交易对方</th>
+<th>商品</th>
+<th>收/支</th>
+<th>金额(元)</th>
+<th>支付方式</th>
+<th>当前状态</th>
+<th>交易单号</th>
+<th>商户单号</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+<td>4</td>
+<td>5</td>
+<td>6</td>
+<td>7</td>
+<td>8</td>
+<td>9</td>
+<td>10</td>
+</tr>
+<tr>
+<td>2023-05-31 14:55:08</td>
+<td>商户消费</td>
+<td>easyopen</td>
+<td>&ldquo;easyopen充值&rdquo;</td>
+<td>支出</td>
+<td>¥10.00</td>
+<td>招商银行(8027)</td>
+<td>支付成功</td>
+<td>4200001853202305316421439877</td>
+<td>02212305315369551305344</td>
+<td>&ldquo;/&rdquo;</td>
+</tr>
+</tbody>
+</table>
+<h1 id="主要功能">主要功能</h1>
+<h2 id="统一账务格式">统一账务格式</h2>
+<p>标准账务格式</p>
+<table>
+<thead>
+<tr>
+<th>交易时间</th>
+<th>账务号</th>
+<th>收/支</th>
+<th>交易对方</th>
+<th>商品</th>
+<th>金额(元)</th>
+<th>商户单号</th>
+<th>类目</th>
+<th>科目</th>
+<th>回款账务号</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+<td>4</td>
+<td>5</td>
+<td>6</td>
+<td>7</td>
+<td>8</td>
+<td>9</td>
+</tr>
+<tr>
+<td>2023-05-31 14:55:08</td>
+<td>ZW0001</td>
+<td>收入/支出</td>
+<td>盒马/姓名/Vita</td>
+<td>群收款/滴滴</td>
+<td>¥10.00</td>
+<td>112233</td>
+<td>交通出行</td>
+<td>[云南,旅游]</td>
+<td>/</td>
+</tr>
+</tbody>
+</table>
+<h2 id="匹配类目">匹配类目</h2>
+<p>一级类目不可以重复，只能归到某一类。用于分析花销的组成</p>
+<ul>
+<li>吃喝（零食、饮料、本地生活）</li>
+<li>文娱（门票、剧场、音乐节、会员）</li>
+<li>服饰鞋帽</li>
+<li>车船机酒（打车、租车、火车、飞机、酒店）</li>
+<li>个护家清（护肤、发型、护理、卫生、摆件、花卉）</li>
+<li>美妆</li>
+<li>房租</li>
+<li>游戏（游戏、充值）</li>
+<li>母婴宠物</li>
+<li>3C数码</li>
+<li>烟酒</li>
+<li>运动户外</li>
+<li>红包转账</li>
+<li>零用（小于50元的未归类项目）</li>
+<li>医疗保健</li>
+<li>图书学习</li>
+</ul>
+<p>第一遍：粗筛，争取全部匹配到标签，讲究覆盖率<br>
+第二遍：纠错，把错误的标签匹配回来，讲究准确率<br>
+比如，“猫咪英雄”这个游戏，粗筛-&gt;母婴宠物，纠错-&gt;游戏娱乐</p>
+<h2 id="匹配科目">匹配科目</h2>
+<p>科目用于解决专项的统计问题。<br>
+科目可以任意添加，比如一条云南的打车记录，同时属于<strong>云南旅游</strong>、<strong>旅游</strong>几个科目<br>
+系统自动添加的科目</p>
+<ul>
+<li>大额消费（&gt;=198）</li>
+<li>摄影<br>
+自己添加的科目</li>
+<li>旅游A</li>
+</ul>
+</div><div id="comments"><div id="giscus" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://giscus.app">Giscus</a>.
+            </noscript></div></div></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.118.2">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2015 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="about" target="_blank">子恒</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/lightgallery/css/lightgallery-bundle.min.css"><link rel="stylesheet" href="/lib/katex/katex.min.css"><script type="text/javascript" src="/lib/autocomplete/autocomplete.min.js"></script><script type="text/javascript" src="/lib/lunr/lunr.min.js"></script><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/lightgallery/lightgallery.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/thumbnail/lg-thumbnail.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/zoom/lg-zoom.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript" src="/lib/sharer/sharer.min.js"></script><script type="text/javascript" src="/lib/katex/katex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/auto-render.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/copy-tex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{"giscus":{"category":"Announcements","categoryId":"DIC_kwDOA9ikP84CQT5Y","darkTheme":"dark","emitMetadata":"0","inputPosition":"bottom","lang":"en","lazyLoading":true,"lightTheme":"light","mapping":"pathname","reactionsEnabled":"1","repo":"chestnutheng/chestnutheng.github.io","repoId":"MDEwOlJlcG9zaXRvcnk2NDUyOTQ3MQ=="}},"lightgallery":true,"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":true,"left":"\\begin{equation}","right":"\\end{equation}"},{"display":true,"left":"\\begin{equation*}","right":"\\end{equation*}"},{"display":true,"left":"\\begin{align}","right":"\\end{align}"},{"display":true,"left":"\\begin{align*}","right":"\\end{align*}"},{"display":true,"left":"\\begin{alignat}","right":"\\end{alignat}"},{"display":true,"left":"\\begin{alignat*}","right":"\\end{alignat*}"},{"display":true,"left":"\\begin{gather}","right":"\\end{gather}"},{"display":true,"left":"\\begin{CD}","right":"\\end{CD}"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"highlightTag":"em","lunrIndexURL":"/index.json","maxResultLength":10,"noResultsFound":"No results found","snippetLength":50,"type":"lunr"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

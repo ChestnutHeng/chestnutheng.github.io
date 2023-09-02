@@ -1,0 +1,30 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>消息队列 - Tag - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/</link>
+        <description>消息队列 - Tag - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Wed, 04 Sep 2019 19:00:56 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" rel="self" type="application/rss+xml" /><item>
+    <title>[后台]RocketMQ的架构和设计</title>
+    <link>http://chestnutheng.github.io/rocketmq/</link>
+    <pubDate>Wed, 04 Sep 2019 19:00:56 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/rocketmq/</guid>
+    <description><![CDATA[主要整理文献：
+RocketMQ部署架构和技术架构 - Github
+RocketMQ关键机制的设计原理 - Github
+RocketMQ 原理简介 - 淘宝消息中间件项目组
+设计理念和部署 消息队列需要解决的问题 发布/订阅 最基础的需求，可以做解耦&amp;聚合，如果用Redis做，不够可靠 支持优先级队列、延时队列 顺序消费，rockmq严格有序 支持消息过滤，Producer和consumer共同过滤 持久化 内存缓存+文件 异常恢复
+broker crash，os crash，掉电 &mdash;保证消息不丢，或者丢失少量数据（依赖刷盘方式是同步还是异步）
+磁盘损坏，机器永久损坏 &mdash;通过异步复制，可保证99%的消息不丢 实时性 RocketMQ使用长轮询Pull方式，可保证消息非常实时，消息实时性不低于Push。 At least Once 和 Exactly Only Once， 至少消费一次且只消费一次 broker的buffer容量问题。RocketMQ 的内存Buffer持久化在硬盘，抽象成一个无限长度的队列，不管有多少数据进来都能装得下，当然也会定时清理。 回溯消费 一般是按照时间维度，例如由于 Consumer 系统故障，恢复后需要重新消费 1 小时前的数据，那么 Broker 要提供一种机制，可以按照时间维度来回退消费进度。
+RocketMQ 支持按照时间回溯消费，时间维度精确到毫秒，可以向前回溯，也可以向后回溯。 消息堆积 消息堆积在内存Buffer，一旦超过内存Buffer，可以根据一定的丢弃策略来丢弃消息，对性能影响不大，但是不能堆积太多
+消息堆积到持久化存储系统中，例如DB，KV存储，文件记录形式。 当消息不能在内存Cache命中时，要不可避免的访问磁盘，会产生大量读IO，读IO的吞吐量直接决定了消息堆积后的访问能力。 消息重试 消息重试有两种原因，一种是消息本身处理失败，如编码有问题等，重试永远不会成功。另一部分是处理消息依赖的下游服务暂时不可用，一段时间重试后可以成功。所以可以消极重试，逐步重试增大等待重试间隔。 RockMQ 模块 Name Server ：NameServer是一个非常简单的Topic路由注册中心，其角色类似Dubbo中的zookeeper，支持Broker的动态注册与发现。
+(1) 路由管理
+Broker管理：NameServer接受Broker集群的注册信息并且保存下来作为路由信息的基本数据。然后提供心跳检测机制，检查Broker是否还存活；
+路由信息管理：每个NameServer将保存关于Broker集群的整个路由信息和用于客户端查询的队列信息。然后Producer和Conumser通过NameServer就可以知道整个Broker集群的路由信息，找到对应topic的路由信息，从而进行消息的投递和消费。
+(2) 无状态：NameServer通常也是集群的方式部署，各实例间相互不进行信息通讯。它是一个几乎无状态的结点，他们之间互不通信。Broker是向每一台NameServer注册自己的路由信息，所以每一个NameServer实例上面都保存一份完整的路由信息。当某个NameServer因某种原因下线了，Broker仍然可以向其它NameServer同步其路由信息，Producer,Consumer仍然可以动态感知Broker的路由的信息。
+(3) 随机选择：客户端连接时，会随机选择。
+(4) 长连接：Broker向所有的NameServer结点建立长连接，注册Topic信息。Producer和Consumer也是长连接。]]></description>
+</item>
+</channel>
+</rss>

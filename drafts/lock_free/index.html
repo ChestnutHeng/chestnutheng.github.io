@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title> - 子恒的博客</title><meta name="Description" content="技术|思考"><meta property="og:title" content="" />
+<meta property="og:description" content="队列是最方便的线程间传递信息的方式。线程间传递信息，难免会引入锁，锁又会带来效率的大幅降低。我们从一个简单的队列开始，看看lock-free的思维如何解决问题。
+加锁的队列 api回顾 回顾一下互斥锁和条件变量的用法：
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 // 锁：是互斥的。一个线程加锁后其他线程如果试图加锁，会陷入等待。 pthread_mutex_t mutex; //锁 // 给互斥体变量加锁，其他线程执行这里时会卡住 pthread_mutex_lock(&amp;mutex); // 给互斥体变量解除锁 phtread_mutex_unlock(&amp;mutex); // 条件变量：用条件控制线程是否继续。条件变量不是卡别人的，使用条件卡自己的，等待别人告诉自己可以继续。 pthread_cond_t qready = PTHREAD_COND_INITIALIZER; pthread_mutex_t qlock = PTHREAD_MUTEX_INITIALIZER; // wait用来等待条件就绪。如果陷入wait，只能通过别的线程被唤醒。一般情况下，wait会配合while和需要wait的条件使用，避免假死和资源竞争等问题 pthread_cond_wait(&amp;qready, &amp;mutex); // signal可以通知一个线程条件已经就绪 pthread_cond_signal(&amp;qready) // broadcast会通知所有线程就绪。这种通知是顺序进行的，因为只有一个线程可以拿到wait时指定的锁，然后执行完自己的操作，最后unlock，把锁让给下一个线程 pthread_cond_broadcast(&amp;qready) 我们可以根据这个用法写一个模板：
+1 2 3 4 5 6 7 void thread1(){ pthread_mutex_lock(&amp;lock); while(不满足条件，比如队列为空、文件未就绪) pthread_cond_wait(&amp;cond, &amp;lock); // ... 得到条件了，做一些事情，比如操作文件、推出队列的东西 pthread_mutex_unlock(&amp;lock); } 加锁队列的实现 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 // 是否为空 template &lt;typename T&gt; bool BlockingQueue&lt;T&gt;::IsEmpty(){ bool rv; g_mutex_lock(m_mutex); rv = m_theQueue." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://chestnutheng.github.io/drafts/lock_free/" /><meta property="og:image" content="http://chestnutheng.github.io/logo.png"/><meta property="article:section" content="drafts" />
+
+<meta property="og:site_name" content="子恒的博客" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="http://chestnutheng.github.io/logo.png"/>
+
+<meta name="twitter:title" content=""/>
+<meta name="twitter:description" content="队列是最方便的线程间传递信息的方式。线程间传递信息，难免会引入锁，锁又会带来效率的大幅降低。我们从一个简单的队列开始，看看lock-free的思维如何解决问题。
+加锁的队列 api回顾 回顾一下互斥锁和条件变量的用法：
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 // 锁：是互斥的。一个线程加锁后其他线程如果试图加锁，会陷入等待。 pthread_mutex_t mutex; //锁 // 给互斥体变量加锁，其他线程执行这里时会卡住 pthread_mutex_lock(&amp;mutex); // 给互斥体变量解除锁 phtread_mutex_unlock(&amp;mutex); // 条件变量：用条件控制线程是否继续。条件变量不是卡别人的，使用条件卡自己的，等待别人告诉自己可以继续。 pthread_cond_t qready = PTHREAD_COND_INITIALIZER; pthread_mutex_t qlock = PTHREAD_MUTEX_INITIALIZER; // wait用来等待条件就绪。如果陷入wait，只能通过别的线程被唤醒。一般情况下，wait会配合while和需要wait的条件使用，避免假死和资源竞争等问题 pthread_cond_wait(&amp;qready, &amp;mutex); // signal可以通知一个线程条件已经就绪 pthread_cond_signal(&amp;qready) // broadcast会通知所有线程就绪。这种通知是顺序进行的，因为只有一个线程可以拿到wait时指定的锁，然后执行完自己的操作，最后unlock，把锁让给下一个线程 pthread_cond_broadcast(&amp;qready) 我们可以根据这个用法写一个模板：
+1 2 3 4 5 6 7 void thread1(){ pthread_mutex_lock(&amp;lock); while(不满足条件，比如队列为空、文件未就绪) pthread_cond_wait(&amp;cond, &amp;lock); // ... 得到条件了，做一些事情，比如操作文件、推出队列的东西 pthread_mutex_unlock(&amp;lock); } 加锁队列的实现 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 // 是否为空 template &lt;typename T&gt; bool BlockingQueue&lt;T&gt;::IsEmpty(){ bool rv; g_mutex_lock(m_mutex); rv = m_theQueue."/>
+<meta name="application-name" content="我的网站">
+<meta name="apple-mobile-web-app-title" content="我的网站"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://chestnutheng.github.io/drafts/lock_free/" /><link rel="prev" href="http://chestnutheng.github.io/drafts/plant-uml-%E7%A4%BA%E4%BE%8B/" /><link rel="next" href="http://chestnutheng.github.io/drafts/latex/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/chestnutheng.github.io\/drafts\/lock_free\/"
+        },"genre": "drafts","wordcount":  254 ,
+        "url": "http:\/\/chestnutheng.github.io\/drafts\/lock_free\/","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "子恒"
+            },"description": ""
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="子恒的博客">子恒的博客</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/"> 主页 </a><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/freinds/"> 友链 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="子恒的博客">子恒的博客</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        Cancel
+                    </a>
+                </div><a class="menu-item" href="/" title="">主页</a><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/freinds/" title="">友链</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><div class="search-dropdown desktop">
+        <div id="search-dropdown-desktop"></div>
+    </div>
+    <div class="search-dropdown mobile">
+        <div id="search-dropdown-mobile"></div>
+    </div><main class="main">
+                <div class="container"><div class="page single special"><h1 class="single-title animate__animated animate__pulse animate__faster"></h1><div class="content" id="content"><p>队列是最方便的线程间传递信息的方式。线程间传递信息，难免会引入锁，锁又会带来效率的大幅降低。我们从一个简单的队列开始，看看lock-free的思维如何解决问题。</p>
+<h1 id="加锁的队列">加锁的队列</h1>
+<h2 id="api回顾">api回顾</h2>
+<p>回顾一下互斥锁和条件变量的用法：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="c1">// 锁：是互斥的。一个线程加锁后其他线程如果试图加锁，会陷入等待。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">pthread_mutex_t</span> <span class="n">mutex</span><span class="p">;</span> <span class="c1">//锁
+</span></span></span><span class="line"><span class="cl"><span class="c1">// 给互斥体变量加锁，其他线程执行这里时会卡住
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutex</span><span class="p">);</span> 
+</span></span><span class="line"><span class="cl"> <span class="c1">// 给互斥体变量解除锁
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">phtread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 条件变量：用条件控制线程是否继续。条件变量不是卡别人的，使用条件卡自己的，等待别人告诉自己可以继续。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">pthread_cond_t</span> <span class="n">qready</span> <span class="o">=</span> <span class="n">PTHREAD_COND_INITIALIZER</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">pthread_mutex_t</span> <span class="n">qlock</span> <span class="o">=</span> <span class="n">PTHREAD_MUTEX_INITIALIZER</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// wait用来等待条件就绪。如果陷入wait，只能通过别的线程被唤醒。一般情况下，wait会配合while和需要wait的条件使用，避免假死和资源竞争等问题
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">pthread_cond_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">qready</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">mutex</span><span class="p">);</span> 
+</span></span><span class="line"><span class="cl"><span class="c1">// signal可以通知一个线程条件已经就绪
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">pthread_cond_signal</span><span class="p">(</span><span class="o">&amp;</span><span class="n">qready</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// broadcast会通知所有线程就绪。这种通知是顺序进行的，因为只有一个线程可以拿到wait时指定的锁，然后执行完自己的操作，最后unlock，把锁让给下一个线程
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">pthread_cond_broadcast</span><span class="p">(</span><span class="o">&amp;</span><span class="n">qready</span><span class="p">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>我们可以根据这个用法写一个模板：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">thread1</span><span class="p">(){</span>
+</span></span><span class="line"><span class="cl">    <span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lock</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">while</span><span class="p">(</span><span class="err">不满足条件，比如队列为空、文件未就绪</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">pthread_cond_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cond</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">lock</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// ... 得到条件了，做一些事情，比如操作文件、推出队列的东西
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lock</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="加锁队列的实现">加锁队列的实现</h2>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="c1">// 是否为空
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">bool</span> <span class="n">BlockingQueue</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">IsEmpty</span><span class="p">(){</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">bool</span> <span class="n">rv</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">g_mutex_lock</span><span class="p">(</span><span class="n">m_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">rv</span> <span class="o">=</span> <span class="n">m_theQueue</span><span class="p">.</span><span class="n">empty</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">g_mutex_unlock</span><span class="p">(</span><span class="n">m_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">rv</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 推出元素
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">bool</span> <span class="n">BlockingQueue</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">Push</span><span class="p">(</span><span class="k">const</span> <span class="n">T</span> <span class="o">&amp;</span><span class="n">a_elem</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">    <span class="n">g_mutex_lock</span><span class="p">(</span><span class="n">m_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 如果队列已满，则等待，直到队列空出位置
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">while</span> <span class="p">(</span><span class="n">m_theQueue</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">m_maximumSize</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">        <span class="n">g_cond_wait</span><span class="p">(</span><span class="n">m_cond</span><span class="p">,</span> <span class="n">m_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kt">bool</span> <span class="n">queueEmpty</span> <span class="o">=</span> <span class="n">m_theQueue</span><span class="p">.</span><span class="n">empty</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">m_theQueue</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">a_elem</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 如果队列push之前为空，通知其余线程可以继续push
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">queueEmpty</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// wake up threads waiting for stuff
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="n">g_cond_broadcast</span><span class="p">(</span><span class="n">m_cond</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="n">g_mutex_unlock</span><span class="p">(</span><span class="n">m_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">BlockingQueue</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">Pop</span><span class="p">(</span><span class="n">T</span> <span class="o">&amp;</span><span class="n">out_data</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">    <span class="n">g_mutex_lock</span><span class="p">(</span><span class="n">m_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 队列为空则陷入等待，直到队列有元素
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">while</span> <span class="p">(</span><span class="n">m_theQueue</span><span class="p">.</span><span class="n">empty</span><span class="p">()){</span>
+</span></span><span class="line"><span class="cl">        <span class="n">g_cond_wait</span><span class="p">(</span><span class="n">m_cond</span><span class="p">,</span> <span class="n">m_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="kt">bool</span> <span class="n">queueFull</span> <span class="o">=</span> <span class="p">(</span><span class="n">m_theQueue</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">m_maximumSize</span><span class="p">)</span> <span class="o">?</span> <span class="nb">true</span> <span class="o">:</span> <span class="nb">false</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">out_data</span> <span class="o">=</span> <span class="n">m_theQueue</span><span class="p">.</span><span class="n">front</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">m_theQueue</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 如果队列已经满了，通知其他线程来pop
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">queueFull</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// wake up threads waiting for stuff
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="n">g_cond_broadcast</span><span class="p">(</span><span class="n">m_cond</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="n">g_mutex_unlock</span><span class="p">(</span><span class="n">m_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>我们举个例子：</p>
+<ol>
+<li>队列<code>m_maximumSize</code>为10</li>
+<li>连续push 20个消息，后面的10个push线程会卡住在wait</li>
+<li>连续pop 10个消息，此时10个消息被pop出去，还有10个push线程卡死在wait（假设pop时有新的push，新的push会直接push进去）</li>
+<li>此时队列为空，新来的pop卡死；之前步骤2卡死在push的线程都会被依次唤醒，push直到队列满</li>
+</ol>
+<h1 id="cas实现的队列">CAS实现的队列</h1>
+<p><a href="https://www.codeproject.com/Articles/153898/Yet-another-implementation-of-a-lock-free-circul" target="_blank" rel="noopener noreffer ">https://www.codeproject.com/Articles/153898/Yet-another-implementation-of-a-lock-free-circul</a></p>
+<h2 id="cas回顾">CAS回顾</h2>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">volatile</span> <span class="kt">int</span> <span class="n">a</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">a</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// a不等于1的时候会一直循环
+</span></span></span><span class="line"><span class="cl"><span class="c1">// a等于1的时候a会被赋值为2，并返回true
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">CAS</span><span class="p">(</span><span class="o">&amp;</span><span class="n">a</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)){</span>
+</span></span><span class="line"><span class="cl">    <span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div></div><div id="comments"><div id="giscus" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://giscus.app">Giscus</a>.
+            </noscript></div></div></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.118.2">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2015 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="about" target="_blank">子恒</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/lightgallery/css/lightgallery-bundle.min.css"><link rel="stylesheet" href="/lib/katex/katex.min.css"><script type="text/javascript" src="/lib/autocomplete/autocomplete.min.js"></script><script type="text/javascript" src="/lib/lunr/lunr.min.js"></script><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/lightgallery/lightgallery.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/thumbnail/lg-thumbnail.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/zoom/lg-zoom.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript" src="/lib/sharer/sharer.min.js"></script><script type="text/javascript" src="/lib/katex/katex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/auto-render.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/copy-tex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{"giscus":{"category":"Announcements","categoryId":"DIC_kwDOA9ikP84CQT5Y","darkTheme":"dark","emitMetadata":"0","inputPosition":"bottom","lang":"en","lazyLoading":true,"lightTheme":"light","mapping":"pathname","reactionsEnabled":"1","repo":"chestnutheng/chestnutheng.github.io","repoId":"MDEwOlJlcG9zaXRvcnk2NDUyOTQ3MQ=="}},"lightgallery":true,"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":true,"left":"\\begin{equation}","right":"\\end{equation}"},{"display":true,"left":"\\begin{equation*}","right":"\\end{equation*}"},{"display":true,"left":"\\begin{align}","right":"\\end{align}"},{"display":true,"left":"\\begin{align*}","right":"\\end{align*}"},{"display":true,"left":"\\begin{alignat}","right":"\\end{alignat}"},{"display":true,"left":"\\begin{alignat*}","right":"\\end{alignat*}"},{"display":true,"left":"\\begin{gather}","right":"\\end{gather}"},{"display":true,"left":"\\begin{CD}","right":"\\end{CD}"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"highlightTag":"em","lunrIndexURL":"/index.json","maxResultLength":10,"noResultsFound":"No results found","snippetLength":50,"type":"lunr"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

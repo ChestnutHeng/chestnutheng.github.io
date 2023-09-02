@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>[深度学习]C1W1~C1W2 - 子恒的博客</title><meta name="Description" content="deeplearning.ai 课程1 Week1~Week2 课程笔记和推导、编码整理"><meta property="og:title" content="[深度学习]C1W1~C1W2" />
+<meta property="og:description" content="deeplearning.ai 课程1 Week1~Week2 课程笔记和推导、编码整理" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://chestnutheng.github.io/c1w1-c1w2/" /><meta property="og:image" content="http://chestnutheng.github.io/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2018-08-14T21:09:13+08:00" />
+<meta property="article:modified_time" content="2018-09-10T02:44:37+08:00" /><meta property="og:site_name" content="子恒的博客" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="http://chestnutheng.github.io/logo.png"/>
+
+<meta name="twitter:title" content="[深度学习]C1W1~C1W2"/>
+<meta name="twitter:description" content="deeplearning.ai 课程1 Week1~Week2 课程笔记和推导、编码整理"/>
+<meta name="application-name" content="我的网站">
+<meta name="apple-mobile-web-app-title" content="我的网站"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://chestnutheng.github.io/c1w1-c1w2/" /><link rel="prev" href="http://chestnutheng.github.io/gdb/" /><link rel="next" href="http://chestnutheng.github.io/rbtree/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[深度学习]C1W1~C1W2",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/chestnutheng.github.io\/c1w1-c1w2\/"
+        },"genre": "posts","keywords": "深度学习, deeplearning.ai","wordcount":  749 ,
+        "url": "http:\/\/chestnutheng.github.io\/c1w1-c1w2\/","datePublished": "2018-08-14T21:09:13+08:00","dateModified": "2018-09-10T02:44:37+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "子恒"
+            },"description": "deeplearning.ai 课程1 Week1~Week2 课程笔记和推导、编码整理"
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="子恒的博客">子恒的博客</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/"> 主页 </a><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/freinds/"> 友链 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="子恒的博客">子恒的博客</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        Cancel
+                    </a>
+                </div><a class="menu-item" href="/" title="">主页</a><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/freinds/" title="">友链</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><div class="search-dropdown desktop">
+        <div id="search-dropdown-desktop"></div>
+    </div>
+    <div class="search-dropdown mobile">
+        <div id="search-dropdown-mobile"></div>
+    </div><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">[深度学习]C1W1~C1W2</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="about" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>子恒</a></span>&nbsp;<span class="post-category">included in <a href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>机器学习</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2018-08-14">2018-08-14</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;749 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;4 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#c1w1-什么是deep-learning">C1W1: 什么是deep learning</a>
+          <ul>
+            <li><a href="#单一神经元">单一神经元</a></li>
+            <li><a href="#飞速发展">飞速发展</a></li>
+            <li><a href="#生命周期">生命周期</a></li>
+          </ul>
+        </li>
+        <li><a href="#c1w2-基本的神经网络">C1W2: 基本的神经网络</a>
+          <ul>
+            <li><a href="#问题描述">问题描述</a></li>
+            <li><a href="#逻辑回归">逻辑回归</a>
+              <ul>
+                <li><a href="#sigmoid函数">Sigmoid函数</a></li>
+                <li><a href="#逻辑回归-1">逻辑回归</a></li>
+                <li><a href="#cost-function">Cost Function</a></li>
+                <li><a href="#梯度下降">梯度下降</a></li>
+                <li><a href="#计算图">计算图</a></li>
+                <li><a href="#vectorization">Vectorization</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="c1w1-什么是deep-learning">C1W1: 什么是deep learning</h2>
+<h3 id="单一神经元">单一神经元</h3>
+<p>deeplearning是模拟大脑的一种机器学习算法。以房价预测为例：</p>
+<img src="http://chestnutheng-blog-1254282572.file.myqcloud.com/c1w1-1.png" style="width: 500px"/>
+<p>上图把房子面积作为输入X，房价作为输出Y，通过拟合得到了一个一次函数<br>
+$$<br>
+Y=aX+b<br>
+$$<br>
+这个函数的负值均视为0，即使用了ReLU函数作为神经元的激活函数做了处理。<br>
+$$<br>
+f(x) = \max(aX+b, 0)<br>
+$$</p>
+<p>Note: ReLU函数：f(x)=\max(0, x)，近年来使用ReLU函数代替sigmoid函数为计算速度做了巨大的提升。</p>
+<p>看看更多特征的情况：<br>
+<img src="http://chestnutheng-blog-1254282572.file.myqcloud.com/c1w1-1.5.png" style="height: 250px" /></p>
+<h3 id="飞速发展">飞速发展</h3>
+<img src="http://chestnutheng-blog-1254282572.file.myqcloud.com/dlc1w1-3.png" style="height: 300px" />
+<p>上图中可以看到传统算法和神经网络的效果的一个对比，在数据多的情况下神经网络有明显的优势。近年来以下的一些原因导致deep learning飞速发展成为主流</p>
+<ol>
+<li>计算速度飞速提升，使得训练较大的神经网络成为可能</li>
+<li>数据变多（labeled data 变多）</li>
+</ol>
+<h3 id="生命周期">生命周期</h3>
+<p>一个典型的深度学习的流程，即是一个Idea-Code-Train 的循环</p>
+<img src="http://chestnutheng-blog-1254282572.file.myqcloud.com/c1w1-2.png" style="height: 280px" />
+<h2 id="c1w2-基本的神经网络">C1W2: 基本的神经网络</h2>
+<h3 id="问题描述">问题描述</h3>
+<img src="http://chestnutheng-blog-1254282572.file.myqcloud.com/C1W2-1.png" style="height: 280px" />
+<p>这里从一个简单的问题开始说起：识别一个64x64的图像是否为猫：</p>
+<p>每个像素有RGB三个值组成，64*64个像素就是12228个值。所以X可以表示为一个12228维的向量。Y则是0或1（是或不是猫咪）。</p>
+<p>这里需要很多(X, Y)组成的labeled data数据用来学习。每个样本用如下的数学方式表示：<br>
+$$<br>
+X\in R^{n_x}, Y\in{0,1}   \qquad 其中n_x为每个图片的维度(12288)<br>
+$$<br>
+训练集可以用很多样本表示：<br>
+$$<br>
+\textrm{m training examples:   } \{(X^{(1)}, Y^{(1)}), (X^{(2)}, Y^{(2)}), &hellip; ,(X^{(3)}, Y^{(3)})\}<br>
+$$<br>
+其中每个X都有n_x列，所以整个样本集可以表示为<br>
+$$<br>
+X\in R^{n_x\times m},Y \in R^{1 \times m}<br>
+$$</p>
+<h3 id="逻辑回归">逻辑回归</h3>
+<h4 id="sigmoid函数">Sigmoid函数</h4>
+<p>在开始正题之前，先看一个函数：<br>
+$$<br>
+\sigma(z) = \frac{1}{1+e^{-z}}<br>
+$$<br>
+如果Z为正无穷，这个函数将会是 1/(1+0) = 1</p>
+<p>如果Z为负无穷，这个函数将会是1/bignum = 0</p>
+<p>这个S型函数非常适用于取值0~1之间的x的映射。</p>
+<p>同时，这个函数的导数也十分有趣：<br>
+$$<br>
+\begin{aligned}<br>
+f&rsquo;(z) &amp;= (\frac{1}{1+e^{-z}})&rsquo;= \frac{e^{-z}}{(1+e^{-z})^{2}} = \frac{1+e^{-z}-1}{(1+e^{-z})^{2}}<br>
+\<br>
+&amp;= \frac{1}{(1+e^{-z})}(1-\frac{1}{(1+e^{-z})})<br>
+\<br>
+&amp;= f(z)(1-f(z))<br>
+\<br>
+\end{aligned}<br>
+$$</p>
+<h4 id="逻辑回归-1">逻辑回归</h4>
+<p>判断单一图片是否为猫的图片，可以表示为给定图片X，预估y为1的概率：<br>
+$$<br>
+\textrm{Given } x , \textrm{ want } \hat{y}=P(y=1|x) \qquad let \ x \in R^{n_x}, 0\leq\hat{y}\leq1<br>
+$$<br>
+设参数<br>
+$$<br>
+w \in R^{n_x},b \in R<br>
+$$<br>
+输出参数和X的乘积，然后用sigmoid做区间化：<br>
+$$<br>
+\hat{y} = \sigma(w^Tx+b)<br>
+$$<br>
+现在的问题就是从样本中估计出参数w和b的值。</p>
+<h4 id="cost-function">Cost Function</h4>
+<p>我们对样本做训练的目标，就是使得w和b对每一个样本的估计都损失最小。用数学的语言就是：<br>
+$$<br>
+\hat{y} = \sigma(w^Tx+b),\textrm{ where }\sigma(z) = \frac{1}{1+e^{-z}}<br>
+$$</p>
+<p>$$<br>
+\textrm{ Given } \{(X^{(1)}, Y^{(1)}),  &hellip; ,(X^{(3)}, Y^{(3)})\}, \textrm{ want } \hat{y} \approx y<br>
+$$</p>
+<p>$\hat{y}$和$y$之间的差距，就是我们的损失。我们当然可以用平方损失函数<br>
+$$<br>
+L(\hat{y}, y) = \frac{1}{2}(\hat{y}-y)^2<br>
+$$<br>
+不过这里却有更好的函数：<br>
+$$<br>
+L(\hat{y}, y) = -(y\log{\hat{y}} + (1-y)\log{(1-\hat{y})})<br>
+$$<br>
+当 y = 1时，$L(\hat{y}, y) = -\log{\hat{y}}$。如果要L小，就要$\hat{y}$尽可能大</p>
+<p>当 y = 0 时，$L(\hat{y}, y)= -\log{(1-\hat{y})}$。如果要L小，就要$\hat{y}$尽可能小</p>
+<p>这两条性质证明了这是个很好的损失函数。总的损失函数可以写成：</p>
+<p>$$<br>
+J(w,b) = \frac{1}{m} \sum^{m}_{i=1} L(\hat{y^{(i)}}, y^{(i)}) = -\frac{1}{m} \sum^{m}_{i=1}(y^{(i)}\log{\hat{y^{(i)}}} + (1-y^{(i)})\log{(1-\hat{y^{(i)}})})<br>
+$$</p>
+<h4 id="梯度下降">梯度下降</h4>
+<p>我们要找到上述函数J(w,b)的最小值。J(w,b)可能是下面的简化曲线：</p>
+<img src="http://chestnutheng-blog-1254282572.file.myqcloud.com/C1W2-2.png" style="height: 150px" />
+<p>假设我们先随机初始化w和b，在曲线上左上方的某一点。要让J的值变小，可以增加w的值。如果点在曲线的右上方，我们就需要减少w的值。事实上增加或减少w的值是有J对w的导数决定的。我们可以每次运行：<br>
+$$<br>
+w := w - \alpha \frac{dJ(w,b)}{dw} \qquad \alpha为学习速率，后面的是偏导数<br>
+$$<br>
+还有参数b：<br>
+$$<br>
+b := b - \alpha \frac{dJ(w,b)}{db} \qquad \alpha为学习速率，后面的是偏导数<br>
+$$<br>
+学习速率是用来决定每次参数迈的步子的大小。事实上J不会是一个凸函数，所以他拥有多个最小值，学习速率可以帮助参数不收敛到局部最小值。</p>
+<h4 id="计算图">计算图</h4>
+<p>计算图可以让我们清晰地通过反向传播计算每个参数的导数。如下是一个代价函数求导的例子：</p>
+<img src="http://chestnutheng-blog-1254282572.file.myqcloud.com/C1W2-3.png" style="height: 250px" />
+<p>反向传播是一个从后向前的计算导数的过程，可以避免重复的计算。</p>
+<p>先求根据上面的损失函数求出da：<br>
+$$<br>
+\frac{dL(a,y)}{da}=\frac{dL}{da} = -\frac{y}{a}+\frac{1-y}{1-a}<br>
+$$<br>
+然后求出dz：<br>
+$$<br>
+\frac{dL}{dz}=\frac{dL}{da} \cdot \frac{da}{dz} = (-\frac{y}{a}+\frac{1-y}{1-a})a(1-a)=(a-1)y+(1-y)a=a-y<br>
+$$<br>
+参数的导数更加容易：<br>
+$$<br>
+\frac{dL}{dw_1}=\frac{dL}{da} \cdot \frac{da}{dz} \cdot \frac{dz}{dw_1}=\frac{dL}{dz} \cdot \frac{dz}{dw_1}=\frac{dL}{dz} \cdot x_1<br>
+$$<br>
+链式求导可以很方便地运用在程序中，只要先记下前几步求导的值。同理，<br>
+$$<br>
+dw_2=dz \cdot x_2 , \quad db=dz<br>
+$$</p>
+<h4 id="vectorization">Vectorization</h4>
+<p>现在已经做完了所有求得参数的准备工作。一个标准的过程可以被表示为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-matlab" data-lang="matlab"><span class="line"><span class="cl"><span class="n">J</span> <span class="p">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">dw1</span> <span class="p">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">dw2</span> <span class="p">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">db</span> <span class="p">=</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl"># 遍历样本
+</span></span><span class="line"><span class="cl"><span class="k">for</span> <span class="nb">i</span> <span class="p">=</span> <span class="mi">1</span> <span class="n">to</span> <span class="n">m</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">  <span class="n">z</span><span class="p">(</span><span class="nb">i</span><span class="p">)</span> <span class="p">=</span> <span class="n">w</span> <span class="o">*</span> <span class="n">x</span><span class="p">(</span><span class="nb">i</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span>
+</span></span><span class="line"><span class="cl">  <span class="n">a</span><span class="p">(</span><span class="nb">i</span><span class="p">)</span> <span class="p">=</span> <span class="n">theta</span><span class="p">(</span><span class="n">z</span><span class="p">(</span><span class="nb">i</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">  <span class="n">J</span> <span class="o">+</span><span class="p">=</span> <span class="o">-</span><span class="p">(</span><span class="n">y</span><span class="p">(</span><span class="nb">i</span><span class="p">)</span><span class="nb">log</span><span class="p">(</span><span class="n">a</span><span class="p">(</span><span class="nb">i</span><span class="p">))</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">y</span><span class="p">(</span><span class="nb">i</span><span class="p">))</span><span class="nb">log</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">a</span><span class="p">(</span><span class="nb">i</span><span class="p">)))</span>
+</span></span><span class="line"><span class="cl">  <span class="n">dz</span><span class="p">(</span><span class="nb">i</span><span class="p">)</span> <span class="p">=</span> <span class="n">a</span><span class="p">(</span><span class="nb">i</span><span class="p">)</span> <span class="o">-</span> <span class="n">y</span><span class="p">(</span><span class="nb">i</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">  <span class="n">dw1</span> <span class="o">+</span><span class="p">=</span> <span class="n">x1</span><span class="p">(</span><span class="nb">i</span><span class="p">)</span><span class="o">*</span><span class="n">dz</span><span class="p">(</span><span class="nb">i</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">  <span class="n">dw2</span> <span class="o">+</span><span class="p">=</span> <span class="n">x2</span><span class="p">(</span><span class="nb">i</span><span class="p">)</span><span class="o">*</span><span class="n">dz</span><span class="p">(</span><span class="nb">i</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">  <span class="c">...</span>
+</span></span><span class="line"><span class="cl">  <span class="n">db</span> <span class="o">+</span><span class="p">=</span> <span class="n">dz</span><span class="p">(</span><span class="nb">i</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">J</span> <span class="o">/</span><span class="p">=</span> <span class="n">m</span>
+</span></span><span class="line"><span class="cl"><span class="n">dw1</span> <span class="o">/</span><span class="p">=</span> <span class="n">m</span><span class="p">;</span> <span class="n">dw2</span> <span class="o">/</span><span class="p">=</span> <span class="n">m</span><span class="p">;</span> <span class="n">db</span> <span class="o">/</span><span class="p">=</span> <span class="n">m</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>在实际的计算中，分步去算参数的值非常不利于GPU进行加速。矩阵化运算可以提速400倍以上。下面是本次PA，也就是整个模型的全过程：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="n">train_set_x_orig</span><span class="p">,</span> <span class="n">train_set_y</span><span class="p">,</span> <span class="n">test_set_x_orig</span><span class="p">,</span> <span class="n">test_set_y</span><span class="p">,</span> <span class="n">classes</span> <span class="o">=</span> <span class="n">load_dataset</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="n">train_set_x_flatten</span> <span class="o">=</span> <span class="n">train_set_x_orig</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">train_set_x_orig</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+</span></span><span class="line"><span class="cl"><span class="n">test_set_x_flatten</span> <span class="o">=</span> <span class="n">test_set_x_orig</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">test_set_x_orig</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">sigmoid</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">s</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">z</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">s</span>
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">b</span> <span class="o">=</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">w</span><span class="p">,</span><span class="n">b</span>
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">propagate</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">m</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">    <span class="n">A</span> <span class="o">=</span> <span class="n">sigmoid</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span><span class="o">+</span><span class="n">b</span><span class="p">)</span>                   <span class="c1"># compute activation</span>
+</span></span><span class="line"><span class="cl">    <span class="n">cost</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="o">/</span><span class="n">m</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">Y</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">Y</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">A</span><span class="p">))</span>         <span class="c1"># compute cost</span>
+</span></span><span class="line"><span class="cl">    <span class="n">dw</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="n">m</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="p">(</span><span class="n">A</span><span class="o">-</span><span class="n">Y</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">db</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="n">m</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">A</span><span class="o">-</span><span class="n">Y</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">cost</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">cost</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">grads</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&#34;dw&#34;</span><span class="p">:</span> <span class="n">dw</span><span class="p">,</span> <span class="s2">&#34;db&#34;</span><span class="p">:</span> <span class="n">db</span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">grads</span><span class="p">,</span> <span class="n">cost</span>
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">optimize</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">num_iterations</span><span class="p">,</span> <span class="n">learning_rate</span><span class="p">,</span> <span class="n">print_cost</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">costs</span> <span class="o">=</span> <span class="p">[]</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_iterations</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="n">grads</span><span class="p">,</span> <span class="n">cost</span> <span class="o">=</span> <span class="n">propagate</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">dw</span> <span class="o">=</span> <span class="n">grads</span><span class="p">[</span><span class="s2">&#34;dw&#34;</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">        <span class="n">db</span> <span class="o">=</span> <span class="n">grads</span><span class="p">[</span><span class="s2">&#34;db&#34;</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">        <span class="n">w</span> <span class="o">=</span> <span class="n">w</span> <span class="o">-</span> <span class="n">learning_rate</span><span class="o">*</span><span class="n">dw</span>
+</span></span><span class="line"><span class="cl">        <span class="n">b</span> <span class="o">=</span> <span class="n">b</span> <span class="o">-</span> <span class="n">learning_rate</span><span class="o">*</span><span class="n">db</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">costs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cost</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="n">print_cost</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="nb">print</span> <span class="p">(</span><span class="s2">&#34;Cost after iteration </span><span class="si">%i</span><span class="s2">: </span><span class="si">%f</span><span class="s2">&#34;</span> <span class="o">%</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">cost</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&#34;w&#34;</span><span class="p">:</span> <span class="n">w</span><span class="p">,</span> <span class="s2">&#34;b&#34;</span><span class="p">:</span> <span class="n">b</span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="n">grads</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&#34;dw&#34;</span><span class="p">:</span> <span class="n">dw</span><span class="p">,</span> <span class="s2">&#34;db&#34;</span><span class="p">:</span> <span class="n">db</span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">grads</span><span class="p">,</span> <span class="n">costs</span>
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">m</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">    <span class="n">Y_prediction</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span><span class="n">m</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">    <span class="n">w</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">A</span> <span class="o">=</span> <span class="n">sigmoid</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+</span></span><span class="line"><span class="cl">        <span class="n">Y_prediction</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.5</span> <span class="k">else</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">Y_prediction</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">Y_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">Y_test</span><span class="p">,</span> <span class="n">num_iterations</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">,</span> <span class="n">learning_rate</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">print_cost</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="c1"># initialize parameters with zeros (≈ 1 line of code)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">w</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">X_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</span></span><span class="line"><span class="cl">    <span class="c1"># Gradient descent (≈ 1 line of code)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">parameters</span><span class="p">,</span> <span class="n">grads</span><span class="p">,</span> <span class="n">costs</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">Y_train</span><span class="p">,</span> <span class="n">num_iterations</span><span class="p">,</span> <span class="n">learning_rate</span><span class="p">,</span> <span class="n">print_cost</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="c1"># Retrieve parameters w and b from dictionary &#34;parameters&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">w</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="s2">&#34;w&#34;</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">    <span class="n">b</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="s2">&#34;b&#34;</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">    <span class="c1"># Predict test/train set examples (≈ 2 lines of code)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">Y_prediction_test</span> <span class="o">=</span> <span class="n">predict</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">X_test</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">Y_prediction_train</span> <span class="o">=</span> <span class="n">predict</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">X_train</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="c1"># Print train/test Errors</span>
+</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="s2">&#34;train accuracy: </span><span class="si">{}</span><span class="s2"> %&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="mi">100</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">Y_prediction_train</span> <span class="o">-</span> <span class="n">Y_train</span><span class="p">))</span> <span class="o">*</span> <span class="mi">100</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="s2">&#34;test accuracy: </span><span class="si">{}</span><span class="s2"> %&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="mi">100</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">Y_prediction_test</span> <span class="o">-</span> <span class="n">Y_test</span><span class="p">))</span> <span class="o">*</span> <span class="mi">100</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">    <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&#34;costs&#34;</span><span class="p">:</span> <span class="n">costs</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">         <span class="s2">&#34;Y_prediction_test&#34;</span><span class="p">:</span> <span class="n">Y_prediction_test</span><span class="p">,</span> 
+</span></span><span class="line"><span class="cl">         <span class="s2">&#34;Y_prediction_train&#34;</span> <span class="p">:</span> <span class="n">Y_prediction_train</span><span class="p">,</span> 
+</span></span><span class="line"><span class="cl">         <span class="s2">&#34;w&#34;</span> <span class="p">:</span> <span class="n">w</span><span class="p">,</span> 
+</span></span><span class="line"><span class="cl">         <span class="s2">&#34;b&#34;</span> <span class="p">:</span> <span class="n">b</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">         <span class="s2">&#34;learning_rate&#34;</span> <span class="p">:</span> <span class="n">learning_rate</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">         <span class="s2">&#34;num_iterations&#34;</span><span class="p">:</span> <span class="n">num_iterations</span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">d</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">d</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">train_set_x</span><span class="p">,</span> <span class="n">train_set_y</span><span class="p">,</span> <span class="n">test_set_x</span><span class="p">,</span> <span class="n">test_set_y</span><span class="p">,</span> <span class="n">num_iterations</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">,</span> <span class="n">learning_rate</span> <span class="o">=</span> <span class="mf">0.005</span><span class="p">,</span> <span class="n">print_cost</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div></div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2018-09-10</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/c1w1-c1w2/index.md" target="_blank">Read Markdown</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="http://chestnutheng.github.io/c1w1-c1w2/" data-title="[深度学习]C1W1~C1W2" data-hashtags="深度学习,deeplearning.ai"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="http://chestnutheng.github.io/c1w1-c1w2/" data-hashtag="深度学习"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Hacker News" data-sharer="hackernews" data-url="http://chestnutheng.github.io/c1w1-c1w2/" data-title="[深度学习]C1W1~C1W2"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="http://chestnutheng.github.io/c1w1-c1w2/" data-title="[深度学习]C1W1~C1W2"><i data-svg-src="/lib/simple-icons/icons/line.min.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="http://chestnutheng.github.io/c1w1-c1w2/" data-title="[深度学习]C1W1~C1W2" data-ralateuid="2461859532"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw" aria-hidden="true"></i>&nbsp;<a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a>,&nbsp;<a href="/tags/deeplearning.ai/">deeplearning.ai</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/gdb/" class="prev" rel="prev" title="[Linux]GDB调试技巧"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>[Linux]GDB调试技巧</a>
+            <a href="/rbtree/" class="next" rel="next" title="[数据结构]深入理解红黑树">[数据结构]深入理解红黑树<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
+</div>
+<div id="comments"><div id="giscus" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://giscus.app">Giscus</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.118.2">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2015 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="about" target="_blank">子恒</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/lightgallery/css/lightgallery-bundle.min.css"><link rel="stylesheet" href="/lib/katex/katex.min.css"><script type="text/javascript" src="/lib/autocomplete/autocomplete.min.js"></script><script type="text/javascript" src="/lib/lunr/lunr.min.js"></script><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/lightgallery/lightgallery.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/thumbnail/lg-thumbnail.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/zoom/lg-zoom.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript" src="/lib/sharer/sharer.min.js"></script><script type="text/javascript" src="/lib/katex/katex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/auto-render.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/copy-tex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{"giscus":{"category":"Announcements","categoryId":"DIC_kwDOA9ikP84CQT5Y","darkTheme":"dark","emitMetadata":"0","inputPosition":"bottom","lang":"en","lazyLoading":true,"lightTheme":"light","mapping":"pathname","reactionsEnabled":"1","repo":"chestnutheng/chestnutheng.github.io","repoId":"MDEwOlJlcG9zaXRvcnk2NDUyOTQ3MQ=="}},"lightgallery":true,"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":true,"left":"\\begin{equation}","right":"\\end{equation}"},{"display":true,"left":"\\begin{equation*}","right":"\\end{equation*}"},{"display":true,"left":"\\begin{align}","right":"\\end{align}"},{"display":true,"left":"\\begin{align*}","right":"\\end{align*}"},{"display":true,"left":"\\begin{alignat}","right":"\\end{alignat}"},{"display":true,"left":"\\begin{alignat*}","right":"\\end{alignat*}"},{"display":true,"left":"\\begin{gather}","right":"\\end{gather}"},{"display":true,"left":"\\begin{CD}","right":"\\end{CD}"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"highlightTag":"em","lunrIndexURL":"/index.json","maxResultLength":10,"noResultsFound":"No results found","snippetLength":50,"type":"lunr"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

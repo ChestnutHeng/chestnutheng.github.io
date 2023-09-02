@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>[Linux]GDB调试技巧 - 子恒的博客</title><meta name="Description" content="本文从介绍一个coredump分析开始，全面介绍了GDB的各种指令。"><meta property="og:title" content="[Linux]GDB调试技巧" />
+<meta property="og:description" content="本文从介绍一个coredump分析开始，全面介绍了GDB的各种指令。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://chestnutheng.github.io/gdb/" /><meta property="og:image" content="http://chestnutheng.github.io/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2017-12-17T00:56:18+08:00" />
+<meta property="article:modified_time" content="2017-12-17T00:56:24+08:00" /><meta property="og:site_name" content="子恒的博客" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="http://chestnutheng.github.io/logo.png"/>
+
+<meta name="twitter:title" content="[Linux]GDB调试技巧"/>
+<meta name="twitter:description" content="本文从介绍一个coredump分析开始，全面介绍了GDB的各种指令。"/>
+<meta name="application-name" content="我的网站">
+<meta name="apple-mobile-web-app-title" content="我的网站"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://chestnutheng.github.io/gdb/" /><link rel="prev" href="http://chestnutheng.github.io/nosql_base/" /><link rel="next" href="http://chestnutheng.github.io/c1w1-c1w2/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[Linux]GDB调试技巧",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/chestnutheng.github.io\/gdb\/"
+        },"genre": "posts","keywords": "GDB, C\u002b\u002b","wordcount":  634 ,
+        "url": "http:\/\/chestnutheng.github.io\/gdb\/","datePublished": "2017-12-17T00:56:18+08:00","dateModified": "2017-12-17T00:56:24+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "子恒"
+            },"description": "本文从介绍一个coredump分析开始，全面介绍了GDB的各种指令。"
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="子恒的博客">子恒的博客</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/"> 主页 </a><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/freinds/"> 友链 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="子恒的博客">子恒的博客</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        Cancel
+                    </a>
+                </div><a class="menu-item" href="/" title="">主页</a><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/freinds/" title="">友链</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><div class="search-dropdown desktop">
+        <div id="search-dropdown-desktop"></div>
+    </div>
+    <div class="search-dropdown mobile">
+        <div id="search-dropdown-mobile"></div>
+    </div><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">[Linux]GDB调试技巧</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="about" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>子恒</a></span>&nbsp;<span class="post-category">included in <a href="/categories/c++/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>C++</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2017-12-17">2017-12-17</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;634 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;3 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#命令行参数">命令行参数</a></li>
+        <li><a href="#简单的例子coredump分析">简单的例子：coredump分析</a></li>
+        <li><a href="#gdb的用法">GDB的用法</a>
+          <ul>
+            <li><a href="#控制命令">控制命令</a></li>
+            <li><a href="#断点">断点</a></li>
+            <li><a href="#查看代码和变量">查看代码和变量</a></li>
+            <li><a href="#堆栈">堆栈</a></li>
+            <li><a href="#内存">内存</a></li>
+            <li><a href="#信号">信号</a></li>
+            <li><a href="#线程">线程</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="命令行参数">命令行参数</h2>
+<p>gdb有下面几种运行方式：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// 1. 通过coredump文件，或者存在的进程id分析，不会拉起新进程
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">gdb</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">executable</span><span class="o">-</span><span class="n">file</span> <span class="p">[</span><span class="n">core</span><span class="o">-</span><span class="n">file</span> <span class="n">or</span> <span class="n">process</span><span class="o">-</span><span class="n">id</span><span class="p">]]</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 2. 带参数运行程序
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">gdb</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="o">--</span><span class="n">args</span> <span class="n">executable</span><span class="o">-</span><span class="n">file</span> <span class="p">[</span><span class="n">inferior</span><span class="o">-</span><span class="n">arguments</span> <span class="p">...]</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 3. redhat等含有用于调试python的工具
+</span></span></span><span class="line"><span class="cl"><span class="c1">// gdb [options] [--python|-P] script-file [script-arguments ...]
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>几个值得注意的参数：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// 和上面的类似，使用参数指定的
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="o">--</span><span class="n">args</span>             <span class="n">Arguments</span> <span class="n">after</span> <span class="n">executable</span><span class="o">-</span><span class="n">file</span> <span class="n">are</span> <span class="n">passed</span> <span class="n">to</span> <span class="n">inferior</span>
+</span></span><span class="line"><span class="cl"><span class="o">--</span><span class="n">core</span><span class="o">=</span><span class="n">COREFILE</span>    <span class="n">Analyze</span> <span class="n">the</span> <span class="n">core</span> <span class="n">dump</span> <span class="n">COREFILE</span><span class="p">.</span>
+</span></span><span class="line"><span class="cl"><span class="o">--</span><span class="n">pid</span><span class="o">=</span><span class="n">PID</span>          <span class="n">Attach</span> <span class="n">to</span> <span class="n">running</span> <span class="n">process</span> <span class="n">PID</span><span class="p">.</span>
+</span></span><span class="line"><span class="cl"><span class="o">--</span><span class="n">exec</span><span class="o">=</span><span class="n">EXECFILE</span>    <span class="n">Use</span> <span class="n">EXECFILE</span> <span class="n">as</span> <span class="n">the</span> <span class="n">executable</span><span class="p">.</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 远程调试
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="o">-</span><span class="n">b</span> <span class="n">BAUDRATE</span>        <span class="n">Set</span> <span class="n">serial</span> <span class="n">port</span> <span class="n">baud</span> <span class="n">rate</span> <span class="n">used</span> <span class="k">for</span> <span class="n">remote</span> <span class="n">debugging</span><span class="p">.</span>
+</span></span><span class="line"><span class="cl"><span class="o">-</span><span class="n">l</span> <span class="n">TIMEOUT</span>         <span class="n">Set</span> <span class="n">timeout</span> <span class="n">in</span> <span class="n">seconds</span> <span class="k">for</span> <span class="n">remote</span> <span class="n">debugging</span><span class="p">.</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 运行某个文件中的gdb指令
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="o">--</span><span class="n">command</span><span class="o">=</span><span class="n">FILE</span><span class="p">,</span> <span class="o">-</span><span class="n">x</span> <span class="n">Execute</span> <span class="n">GDB</span> <span class="n">commands</span> <span class="n">from</span> <span class="n">FILE</span><span class="p">.</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 运行某gdb指令，如gdb a.out -ex r开启文件并立即运行
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="o">--</span><span class="n">eval</span><span class="o">-</span><span class="n">command</span><span class="o">=</span><span class="n">COMMAND</span><span class="p">,</span> <span class="o">-</span><span class="n">ex</span>   <span class="n">Execute</span> <span class="n">a</span> <span class="n">single</span> <span class="n">GDB</span> <span class="n">command</span><span class="p">.</span>
+</span></span><span class="line"><span class="cl"><span class="o">--</span><span class="n">directory</span><span class="o">=</span><span class="n">DIR</span>    <span class="n">Search</span> <span class="k">for</span> <span class="n">source</span> <span class="n">files</span> <span class="n">in</span> <span class="n">DIR</span><span class="p">.</span>
+</span></span><span class="line"><span class="cl"><span class="o">--</span><span class="n">se</span><span class="o">=</span><span class="n">FILE</span>          <span class="n">Use</span> <span class="n">FILE</span> <span class="n">as</span> <span class="n">symbol</span> <span class="n">file</span> <span class="n">and</span> <span class="n">executable</span> <span class="n">file</span><span class="p">.</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="简单的例子coredump分析">简单的例子：coredump分析</h2>
+<p>gdb的一大用处是通过coredump文件分析程序哪里发生了错误。首先要打开coredump生成开关：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// 可以先运行 ulimit -a 查看所有限制，或者运行 ulimit -c 查看当前coredump设置
+</span></span></span><span class="line"><span class="cl"><span class="c1">// 设置成无限可能会生成数GB的coredump文件
+</span></span></span><span class="line"><span class="cl"><span class="c1">// 这条命令重启后无效
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">ulimit</span> <span class="o">-</span><span class="n">c</span> <span class="n">unlimited</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>coredump文件会默认生成在程序相同目录下。如果没有对应文件，可以查看<code>/etc/sysctl.conf</code>:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// 生成目录格式，%e 程序名 %p 进程id %s 信号 %t 时间 %e 命令名
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">kernel</span><span class="p">.</span><span class="n">core_pattern</span> <span class="o">=/</span><span class="n">data</span><span class="o">/</span><span class="n">coredump</span><span class="o">/</span><span class="n">core</span><span class="o">%</span><span class="n">e</span><span class="o">%</span><span class="n">p</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 1表示使用procid命名，0表示不使用
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">kernel</span><span class="p">.</span><span class="n">core_uses_pid</span><span class="o">=</span> <span class="mi">0</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>我们先编写一个简单的c程序<code>main.c</code>，它试图从非法地址读取数据：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">a</span> <span class="o">=</span> <span class="o">*</span><span class="p">((</span><span class="kt">int</span> <span class="o">*</span><span class="p">)</span><span class="nb">NULL</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>编译，一定要加上<code>-g</code>选项：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">gcc -o test_worker main.c -g
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>运行，果然dump：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">./test_worker
+</span></span><span class="line"><span class="cl">Segmentation fault (core dumped)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>然后使用第一节里的第一种方式启动， 携带coredump文件：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">gdb ./test_worker core.xxx.xxx
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>进去后就能看到dump的地方以及原因。使用<code>bt</code>查看coredump时栈顶的信息：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">Core was generated by `./t&#39;.
+</span></span><span class="line"><span class="cl">Program terminated with signal 11, Segmentation fault.
+</span></span><span class="line"><span class="cl">#0  0x0000000000400564 in main () at t.c:13
+</span></span><span class="line"><span class="cl">13	    int a = *((int *)NULL);
+</span></span><span class="line"><span class="cl">Missing separate debuginfos, use: debuginfo-install glibc-2.17-106.el7_2.4.x86_64
+</span></span><span class="line"><span class="cl">(gdb) bt
+</span></span><span class="line"><span class="cl">#0  0x0000000000400564 in main () at t.c:13
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="gdb的用法">GDB的用法</h2>
+<p><a href="https://sourceware.org/gdb/onlinedocs/gdb/index.html#SEC_Contents"> GDB Online Docs </a></p>
+<p>GDB启动时会读取二进制文件的符号表，然后进入调试命令行。这里可以运行各种命令查看程序的符号表、变量、内存值以及控制程序的运行。</p>
+<h3 id="控制命令">控制命令</h3>
+<ol>
+<li><strong>file</strong> 加载一个二进制文件，直接进入gdb时可以用这个加载。参数为文件名。</li>
+<li><strong>run</strong> (或者r) 从头运行程序一直到断点。没有断点会一直运行结束，或者直到遇到异常。可以<strong>r &lt; a.in</strong> 重定向输入输出。</li>
+<li><strong>continue</strong> (或者c) 运行程序一直到下一个断点。</li>
+<li><strong>next/step</strong>  (或者n/s) 单步调试，next不会在行内进入函数体，step则会跳入函数体。 参数为跳多行。</li>
+<li><strong>until</strong> (或者 u) 直接跳出当前循环。（但是还是会被断点卡住）。参数为跳到指定行。</li>
+<li><strong>finish</strong> 直接运行到函数返回</li>
+<li><strong>call</strong> 运行某函数，参数为函数和参数，如 <code>call foo(2, &quot;hello&quot;)</code></li>
+<li><strong>回车键</strong> 重复上个指令</li>
+</ol>
+<h3 id="断点">断点</h3>
+<ol>
+<li><strong>break n</strong> (或者b) 在第n行打断点</li>
+<li><strong>b main.c:n</strong> 指定文件打断点；  <strong>b main</strong> 指定函数入口处打断点；  <strong>b main:label</strong> 指定函数的标签处打断点</li>
+<li><strong>b n if i == 5</strong> 满足条件打断点，对循环尤其有效。</li>
+<li><strong>info b</strong> 查看断点号和信息，或者 <strong>i b</strong></li>
+<li><strong>delete no</strong> (或者d) 删除对应编号的断点； <strong>d breakpoints</strong> 删除所有断点</li>
+<li><strong>clear lineno</strong> 删除对应行的断点</li>
+<li><strong>disable/enable no</strong>  屏蔽/使用对应编号的断点</li>
+</ol>
+<h3 id="查看代码和变量">查看代码和变量</h3>
+<ol>
+<li><strong>list</strong>  (或者l) 列出10行源文件。每次从上次结束的地方开始列。</li>
+<li><strong>list lineno</strong> 列出某行的前后源码；<strong>l main</strong> 列出某函数的源码</li>
+<li><strong>print exp</strong> (或者p) 打印任意变量、表达式、函数、字符串、数组的值</li>
+<li><strong>display exp</strong> 每次单步完打印该表达式</li>
+<li><strong>watch exp</strong> 如果该表达式值改变了，打印并停止程序</li>
+<li><strong>whatis</strong>  查询变量，函数的类型</li>
+<li><strong>info</strong> (或者i) 查询信息 <strong>i locals</strong> 所有变量的值 <strong>i args</strong> 所有参数的值 <strong>i function</strong> 函数信息 <strong>i frame</strong> 栈信息<br>
+<strong>i program</strong> 程序信息 <strong>i threads</strong> 线程信息</li>
+</ol>
+<h3 id="堆栈">堆栈</h3>
+<ol>
+<li>
+<p><strong>bt</strong> 查看栈信息； <strong>bt n</strong> 栈顶n层；<strong>bt -n</strong> 栈底n层</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">bt</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#0  foot () at t.c:7
+</span></span></span><span class="line"><span class="cl"><span class="cp">#1  0x0000000000400525 in main () at t.c:15
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p><strong>frame</strong> (或者f)查看帧信息。上面一个#号（一层）是一帧。<br>
+<strong>frame n</strong> 查看第n帧 ；<strong>up n</strong> 上面n帧； <strong>down n</strong> 下面n帧；<strong>frame addr</strong> 查看某地址的帧</p>
+</li>
+<li>
+<p><strong>info frame n/addr</strong> 帧详细信息<br>
+ip是下条命令的地址（pc），bp是栈底的地址，sp是栈顶的地址。<br>
+64位机的帧信息：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">i</span> <span class="n">f</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl"> <span class="c1">// 帧地址
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span> <span class="n">Stack</span> <span class="n">frame</span> <span class="n">at</span> <span class="mh">0x7fffffffe560</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl"> <span class="c1">// rip：帧PC      帧函数名       saved rip：caller帧PC
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span> <span class="n">rip</span> <span class="o">=</span> <span class="mh">0x4004fd</span> <span class="n">in</span> <span class="nf">foot</span> <span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="nl">c</span><span class="p">:</span><span class="mi">7</span><span class="p">);</span> <span class="n">saved</span> <span class="n">rip</span> <span class="mh">0x400525</span>
+</span></span><span class="line"><span class="cl"> <span class="c1">// caller帧地址
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span> <span class="n">called</span> <span class="n">by</span> <span class="n">frame</span> <span class="n">at</span> <span class="mh">0x7fffffffe570</span>
+</span></span><span class="line"><span class="cl"> <span class="n">source</span> <span class="n">language</span> <span class="n">c</span><span class="p">.</span>
+</span></span><span class="line"><span class="cl"> <span class="c1">// 帧参数地址
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span> <span class="n">Arglist</span> <span class="n">at</span> <span class="mh">0x7fffffffe550</span><span class="p">,</span> <span class="nl">args</span><span class="p">:</span> 
+</span></span><span class="line"><span class="cl"> <span class="c1">// 帧局部变量地址，caller的栈顶地址
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span> <span class="n">Locals</span> <span class="n">at</span> <span class="mh">0x7fffffffe550</span><span class="p">,</span> <span class="n">Previous</span> <span class="n">frame</span> <span class="n">sp</span> <span class="n">is</span> <span class="mh">0x7fffffffe560</span>
+</span></span><span class="line"><span class="cl"> <span class="c1">// 帧寄存器列表
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span> <span class="n">Saved</span> <span class="nl">registers</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl"> <span class="n">rbp</span> <span class="n">at</span> <span class="mh">0x7fffffffe550</span><span class="p">,</span> <span class="n">rip</span> <span class="n">at</span> <span class="mh">0x7fffffffe558</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>32位机的帧信息：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">i</span> <span class="n">f</span>
+</span></span><span class="line"><span class="cl"> <span class="n">Stack</span> <span class="n">level</span> <span class="mi">0</span><span class="p">,</span> <span class="n">frame</span> <span class="n">at</span> <span class="mh">0xbffff630</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl"> <span class="c1">// eip：帧PC      帧函数名       saved eip：caller帧PC
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span> <span class="n">eip</span> <span class="o">=</span> <span class="mh">0x80483e4</span> <span class="n">in</span> <span class="nf">main</span> <span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="nl">c</span><span class="p">:</span><span class="mi">8</span><span class="p">);</span> <span class="n">saved</span> <span class="n">eip</span> <span class="o">=</span> <span class="mh">0xb7e31637</span>
+</span></span><span class="line"><span class="cl"> <span class="n">source</span> <span class="n">language</span> <span class="n">c</span><span class="p">.</span>
+</span></span><span class="line"><span class="cl"> <span class="c1">// 帧参数地址
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span> <span class="n">Arglist</span> <span class="n">at</span> <span class="mh">0xbffff628</span><span class="p">,</span> <span class="nl">args</span><span class="p">:</span> 
+</span></span><span class="line"><span class="cl"> <span class="c1">// 帧局部变量地址，caller的栈顶地址
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span> <span class="n">Locals</span> <span class="n">at</span> <span class="mh">0xbffff628</span><span class="p">,</span> <span class="n">Previous</span> <span class="n">frame</span> <span class="n">sp</span> <span class="n">is</span> <span class="mh">0xbffff630</span>
+</span></span><span class="line"><span class="cl"> <span class="c1">// 帧寄存器列表
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span> <span class="n">Saved</span> <span class="nl">registers</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl"> <span class="n">ebp</span> <span class="n">at</span> <span class="mh">0xbffff628</span><span class="p">,</span> <span class="n">eip</span> <span class="n">at</span> <span class="mh">0xbffff62c</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​</p>
+</li>
+</ol>
+<h3 id="内存">内存</h3>
+<p><a href="https://wizardforcel.gitbooks.io/100-gdb-tips/examine-memory.html">100 GDB Tips</a></p>
+<p>gdb中使用<code>x</code>命令来打印内存的值，格式为<code>x/nfu addr</code>。</p>
+<p>含义为以<code>f</code>格式打印从<code>addr</code>开始的<code>n</code>个长度单元为<code>u</code>的内存值。参数具体含义如下：<br>
+a）n：输出单元的个数。<br>
+b）f：是输出格式。比如<code>x</code>是以16进制形式输出，<code>o</code>是以8进制形式输出,等等。<br>
+c）u：标明一个单元的长度。<code>b</code>是一个<code>bytes</code>，<code>h</code>是两个<code>bytes</code>（halfword），<code>w</code>是四个<code>bytes</code>（word），<code>g</code>是八个<code>bytes</code>（giant word）。</p>
+<p>比如对一个字符串arr查看内存：（这个数组越界踩掉了总共10 char的内容，每个char在32位机上是32bit）</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="n">arr</span>
+</span></span><span class="line"><span class="cl"><span class="err">$</span><span class="mi">4</span> <span class="o">=</span> <span class="s">&#34;</span><span class="se">\000\001\002\003</span><span class="s">&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 显示11个byte，十六进制显示
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">x</span><span class="o">/</span><span class="mi">11</span><span class="n">xb</span> <span class="n">arr</span>
+</span></span><span class="line"><span class="cl"><span class="mh">0x7fffffffe540</span><span class="o">:</span>	<span class="mh">0x00</span>	<span class="mh">0x01</span>	<span class="mh">0x02</span>	<span class="mh">0x03</span>	<span class="mh">0x04</span>	<span class="mh">0x05</span>	<span class="mh">0x06</span>	<span class="mh">0x07</span>
+</span></span><span class="line"><span class="cl"><span class="mh">0x7fffffffe548</span><span class="o">:</span>	<span class="mh">0x08</span>	<span class="mh">0x09</span>	<span class="mh">0x40</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 显示3个4-byte，十六进制显示
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">x</span><span class="o">/</span><span class="mi">3</span><span class="n">xw</span> <span class="n">arr</span>
+</span></span><span class="line"><span class="cl"><span class="mh">0x7fffffffe540</span><span class="o">:</span>	<span class="mh">0x03020100</span>	<span class="mh">0x07060504</span>	<span class="mh">0x00400908</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="信号">信号</h3>
+<p>这部分的详细内容在<a href="https://sourceware.org/gdb/onlinedocs/gdb/Signals.html">GDB Online Docs-5.4 Signals</a>中。你可以自由地对程序进行发送信号（signal）、捕获信号（catch）或者处理信号（handle）。</p>
+<h3 id="线程">线程</h3>
+<p>除了上文的查看线程信息之外，还可以查看详细的线程信息，参考<a href="https://sourceware.org/gdb/onlinedocs/gdb/Threads.html#Threads">GDB Online Docs-4 Threads</a>，或者查看fork的情况，参考<a href="https://sourceware.org/gdb/onlinedocs/gdb/Forks.html#Forks">GDB Online Docs-5Forks</a> 。</p>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2017-12-17</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/gdb/index.md" target="_blank">Read Markdown</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="http://chestnutheng.github.io/gdb/" data-title="[Linux]GDB调试技巧" data-hashtags="GDB,C&#43;&#43;"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="http://chestnutheng.github.io/gdb/" data-hashtag="GDB"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Hacker News" data-sharer="hackernews" data-url="http://chestnutheng.github.io/gdb/" data-title="[Linux]GDB调试技巧"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="http://chestnutheng.github.io/gdb/" data-title="[Linux]GDB调试技巧"><i data-svg-src="/lib/simple-icons/icons/line.min.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="http://chestnutheng.github.io/gdb/" data-title="[Linux]GDB调试技巧" data-ralateuid="2461859532"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw" aria-hidden="true"></i>&nbsp;<a href="/tags/gdb/">GDB</a>,&nbsp;<a href="/tags/c&#43;&#43;/">c&#43;&#43;</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/nosql_base/" class="prev" rel="prev" title="[后台]分布式基础概念"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>[后台]分布式基础概念</a>
+            <a href="/c1w1-c1w2/" class="next" rel="next" title="[深度学习]C1W1~C1W2">[深度学习]C1W1~C1W2<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
+</div>
+<div id="comments"><div id="giscus" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://giscus.app">Giscus</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.118.2">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2015 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="about" target="_blank">子恒</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/lightgallery/css/lightgallery-bundle.min.css"><link rel="stylesheet" href="/lib/katex/katex.min.css"><script type="text/javascript" src="/lib/autocomplete/autocomplete.min.js"></script><script type="text/javascript" src="/lib/lunr/lunr.min.js"></script><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/lightgallery/lightgallery.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/thumbnail/lg-thumbnail.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/zoom/lg-zoom.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript" src="/lib/sharer/sharer.min.js"></script><script type="text/javascript" src="/lib/katex/katex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/auto-render.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/copy-tex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{"giscus":{"category":"Announcements","categoryId":"DIC_kwDOA9ikP84CQT5Y","darkTheme":"dark","emitMetadata":"0","inputPosition":"bottom","lang":"en","lazyLoading":true,"lightTheme":"light","mapping":"pathname","reactionsEnabled":"1","repo":"chestnutheng/chestnutheng.github.io","repoId":"MDEwOlJlcG9zaXRvcnk2NDUyOTQ3MQ=="}},"lightgallery":true,"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":true,"left":"\\begin{equation}","right":"\\end{equation}"},{"display":true,"left":"\\begin{equation*}","right":"\\end{equation*}"},{"display":true,"left":"\\begin{align}","right":"\\end{align}"},{"display":true,"left":"\\begin{align*}","right":"\\end{align*}"},{"display":true,"left":"\\begin{alignat}","right":"\\end{alignat}"},{"display":true,"left":"\\begin{alignat*}","right":"\\end{alignat*}"},{"display":true,"left":"\\begin{gather}","right":"\\end{gather}"},{"display":true,"left":"\\begin{CD}","right":"\\end{CD}"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"highlightTag":"em","lunrIndexURL":"/index.json","maxResultLength":10,"noResultsFound":"No results found","snippetLength":50,"type":"lunr"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

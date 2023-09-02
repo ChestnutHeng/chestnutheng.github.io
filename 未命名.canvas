@@ -1,0 +1,11 @@
+{
+	"nodes":[
+		{"id":"f3f8be7953041bca","x":-580,"y":-20,"width":400,"height":400,"type":"file","file":"drafts/docs/wudao money 设计文档.md"},
+		{"id":"8f2aceb95a1ea0ac","x":-480,"y":-320,"width":250,"height":60,"type":"text","text":"dd"},
+		{"id":"912488c5c5ac8738","x":-80,"y":-120,"width":250,"height":60,"type":"text","text":"aa"},
+		{"id":"d8ad3f202f5a48af","x":-80,"y":20,"width":250,"height":60,"type":"text","text":"哈哈"}
+	],
+	"edges":[
+		{"id":"c2b0407e72a329d6","fromNode":"f3f8be7953041bca","fromSide":"top","toNode":"912488c5c5ac8738","toSide":"top"}
+	]
+}

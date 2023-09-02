@@ -1,0 +1,58 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>socket - Tag - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/tags/socket/</link>
+        <description>socket - Tag - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Mon, 21 Oct 2019 17:45:09 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/tags/socket/" rel="self" type="application/rss+xml" /><item>
+    <title>[Linux]Linux socket API</title>
+    <link>http://chestnutheng.github.io/socket/</link>
+    <pubDate>Mon, 21 Oct 2019 17:45:09 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/socket/</guid>
+    <description><![CDATA[创建和关闭 int socket(int domain, int type, int protocol) 创建一个socket。
+domain 指定了通信的特性。AF_UNIX Unix域，AF_INET IPv4域。 AF_INET6 IPv6域。
+type 指定了连接的类型。
+SOCK_STREAM 有序、可靠、双向、面向连接的字节流 TCP
+SOCK_DGRAM 不可靠、无连接、固定长度的报文 UDP
+SOCK_SEQPACKET 固定长度、有序、可靠、双向、面向连接的字节流
+protocol 为0时，选择指定域的默认协议。AF_INET域的SOCK_STREAM默认的协议为TCP，SOCK_DGRAM则为UDP。还有IPPROTO_ICMP、IPPROTO_IP、IPPROTO_RAW等。SOCK_STREAM提供字节流服务，所以程序分不出报文的界限。
+int shutdown(int socketfd, int how) 关闭一个socket。
+套接字函数是双向的。可以用这个函数关闭套接字的某个方向的IO。 how是SHUT_RD表示关闭读端，无法从套接字读取数据。SHUT_WR是关闭写端，无法向套接字写入数据。SHUT_RDWR无法读也无法写。 close()是一个fd的通用释放函数。他和shutdown有何不同？1) close要等所有的活动引用关闭后才释放套接字。这使得dup之后的套接字必须等待所有的引用释放。但是shutdown和引用fd数量无关。2)shutdown可以方便地关闭读写的任何一端。 网络地址 地址的结构体 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 // Linux 套接字 // 这是Linux定义的一个通用结构。所有地址都可以强转为这个结构体，比如IPV4、IPV6等，便于使用。 struct sockaddr { u_short sa_family; /* address family */ char sa_data[14]; /* up to 14 bytes of direct address */ }; // IPv4 地址 // 1.]]></description>
+</item>
+<item>
+    <title>[Python]Python版socket十行模板</title>
+    <link>http://chestnutheng.github.io/socket_in_10_lines/</link>
+    <pubDate>Fri, 20 Jan 2017 10:15:13 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/socket_in_10_lines/</guid>
+    <description><![CDATA[以下的socket
+都是python实现的服务端接受客户端键盘输入的信息，改为大写返回客户端的模板
+都是同步、阻塞的
+都会在数据长度大于1024时产生错误，请自己写协议
+端口都是8080，请确保未被占用
+tcp_server.py 6行控制监听的最大tcp链接数。
+tcp是有链接的。9行建立链接，10行接受数据，11行发送数据，12行关闭链接。
+1 2 3 4 5 6 7 8 9 10 11 12 import socket server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) server.bind((&#34;0.0.0.0&#34;, 8080)) server.listen(1) while True: conn, addr = server.accept() data_from_client = conn.recv(1024).decode(&#39;utf8&#39;) conn.sendall(data_from_client.upper().encode(&#39;utf8&#39;)) conn.close() tcp_client.py 5行链接，6行发送数据，7行接收数据，9行关闭链接。
+1 2 3 4 5 6 7 8 9 import socket while True: client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) client.connect((&#34;0.0.0.0&#34;, 8080)) client.sendall(input().encode(&#39;utf8&#39;)) data_from_server = client.recv(1024).decode(&#39;utf8&#39;) print(&#39;GET &#39; + data_from_server) client.]]></description>
+</item>
+<item>
+    <title>[后台]用select写一个HTTP代理</title>
+    <link>http://chestnutheng.github.io/select/</link>
+    <pubDate>Thu, 12 Jan 2017 11:23:44 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/select/</guid>
+    <description><![CDATA[函数说明 18.3. select — Waiting for I/O completion — Python 3.6.0 documentation
+select.select(rlist, wlist, xlist[, timeout]) Unix select()系统调用的一个简单接口。前三个参数是文件描述符（int类型）的序列。
+1 2 3 rlist：等待准备读取 wlist：等待准备写作 xlist：等待一个异常 参数说明 在Unix上序列可以为空，但在Windows则不可以。可选的timeout参数将超时指定为浮点数（以秒为单位）。当省略timeout参数时，该函数阻塞，直到至少一个文件描述符已准备好。该值为0时表示轮询从不停止。
+返回值 准备好的对象列表的三元组（前三个参数的子集）。当超时但没有文件描述符就绪时，返回三个空列表。
+序列对象 序列中可用的对象类型包括Python文件对象（例如sys.stdin或由open()或os.popen()返回的对象），由socket.socket()返回的socket对象。你也可以自己定义一个类，只要它有一个合适的fileno()方法（返回一个真正的文件描述符，而不只是一个随机整数）。
+注意：
+Windows上的文件对象不可接受，但socket可以。在Windows上，底层的select()函数由WinSock库提供，不处理不是源自WinSock的文件描述符。
+实现HTTP代理 代理由两个部分组成：客户端-代理的socket，和代理-Web服务器的socket。
+因为代理像两边接受数据时调用recv方法都会发生阻塞，
+所以，在这个样例中，事件循环由两个事件组成：客户端-代理链接可以继续接受数据了，和代理-Web服务器链接可以接受数据了（指都是代理端）。
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 import select import socket import _thread BUFF_SIZE = 1024 # get http head data from a connection def get_post(conn): res = b&#39;&#39; while True: res += conn.]]></description>
+</item>
+</channel>
+</rss>

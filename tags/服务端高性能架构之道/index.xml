@@ -1,0 +1,29 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>服务端高性能架构之道 - Tag - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/tags/%E6%9C%8D%E5%8A%A1%E7%AB%AF%E9%AB%98%E6%80%A7%E8%83%BD%E6%9E%B6%E6%9E%84%E4%B9%8B%E9%81%93/</link>
+        <description>服务端高性能架构之道 - Tag - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Tue, 28 Sep 2021 21:13:08 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/tags/%E6%9C%8D%E5%8A%A1%E7%AB%AF%E9%AB%98%E6%80%A7%E8%83%BD%E6%9E%B6%E6%9E%84%E4%B9%8B%E9%81%93/" rel="self" type="application/rss+xml" /><item>
+    <title>[后台]服务端高性能架构之道（系统和服务篇）</title>
+    <link>http://chestnutheng.github.io/high_perf_1/</link>
+    <pubDate>Tue, 28 Sep 2021 21:13:08 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/high_perf_1/</guid>
+    <description><![CDATA[如果你在服务端的工区，常常会听到同学们激烈的讨论，包括能不能扛得住xx流量？能不能P99达到x毫秒？某操作能不能立即生效？某服务CPU飙升了，某服务OOM了，某服务超时率暴涨了？
+这些灵魂的质问，其实就是在保障服务端的高并发、高性能、高可用、高一致性等等，是我们服务端同学必备的扎实基本功。
+克服系统瓶颈 服务端的代码都跑在各种版本的Linux之上，所以高性能的第一步要和操作系统打交道。我们的服务需要通过操作系统进行I/O、CPU、内存等等设备的使用，同时在使用各种系统调用时避免各种资源的开销过大。
+零拷贝 认识零拷贝之前，我们先要对Linux系统I/O机制有一定的了解。当我们执行一个write(2)或者read(2)的时候（或者recv和send），什么时候操作系统会执行读写操作？什么时候又最终会落到磁盘上？
+以一个简单的echo服务器为例，我们模拟下每天都在发生的请求和回包：
+1 2 3 4 5 6 sockfd = socket(...); //打开socket buffer = new buffer(...); //创建buffer while((clientfd = accept(socketfd...)){	// 接收一个请求 read(clientfd, buffer, ...); //从文件内容读到buffer中 write(clientfd, buffer, ...); //将buffer中的内容发送到网络 }	看一下这段代码的拷贝流程（下图）：
+数据包到达网卡，网卡进行DMA操作，把网卡寄存器的数据拷贝到内核缓冲区 CPU把内核缓冲区的数据拷贝到用户空间的缓冲区 用户空间处理buffer中的数据（此处不处理） CPU把用户空间的缓冲区的数据拷贝到内核缓冲区 网卡进行DMA操作，把内核缓冲区的数据拷贝到网卡寄存器，发送出去 整个过程触发了4次拷贝（2次CPU，2次DMA），2次系统调用（对应4次上下文切换）
+（注：DMA(Direct Memory Access)， I/O 设备直接访问内存的一个通道，可以完成数据拷贝，使得CPU 不再参与任何拷贝相关的事情，现在几乎所有的设备都有DMA）
+使用mmap mmap可以把用户空间的内存地址映射到内核空间，这样对用户空间的数据操作可以反映到内核空间，省去了用户空间的一次拷贝：
+应用调用mmap，和内核共享缓冲区（只需一次） 数据包到达网卡，网卡进行DMA操作，把网卡寄存器的数据拷贝到内核缓冲区 CPU把接收到的内核缓冲区的数据拷贝到发送的内核缓冲区 网卡进行DMA操作，把内核缓冲区的数据拷贝到网卡寄存器，发送出去 整个过程触发了3次拷贝（1次CPU，2次DMA），2次系统调用（对应4次上下文切换）
+使用sendfile/splice Linux 内核版本 2.1 中实现了一个函数sendfile(2)：
+他把read(2)和write(2)合二为一，成为一次系统调用，实现了把一个文件读取并写到另一个文件的语义 系统调用中不再切换回用户态，而是在内核空间中直接把数据拷贝过去（2.4 之后这一步支持了DMA拷贝，实现了CPU零拷贝） 我门看下使用sendfile之后的流程：
+整个过程触发了3次拷贝（0次CPU，3次DMA），1次系统调用（对应2次上下文切换）
+Linux 内核版本 2.6 中实现了一个函数splice(2)，类似sendfile，但是接收/发送方必须有一个文件是管道，通过管道的方式连接发送方和接收方的内核缓冲区，不再需要拷贝（0次CPU，2次DMA，1次系统调用）]]></description>
+</item>
+</channel>
+</rss>

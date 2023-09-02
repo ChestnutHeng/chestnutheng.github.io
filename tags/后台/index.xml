@@ -1,0 +1,142 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>后台 - Tag - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/tags/%E5%90%8E%E5%8F%B0/</link>
+        <description>后台 - Tag - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Tue, 28 Sep 2021 21:13:08 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/tags/%E5%90%8E%E5%8F%B0/" rel="self" type="application/rss+xml" /><item>
+    <title>[后台]服务端高性能架构之道（系统和服务篇）</title>
+    <link>http://chestnutheng.github.io/high_perf_1/</link>
+    <pubDate>Tue, 28 Sep 2021 21:13:08 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/high_perf_1/</guid>
+    <description><![CDATA[如果你在服务端的工区，常常会听到同学们激烈的讨论，包括能不能扛得住xx流量？能不能P99达到x毫秒？某操作能不能立即生效？某服务CPU飙升了，某服务OOM了，某服务超时率暴涨了？
+这些灵魂的质问，其实就是在保障服务端的高并发、高性能、高可用、高一致性等等，是我们服务端同学必备的扎实基本功。
+克服系统瓶颈 服务端的代码都跑在各种版本的Linux之上，所以高性能的第一步要和操作系统打交道。我们的服务需要通过操作系统进行I/O、CPU、内存等等设备的使用，同时在使用各种系统调用时避免各种资源的开销过大。
+零拷贝 认识零拷贝之前，我们先要对Linux系统I/O机制有一定的了解。当我们执行一个write(2)或者read(2)的时候（或者recv和send），什么时候操作系统会执行读写操作？什么时候又最终会落到磁盘上？
+以一个简单的echo服务器为例，我们模拟下每天都在发生的请求和回包：
+1 2 3 4 5 6 sockfd = socket(...); //打开socket buffer = new buffer(...); //创建buffer while((clientfd = accept(socketfd...)){	// 接收一个请求 read(clientfd, buffer, ...); //从文件内容读到buffer中 write(clientfd, buffer, ...); //将buffer中的内容发送到网络 }	看一下这段代码的拷贝流程（下图）：
+数据包到达网卡，网卡进行DMA操作，把网卡寄存器的数据拷贝到内核缓冲区 CPU把内核缓冲区的数据拷贝到用户空间的缓冲区 用户空间处理buffer中的数据（此处不处理） CPU把用户空间的缓冲区的数据拷贝到内核缓冲区 网卡进行DMA操作，把内核缓冲区的数据拷贝到网卡寄存器，发送出去 整个过程触发了4次拷贝（2次CPU，2次DMA），2次系统调用（对应4次上下文切换）
+（注：DMA(Direct Memory Access)， I/O 设备直接访问内存的一个通道，可以完成数据拷贝，使得CPU 不再参与任何拷贝相关的事情，现在几乎所有的设备都有DMA）
+使用mmap mmap可以把用户空间的内存地址映射到内核空间，这样对用户空间的数据操作可以反映到内核空间，省去了用户空间的一次拷贝：
+应用调用mmap，和内核共享缓冲区（只需一次） 数据包到达网卡，网卡进行DMA操作，把网卡寄存器的数据拷贝到内核缓冲区 CPU把接收到的内核缓冲区的数据拷贝到发送的内核缓冲区 网卡进行DMA操作，把内核缓冲区的数据拷贝到网卡寄存器，发送出去 整个过程触发了3次拷贝（1次CPU，2次DMA），2次系统调用（对应4次上下文切换）
+使用sendfile/splice Linux 内核版本 2.1 中实现了一个函数sendfile(2)：
+他把read(2)和write(2)合二为一，成为一次系统调用，实现了把一个文件读取并写到另一个文件的语义 系统调用中不再切换回用户态，而是在内核空间中直接把数据拷贝过去（2.4 之后这一步支持了DMA拷贝，实现了CPU零拷贝） 我门看下使用sendfile之后的流程：
+整个过程触发了3次拷贝（0次CPU，3次DMA），1次系统调用（对应2次上下文切换）
+Linux 内核版本 2.6 中实现了一个函数splice(2)，类似sendfile，但是接收/发送方必须有一个文件是管道，通过管道的方式连接发送方和接收方的内核缓冲区，不再需要拷贝（0次CPU，2次DMA，1次系统调用）]]></description>
+</item>
+<item>
+    <title>[Redis]Redis 应用篇</title>
+    <link>http://chestnutheng.github.io/redis_1/</link>
+    <pubDate>Thu, 24 Sep 2020 15:57:27 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/redis_1/</guid>
+    <description><![CDATA[分布式锁 简单加锁 1 2 3 4 5 // 思想：利用setnx检测有没有set过，如果set过就表示没有抢到锁 &gt; setnx locker true OK // ... do somthing ... &gt; del locker 处理set之后进程崩溃的死锁问题 1 2 3 4 5 6 // 思想：给锁加上过期时间，即使set之后进程挂掉，也不会死锁 &gt; setnx locker true OK &gt; expire locker 5 // ... do somthing ... &gt; del locker 处理非原子性问题 setnx之后，expire之前，进程挂了，也会死锁。怎么处理这种情况？
+使用redis事务吗？事务里没有if else，要么全部执行，要么全部不执行。需求是setnx成功才执行expire，有依赖关系，没法用事务 使用新的原子命令，如下 1 2 3 4 &gt; set locker true ex5 nx OK // ... do somthing ... &gt; del locker 处理超时问题 上面的方案设定了超时时间。但是如果少数操作的时间超过了超时时间怎么办？有两个问题：]]></description>
+</item>
+<item>
+    <title>[后台]负载均衡（二）能力篇</title>
+    <link>http://chestnutheng.github.io/load_balance2/</link>
+    <pubDate>Thu, 21 May 2020 17:18:55 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/load_balance2/</guid>
+    <description><![CDATA[名字服务 基础设计 名字服务考虑的基本设计
+客户端发现：
+服务提供者的实例在启动时或者位置信息发生变化时会向服务注册表注册自身，在停止时会向服务注册表注销自身，如果服务提供者的实例发生故障，在一段时间内不发送心跳之后，也会被服务注册表注销。
+服务消费者的实例会向服务注册表查询服务提供者的位置信息，然后通过这些位置信息直接向服务提供者发起请求。
+服务端发现：
+第一步与客户端发现相同。
+服务消费者不直接向服务注册表查询，也不直接向服务提供者发起请求，而是将对服务提供者的请求发往一个中央路由器或者负载均衡器，中央路由器或者负载均衡器查询服务注册表获取服务提供者的位置信息，并将请求转发给服务提供者。
+这两种模式各有利弊，客户端发现模式的优势是，服务消费者向服务提供者发起请求时比服务端发现模式少了一次网络跳转，劣势是服务消费者需要内置特定的服务发现客户端和服务发现逻辑；
+服务端发现模式的优势是服务消费者无需内置特定的服务发现客户端和服务发现逻辑，劣势是多了一次网络跳转，并且需要基础设施环境提供中央路由机制或者负载均衡机制。目前客户端发现模式应用的多一些，因为这种模式的对基础设施环境没有特殊的要求，和基础设施环境也没有过多的耦合性。
+主调调用被调时，根据被调的名字从服务注册中心获取服务实例列表，包括节点ip、端口、权重、地理位置等；一般采取分钟级别的定时任务去拉取，本地做缓存，异步更新。
+实现方式
+DNS，传播速度太慢，没法发现端口。SkyDNS解决了这个问题，在k8s里大量使用 zookeeper或者etcd，如SmartStack，能保证强一致，但是要做很多开发 Eureka。Netflix的java生态里的优秀方案 Consul，提供服务配置、服务的内存和磁盘监测等 服务注册信息 IP和端口 一个服务端要接入名字服务，必须要先提供自己的IP和端口信息。
+IP的获取方法：
+通过遍历网卡的方式去获取，找到第一个不为本地环回地址的 IP 地址。dubbo就是这种方法 指定网卡名interfaceName，来获取IP 直接与服务注册中心建立 socket 连接，然后通过socket.getLocalAddress() 这种方式来获取本机的 IP
+端口的获取方法：
+一般的RPC服务或者Web服务监听的端口都在配置中写好，可以直接获取上报。 扩展设计 除了IP和端口，可能还有一些常用的服务信息需要注册上来，提供更高级的功能：
+1.支持TLS：想知道某个 HTTP 服务是否开启了 TLS。
+2.权重：对相同服务下的不同节点设置不同的权重，进行流量调度。
+3.环境分配：将服务分成预发环境和生产环境，方便进行AB Test功能。
+4.机房：不同机房的服务注册时加上机房的标签，以实现同机房优先的路由规则。
+无损注册/下线 虽然服务注册一般发生在服务的启动阶段，但是细分的话，服务注册应该在服务已经完全启动成功，并准备对外提供服务之后才能进行注册。
+1.有些 RPC 框架自身提供了方法来判断服务是否已经启动完成，如 Thrift ，我们可以通过 Server.isServing() 来判断。
+2.有一些 RPC 框架本身没有提供服务是否启动完成的方式，这时我们可以通过检测端口是否已经处于监听状态来判断。
+3.而对于 HTTP 服务，服务是否启动完毕也可以通过端口是否处于监听状态来判断。
+下线也是一样的，可以注册服务下线的回调，或者监听服务下线的信号，或者做健康检查
+健康检查 客户端主动心跳上报健康：
+客户端每隔一定时间主动发送“心跳”的方式来向服务端表明自己的服务状态正常，心跳可以是 TCP 的形式，也可以是 HTTP 的形式。 也可以通过维持客户端和服务端的一个 socket 长连接自己实现一个客户端心跳的方式。
+客户端的健康检查只能表明网络可达，不能代表服务可用。服务端的健康检查可以准确获得服务的健康状态： 服务端调用服务发布者某个 HTTP 接口来完成健康检查。 对于没有提供 HTTP 服务的 RPC 应用，服务端调用服务发布者的接口来完成健康检查。 可以通过执行某个脚本的形式来进行综合检查，覆盖多个场景。]]></description>
+</item>
+<item>
+    <title>[后台]负载均衡 （一）算法篇</title>
+    <link>http://chestnutheng.github.io/load_balance/</link>
+    <pubDate>Wed, 06 May 2020 20:24:30 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/load_balance/</guid>
+    <description><![CDATA[当单机的访问压力很大时，就需要引入集群。集群一个很重要的事情就是把请求均匀地分配在各个机器上，这就是负载均衡的雏形。
+有基于MAC地址的二层负载均衡和基于IP地址的三层负载均衡。 二层负载均衡会通过一个虚拟MAC地址接收请求，然后再分配到真实的MAC地址；三层负载均衡会通过一个虚拟IP地址接收请求，然后再分配到真实的IP地址；
+四层通过虚拟IP+端口接收请求，然后再分配到真实的服务器（比如LVS，F5）；七层通过虚拟的URL或主机名接收请求，然后再分配到真实的服务器（Haproxy和Nginx）。
+四层和七层是最常见的负载均衡模型。
+**四层：**以常见的TCP为例，负载均衡设备在接收到第一个来自客户端的SYN请求时，通过负载均衡算法选择服务器，并对报文中目标IP地址进行修改（改为后端服务器IP），直接转发给该服务器。TCP的连接建立，即三次握手是客户端和服务器直接建立的，负载均衡设备只是起到一个类似路由器的转发动作。在某些部署情况下，为保证服务器回包可以正确返回给负载均衡设备，在转发报文的同时可能还会对报文原来的源地址进行修改。
+**七层：**以常见的TCP为例，负载均衡设备如果要根据真正的应用层内容再选择服务器，只能先代理最终的服务器和客户端建立连接(三次握手)后，才可能接受到客户端发送的真正应用层内容的报文，然后再根据该报文中的特定字段，再加上设置的负载均衡算法，选择内部某台服务器。负载均衡设备在这种情况下，更类似于一个代理服务器。负载均衡和前端的客户端以及后端的服务器会分别建立TCP连接。所以从这个技术原理上来看，七层负载均衡明显的对负载均衡设备的要求更高，处理七层的能力也必然会低于四层模式的部署方式。
+参考资料：四层和七层负载均衡的区别
+nginx用的负载均衡算法 Nginx可以作为HTTP反向代理，把访问本机的HTTP请求，均分到后端集群的若干台服务器上。负载均衡的核心就是负载均衡所使用的平衡算法，适用于各种场景。
+Nginx的负载均衡算法
+Nginx目前提供的负载均衡模块：
+ngx_http_upstream_round_robin，加权轮询，可均分请求，是默认的HTTP负载均衡算法，集成在框架中。
+ngx_http_upstream_ip_hash_module，IP哈希，可保持会话。
+ngx_http_upstream_least_conn_module，最少连接数，可均分连接。适用于链接数体现资源的服务，比如FTP。
+ngx_http_upstream_hash_module，一致性哈希，可减少缓存数据的失效。
+随机访问 在介绍nginx的模式前，先介绍下普通的负载均衡方法。假设有7个请求，我们给A、B、C三个节点分别4、2、1的权重。最朴素的负载均衡方式有下面几种：
+完全轮询：访问完A去访问B，访问完B去访问C，再去访问A。缺点是没有权重，不能根据负载调节。 列表轮询：构造一个数组[A, A, A, A, B, B, C]，每次pop出去一个访问。缺点是pop出去的元素太随机，可能一次集中访问A ，而且占用内存太大，对于几万的权重范围不合适。 随机数：我们按照A、B、C的权重划分好区间，A（0、1、2、3），B（4、5），C（6），然后取一个随机数，模余7，看看最后的结果在哪个区间内，就取哪个节点。缺点是完全随机，无法避免集中访问。 加权轮询 假设有7个请求，我们给A、B、C三个节点分别4、2、1的权重。如果随机按照概率来选，那么很可能出现连续四个请求都在A上面的情况，这样只能保证结果看起来均衡，但是时间段内不均衡。Nginx采用了一种平滑的加权平均算法来选取节点（Weighted Round Robin）。
+先引入三个概念，都用来描述服务器节点的权重：
+$W$ : weight 我们指定的权重，就是上面例子中的4、2、1。 $W_{ew}$: effective_weight 有效权重，初始值为$W$。用来对故障节点降权。
+如果通信中有错误产生，就减小effective_weight。（故障降权）
+此后有新的请求过来时，再逐步增加effective_weight，最终又恢复到weight。（自动恢复） $W_{cw}$ : current_weight 当前真实权重，每次都会选到最大的真实权重的节点去请求 真实权重$W_{cw}$计算方式：
+初始化：$W_{cw}$ 起始值为0 获得实时权重：请求到来后，给每个节点的真实权重加上有效权重，即$每个节点 W_{cw} = W_{cw} + W_{ew}$ 选出最大权重：选择真实权重最大的节点最为本次请求的目标 回避刚选的节点：最选择的节点的实时权重减去所有节点（包括自己）的有效权重和。即$选中节点 W_{cw} = W_{cw} - (W_{ew1} + W_{ew2} + &hellip; + W_{ewn})$ 来看一个具体的例子：
+假设A、B、C三个节点的权重分别为4、2、1。]]></description>
+</item>
+<item>
+    <title>[后台]RocketMQ的架构和设计</title>
+    <link>http://chestnutheng.github.io/rocketmq/</link>
+    <pubDate>Wed, 04 Sep 2019 19:00:56 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/rocketmq/</guid>
+    <description><![CDATA[主要整理文献：
+RocketMQ部署架构和技术架构 - Github
+RocketMQ关键机制的设计原理 - Github
+RocketMQ 原理简介 - 淘宝消息中间件项目组
+设计理念和部署 消息队列需要解决的问题 发布/订阅 最基础的需求，可以做解耦&amp;聚合，如果用Redis做，不够可靠 支持优先级队列、延时队列 顺序消费，rockmq严格有序 支持消息过滤，Producer和consumer共同过滤 持久化 内存缓存+文件 异常恢复
+broker crash，os crash，掉电 &mdash;保证消息不丢，或者丢失少量数据（依赖刷盘方式是同步还是异步）
+磁盘损坏，机器永久损坏 &mdash;通过异步复制，可保证99%的消息不丢 实时性 RocketMQ使用长轮询Pull方式，可保证消息非常实时，消息实时性不低于Push。 At least Once 和 Exactly Only Once， 至少消费一次且只消费一次 broker的buffer容量问题。RocketMQ 的内存Buffer持久化在硬盘，抽象成一个无限长度的队列，不管有多少数据进来都能装得下，当然也会定时清理。 回溯消费 一般是按照时间维度，例如由于 Consumer 系统故障，恢复后需要重新消费 1 小时前的数据，那么 Broker 要提供一种机制，可以按照时间维度来回退消费进度。
+RocketMQ 支持按照时间回溯消费，时间维度精确到毫秒，可以向前回溯，也可以向后回溯。 消息堆积 消息堆积在内存Buffer，一旦超过内存Buffer，可以根据一定的丢弃策略来丢弃消息，对性能影响不大，但是不能堆积太多
+消息堆积到持久化存储系统中，例如DB，KV存储，文件记录形式。 当消息不能在内存Cache命中时，要不可避免的访问磁盘，会产生大量读IO，读IO的吞吐量直接决定了消息堆积后的访问能力。 消息重试 消息重试有两种原因，一种是消息本身处理失败，如编码有问题等，重试永远不会成功。另一部分是处理消息依赖的下游服务暂时不可用，一段时间重试后可以成功。所以可以消极重试，逐步重试增大等待重试间隔。 RockMQ 模块 Name Server ：NameServer是一个非常简单的Topic路由注册中心，其角色类似Dubbo中的zookeeper，支持Broker的动态注册与发现。
+(1) 路由管理
+Broker管理：NameServer接受Broker集群的注册信息并且保存下来作为路由信息的基本数据。然后提供心跳检测机制，检查Broker是否还存活；
+路由信息管理：每个NameServer将保存关于Broker集群的整个路由信息和用于客户端查询的队列信息。然后Producer和Conumser通过NameServer就可以知道整个Broker集群的路由信息，找到对应topic的路由信息，从而进行消息的投递和消费。
+(2) 无状态：NameServer通常也是集群的方式部署，各实例间相互不进行信息通讯。它是一个几乎无状态的结点，他们之间互不通信。Broker是向每一台NameServer注册自己的路由信息，所以每一个NameServer实例上面都保存一份完整的路由信息。当某个NameServer因某种原因下线了，Broker仍然可以向其它NameServer同步其路由信息，Producer,Consumer仍然可以动态感知Broker的路由的信息。
+(3) 随机选择：客户端连接时，会随机选择。
+(4) 长连接：Broker向所有的NameServer结点建立长连接，注册Topic信息。Producer和Consumer也是长连接。]]></description>
+</item>
+<item>
+    <title>[后台]用select写一个HTTP代理</title>
+    <link>http://chestnutheng.github.io/select/</link>
+    <pubDate>Thu, 12 Jan 2017 11:23:44 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/select/</guid>
+    <description><![CDATA[函数说明 18.3. select — Waiting for I/O completion — Python 3.6.0 documentation
+select.select(rlist, wlist, xlist[, timeout]) Unix select()系统调用的一个简单接口。前三个参数是文件描述符（int类型）的序列。
+1 2 3 rlist：等待准备读取 wlist：等待准备写作 xlist：等待一个异常 参数说明 在Unix上序列可以为空，但在Windows则不可以。可选的timeout参数将超时指定为浮点数（以秒为单位）。当省略timeout参数时，该函数阻塞，直到至少一个文件描述符已准备好。该值为0时表示轮询从不停止。
+返回值 准备好的对象列表的三元组（前三个参数的子集）。当超时但没有文件描述符就绪时，返回三个空列表。
+序列对象 序列中可用的对象类型包括Python文件对象（例如sys.stdin或由open()或os.popen()返回的对象），由socket.socket()返回的socket对象。你也可以自己定义一个类，只要它有一个合适的fileno()方法（返回一个真正的文件描述符，而不只是一个随机整数）。
+注意：
+Windows上的文件对象不可接受，但socket可以。在Windows上，底层的select()函数由WinSock库提供，不处理不是源自WinSock的文件描述符。
+实现HTTP代理 代理由两个部分组成：客户端-代理的socket，和代理-Web服务器的socket。
+因为代理像两边接受数据时调用recv方法都会发生阻塞，
+所以，在这个样例中，事件循环由两个事件组成：客户端-代理链接可以继续接受数据了，和代理-Web服务器链接可以接受数据了（指都是代理端）。
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 import select import socket import _thread BUFF_SIZE = 1024 # get http head data from a connection def get_post(conn): res = b&#39;&#39; while True: res += conn.]]></description>
+</item>
+</channel>
+</rss>
