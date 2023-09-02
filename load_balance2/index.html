@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>[后台]负载均衡（二）能力篇 - 子恒的博客</title><meta name="Description" content="负载均衡是集群中一个重要的组成部分。这个模块一般集成了名字服务、负载均衡、过载保护、限流等功能。第二部分是针对名字服务、负载均衡、过载保护手段的介绍。"><meta property="og:title" content="[后台]负载均衡（二）能力篇" />
+<meta property="og:description" content="负载均衡是集群中一个重要的组成部分。这个模块一般集成了名字服务、负载均衡、过载保护、限流等功能。第二部分是针对名字服务、负载均衡、过载保护手段的介绍。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://chestnutheng.github.io/load_balance2/" /><meta property="og:image" content="http://chestnutheng.github.io/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2020-05-21T17:18:55+08:00" />
+<meta property="article:modified_time" content="2020-07-16T20:10:14+08:00" /><meta property="og:site_name" content="子恒的博客" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="http://chestnutheng.github.io/logo.png"/>
+
+<meta name="twitter:title" content="[后台]负载均衡（二）能力篇"/>
+<meta name="twitter:description" content="负载均衡是集群中一个重要的组成部分。这个模块一般集成了名字服务、负载均衡、过载保护、限流等功能。第二部分是针对名字服务、负载均衡、过载保护手段的介绍。"/>
+<meta name="application-name" content="我的网站">
+<meta name="apple-mobile-web-app-title" content="我的网站"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://chestnutheng.github.io/load_balance2/" /><link rel="prev" href="http://chestnutheng.github.io/load_balance/" /><link rel="next" href="http://chestnutheng.github.io/load_balance3/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[后台]负载均衡（二）能力篇",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/chestnutheng.github.io\/load_balance2\/"
+        },"genre": "posts","keywords": "负载均衡, 后台, 名字服务, 过载保护","wordcount":  202 ,
+        "url": "http:\/\/chestnutheng.github.io\/load_balance2\/","datePublished": "2020-05-21T17:18:55+08:00","dateModified": "2020-07-16T20:10:14+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "子恒"
+            },"description": "负载均衡是集群中一个重要的组成部分。这个模块一般集成了名字服务、负载均衡、过载保护、限流等功能。第二部分是针对名字服务、负载均衡、过载保护手段的介绍。"
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="子恒的博客">子恒的博客</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/"> 主页 </a><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/freinds/"> 友链 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="子恒的博客">子恒的博客</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        Cancel
+                    </a>
+                </div><a class="menu-item" href="/" title="">主页</a><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/freinds/" title="">友链</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><div class="search-dropdown desktop">
+        <div id="search-dropdown-desktop"></div>
+    </div>
+    <div class="search-dropdown mobile">
+        <div id="search-dropdown-mobile"></div>
+    </div><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">[后台]负载均衡（二）能力篇</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="about" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>子恒</a></span>&nbsp;<span class="post-category">included in <a href="/categories/%E5%90%8E%E5%8F%B0/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>后台</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2020-05-21">2020-05-21</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;202 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;One minute&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#名字服务">名字服务</a>
+      <ul>
+        <li><a href="#基础设计">基础设计</a></li>
+        <li><a href="#服务注册信息">服务注册信息</a>
+          <ul>
+            <li><a href="#ip和端口">IP和端口</a></li>
+            <li><a href="#扩展设计">扩展设计</a></li>
+          </ul>
+        </li>
+        <li><a href="#无损注册下线">无损注册/下线</a></li>
+        <li><a href="#健康检查">健康检查</a></li>
+        <li><a href="#节点变化通知">节点变化通知</a></li>
+        <li><a href="#容灾">容灾</a></li>
+      </ul>
+    </li>
+    <li><a href="#熔断">熔断</a>
+      <ul>
+        <li><a href="#熔断器模式">熔断器模式</a></li>
+        <li><a href="#熔断器发现-时间窗上报">熔断器发现-时间窗上报</a></li>
+        <li><a href="#熔断器恢复-探针">熔断器恢复-探针</a></li>
+      </ul>
+    </li>
+    <li><a href="#过载保护">过载保护</a>
+      <ul>
+        <li><a href="#四大方法">四大方法</a>
+          <ul>
+            <li><a href="#轻重分离">轻重分离</a></li>
+            <li><a href="#及早拒绝">及早拒绝</a></li>
+            <li><a href="#量力而为">量力而为</a></li>
+            <li><a href="#动态调节">动态调节</a></li>
+          </ul>
+        </li>
+        <li><a href="#lb和过载保护">LB和过载保护</a></li>
+        <li><a href="#请求队列和过载保护">请求队列和过载保护</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="名字服务">名字服务</h1>
+<h2 id="基础设计">基础设计</h2>
+<p><a href="http://jm.taobao.org/2018/06/26/%E8%81%8A%E8%81%8A%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%9A%84%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C%E4%B8%8E%E5%8F%91%E7%8E%B0/" target="_blank" rel="noopener noreffer ">名字服务考虑的基本设计</a></p>
+<p>客户端发现：<br>
+服务提供者的实例在启动时或者位置信息发生变化时会向服务注册表注册自身，在停止时会向服务注册表注销自身，如果服务提供者的实例发生故障，在一段时间内不发送心跳之后，也会被服务注册表注销。<br>
+服务消费者的实例会向服务注册表查询服务提供者的位置信息，然后通过这些位置信息直接向服务提供者发起请求。</p>
+<p>服务端发现：<br>
+第一步与客户端发现相同。<br>
+服务消费者不直接向服务注册表查询，也不直接向服务提供者发起请求，而是将对服务提供者的请求发往一个中央路由器或者负载均衡器，中央路由器或者负载均衡器查询服务注册表获取服务提供者的位置信息，并将请求转发给服务提供者。</p>
+<p>这两种模式各有利弊，客户端发现模式的优势是，服务消费者向服务提供者发起请求时比服务端发现模式少了一次网络跳转，劣势是服务消费者需要内置特定的服务发现客户端和服务发现逻辑；<br>
+服务端发现模式的优势是服务消费者无需内置特定的服务发现客户端和服务发现逻辑，劣势是多了一次网络跳转，并且需要基础设施环境提供中央路由机制或者负载均衡机制。目前客户端发现模式应用的多一些，因为这种模式的对基础设施环境没有特殊的要求，和基础设施环境也没有过多的耦合性。<br>
+主调调用被调时，根据被调的名字从服务注册中心获取服务实例列表，包括节点ip、端口、权重、地理位置等；一般采取分钟级别的定时任务去拉取，本地做缓存，异步更新。</p>
+<p>实现方式</p>
+<ol>
+<li>DNS，传播速度太慢，没法发现端口。SkyDNS解决了这个问题，在k8s里大量使用</li>
+<li>zookeeper或者etcd，如SmartStack，能保证强一致，但是要做很多开发</li>
+<li>Eureka。Netflix的java生态里的优秀方案</li>
+<li>Consul，提供服务配置、服务的内存和磁盘监测等</li>
+</ol>
+<h2 id="服务注册信息">服务注册信息</h2>
+<h3 id="ip和端口">IP和端口</h3>
+<p>一个服务端要接入名字服务，必须要先提供自己的IP和端口信息。<br>
+IP的获取方法：</p>
+<ol>
+<li>通过遍历网卡的方式去获取，找到第一个不为本地环回地址的 IP 地址。dubbo就是这种方法</li>
+<li>指定网卡名interfaceName，来获取IP</li>
+<li>直接与服务注册中心建立 socket 连接，然后通过socket.getLocalAddress() 这种方式来获取本机的 IP<br>
+端口的获取方法：<br>
+一般的RPC服务或者Web服务监听的端口都在配置中写好，可以直接获取上报。</li>
+</ol>
+<h3 id="扩展设计">扩展设计</h3>
+<p>除了IP和端口，可能还有一些常用的服务信息需要注册上来，提供更高级的功能：<br>
+1.支持TLS：想知道某个 HTTP 服务是否开启了 TLS。<br>
+2.权重：对相同服务下的不同节点设置不同的权重，进行流量调度。<br>
+3.环境分配：将服务分成预发环境和生产环境，方便进行AB Test功能。<br>
+4.机房：不同机房的服务注册时加上机房的标签，以实现同机房优先的路由规则。</p>
+<h2 id="无损注册下线">无损注册/下线</h2>
+<p>虽然服务注册一般发生在服务的启动阶段，但是细分的话，服务注册应该在服务已经完全启动成功，并准备对外提供服务之后才能进行注册。<br>
+1.有些 RPC 框架自身提供了方法来判断服务是否已经启动完成，如 Thrift ，我们可以通过 Server.isServing() 来判断。<br>
+2.有一些 RPC 框架本身没有提供服务是否启动完成的方式，这时我们可以通过检测端口是否已经处于监听状态来判断。<br>
+3.而对于 HTTP 服务，服务是否启动完毕也可以通过端口是否处于监听状态来判断。<br>
+下线也是一样的，可以注册服务下线的回调，或者监听服务下线的信号，或者做健康检查</p>
+<h2 id="健康检查">健康检查</h2>
+<p>客户端主动心跳上报健康：</p>
+<ol>
+<li>客户端每隔一定时间主动发送“心跳”的方式来向服务端表明自己的服务状态正常，心跳可以是 TCP 的形式，也可以是 HTTP 的形式。</li>
+<li>也可以通过维持客户端和服务端的一个 socket 长连接自己实现一个客户端心跳的方式。<br>
+客户端的健康检查只能表明网络可达，不能代表服务可用。服务端的健康检查可以准确获得服务的健康状态：</li>
+<li>服务端调用服务发布者某个 HTTP 接口来完成健康检查。</li>
+<li>对于没有提供 HTTP 服务的 RPC 应用，服务端调用服务发布者的接口来完成健康检查。</li>
+<li>可以通过执行某个脚本的形式来进行综合检查，覆盖多个场景。<br>
+服务端检查也有问题，一个是调用服务的方式不通用，需要额外实现，还有就是服务注册中心可能和服务的网络不互通。</li>
+</ol>
+<h2 id="节点变化通知">节点变化通知</h2>
+<p>当服务有节点退出或新的节点加入时，订阅者如何及时收到通知？经典的push和pull的问题</p>
+<ol>
+<li>Push 的经典实现有两种，基于 socket 长连接的 notify，典型的实现如 zookeeper；另一种为 HTTP 连接所使用 Long Polling。<br>
+但是基于 socket 长连接的 notify 和基于 HTTP 协议的 Long Polling 都会存在notify消息丢失的问题。</li>
+<li>Pull 的定时轮询也需要支持，要选好查询的间隔时间，在服务性能和业务规模之间权衡</li>
+<li>还有一种真push，客户端开启一个 UDP server，服务注册中心通过 UDP 的方式进行数据推送，当然这个也受限于网络的连通性</li>
+</ol>
+<h2 id="容灾">容灾</h2>
+<p>客户端容灾：<br>
+首先，本地内存缓存，当运行时与服务注册中心的连接丢失或服务注册中心完全宕机，仍能正常地调用服务。<br>
+然后，本地缓存文件，当应用与服务注册中心发生网络分区或服务注册中心完全宕机后，应用进行了重启操作，内存里没有数据，此时应用可以通过读取本地缓存文件的数据来获取到最后一次订阅到的内容。<br>
+最后，本地容灾文件夹。正常的情况下，容灾文件夹内是没有内容的。当服务端完全宕机且长时间不能恢复，同时服务提供者又发生了很大的变更时，运维可以通过在容灾文件夹内手动添加文件的方式来开启本地容灾。此时客户端会忽略原有的本地缓存文件，只从本地容灾文件中读取配置。<br>
+服务端容灾：<br>
+由于地址服务是无状态的，服务端容灾可以做的很薄，主要有两点：新的服务端加入，地址服务器会更新并和其他地址服务器保持同步；服务端删除，地址服务器能保证快速删除。</p>
+<h1 id="熔断">熔断</h1>
+<h2 id="熔断器模式">熔断器模式</h2>
+<p><a href="https://martinfowler.com/bliki/CircuitBreaker.html" target="_blank" rel="noopener noreffer ">熔断器模式</a>是一种用于故障恢复的设计模式，也常用在负载均衡中。它可以防止一个应用不断地去尝试一个很可能失败的操作，避免服务持续过载。他由几个状态组成：</p>
+<ol>
+<li>关闭(Closed)：默认情况下Circuit Breaker是关闭的，此时允许操作执行。Circuit Breaker内部记录着最近失败的次数，如果对应的操作执行失败，次数就会续一次。如果在某个时间段内，失败次数（或者失败比率）达到阈值，Circuit Breaker会转换到开启(Open)状态。</li>
+<li>开启(Open)：在此状态下，执行对应的操作将会立即失败并且立即抛出异常。在开启状态中，Circuit Breaker会启用一个超时计时器，设这个计时器的目的是给集群相应的时间来恢复故障。当计时器时间到的时候，Circuit Breaker会转换到半开启(Half-Open)状态。</li>
+<li>半开启(Half-Open)：在此状态下，Circuit Breaker 会允许执行一定数量的操作。如果所有操作全部成功，Circuit Breaker就会假定故障已经恢复，它就会转换到关闭状态，并且重置失败次数。如果其中 任意一次 操作失败了，Circuit Breaker就会认为故障仍然存在，所以它会转换到开启状态并再次开启计时器（再给系统一些时间使其从失败中恢复）。</li>
+</ol>
+<p>我们可以借鉴此设计模式设计一种负载均衡的熔断策略：<br>
+请求失败比例过高熔断：当服务端在上一个时间窗（比如10秒）内，成功的请求量小于最低请求量要求requestVolumeThreshold（默认100个），且成功率小于最低成功率errorThresholdPercentage（比如50%），服务端就会进入隔离状态，熔断器开启。<br>
+请求连续失败熔断：当服务端在上一个时间窗（比如10秒）内，连续失败的请求超过连续失败上限bound2（默认10个），服务器进入隔离状态，熔断器开启<br>
+熔断隔离时间sleepWindowInMilliseconds：默认隔离30s，支持可配置。</p>
+<h2 id="熔断器发现-时间窗上报">熔断器发现-时间窗上报</h2>
+<p>要想再问题发生的时候熔断，首先要发现问题。我们看看Hystrix的熔断器模型怎么收集上报：<br>
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb2_1.png"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb2_1.png, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb2_1.png 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb2_1.png 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb2_1.png"
+        title="Hystrix的时间窗" /><br>
+Hystrix滑动窗口策略，以秒为单位来统计请求处理情况，上面每个格子代表1秒，格子中的数据就是1秒内各请求的处理结果，称为一个桶。<br>
+我们假设每次决策都以最近的十个桶来决定是否熔断，比如失败率超过50%就熔断。这10秒就是一个滑动窗口，每经过一秒，最老的一个桶就会被丢弃，同时增加一个新的桶。<br>
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb2_2.png"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb2_2.png, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb2_2.png 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb2_2.png 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb2_2.png"
+        title="Hystrix的结构" /></p>
+<h2 id="熔断器恢复-探针">熔断器恢复-探针</h2>
+<p>熔断器在半开状态时，如果用请求来检测服务可用，那么还是会有一些请求会丢失的风险。一种比较好的办法是使用探针来检测服务的可用性。探针一般有TCP、UDP、HTTP几种，还要支持用户自定义探针。<br>
+主调需要在配置中指定要用的探针类型和探针的使用顺序，在需要探测时会以这个顺序调用探测插件进行探测；只要有一个探测插件成功，就认为服务已经恢复，停止探测。</p>
+<p>比如一个udp探针：</p>
+<ul>
+<li>探测插件名：udp</li>
+<li>探测请求包：0x0001</li>
+<li>期望回包：0x000F</li>
+<li>超时时间：100ms</li>
+<li>探测次数：5</li>
+</ul>
+<h1 id="过载保护">过载保护</h1>
+<p><a href="https://mp.weixin.qq.com/s/uv4WkTIPvDCFlvKAEXrT2g" target="_blank" rel="noopener noreffer ">微信的过载保护</a><br>
+操作系统里有CPU、内存、网卡、磁盘等各种资源，当程序处理海量请求时很容易使得某一种资源到达处理性能瓶颈，从而使得服务的处理能力迅速下降。一般的后台服务可能会有几个下面的瓶颈：</p>
+<ol>
+<li>CPU，计算密集型服务</li>
+<li>内存，内存消耗型服务</li>
+<li>CPU LOAD，多线程型服务（进程调度频繁导致CPU空跑）</li>
+<li>IO，包括磁盘IO（比如随机IO导致cache性能下降，机械臂移动频繁，swap频繁），网络IO、网络连接数多的服务（网络拥塞）<br>
+这些瓶颈中的某一个因素打破平衡后，会传播和放大（比如用户不断失败重试），形成滚雪球效应，导致整个系统崩溃。此时就需要我们的负载均衡理论来保障系统的可用性。</li>
+</ol>
+<h2 id="四大方法">四大方法</h2>
+<h3 id="轻重分离">轻重分离</h3>
+<p>轻重分离是一种类似高内聚，低耦合的方法论，用来限制服务崩溃的影响扩大。<br>
+按服务的重要性对服务分别隔离部署，避免一些不重要的服务影响要重要的服务。服务的隔离最好能做到物理隔离，包括服务器、带宽、IDC级别的隔离。</p>
+<ol>
+<li>按重要性分离：比如微博热点出现时大家都去访问某明星的主页，我们尽量只让个人主页服务挂掉，不要影响其他的资讯、推送服务</li>
+<li>按部署分离：电信、联通、教育网、海外用户之间的分离</li>
+<li>按快慢分离：下载资源服务和资讯页面服务的分离</li>
+<li>按set分离用户：按游戏区服、用户uid的哈希值分离，从逻辑分离到物理隔离</li>
+</ol>
+<h3 id="及早拒绝">及早拒绝</h3>
+<p>问题解决的阶段越早，成本越低，影响越小的一种思想。<br>
+原则：前端保护后端，后端不信任前端。</p>
+<ol>
+<li>前后端要交流：后端把自己的负载情况也报告给前端</li>
+<li>前端收到后端的负载情况后，要用正确的策略调度后端，后端负载满时不再发起请求</li>
+<li>后端接到前端的请求后，如果自己负载很高，要拒绝发来的新请求<br>
+这里面有两个关键点：</li>
+</ol>
+<ul>
+<li>高负载识别 负载能力需要一些具体的指标来识别，比如包量、并发连接数</li>
+<li>拒绝方法 拒绝的时候要有降级策略，用有损服务和柔性可用来保障体验</li>
+</ul>
+<h3 id="量力而为">量力而为</h3>
+<p>每个服务要先做好自我保护，再考虑对关联系统的保护。<br>
+对自己的保护需要做好过载监控要做好告警机制，比如在系统负载达到70%的时候发出预警，在后台负载90%的时候启动过载保护</p>
+<h3 id="动态调节">动态调节</h3>
+<p>结合上面的三个方法，持续监控服务过载状态，形成一个良性的正反馈循环：<br>
+业务正常状态-&gt; 过载保护状态 -&gt; 业务灰度恢复 -&gt; 业务正常状态</p>
+<h2 id="lb和过载保护">LB和过载保护</h2>
+<p>LB和容灾解决的是大容量业务的平行扩展及可用性问题，在做好容量管理的前提下具备一定的应对突发流量的能力（因为具备一定的资源冗余），但是LB只做到流量的均衡分布处理，却没有实现流量超出系统总体容量时的保护、控制。<br>
+WRR仅仅实现了根据运营配置的静态负载均衡策略，当集群中某个节点过载时，不能及时调整负载均衡策略以保护该节点，使得过载节点雪上加霜最终假死，更可怕的是节点假死（或者某节点故障）后，LB会马上摘除该节点，并把该节点的负载分担到其它正常节点上，从而可能造成正常节点的过载，如此循环往复，过载不断扩散，最终使得系统整体雪崩。<br>
+我们可以优化一下LB的机制，把过载时多出来的请求直接抛弃掉。但是该机制还未能很好的解决过载的源头问题，即用户失去耐心后的无效请求倍增的滚雪球效应，同时也未能给用户较好的有损体验。<br>
+还有一种方法是一损俱损，当整个后台集群不可用时，LB把所有的机器都返回，这样在极端情况下也能保障系统的部分可用性。</p>
+<h2 id="请求队列和过载保护">请求队列和过载保护</h2>
+<p>实现请求队列的目的是通过非阻塞方式实现异步系统，优化系统架构，从而提升系统性能。<br>
+异步系统的问题是在分层系统中，各层次所维护的请求/响应队列与原始请求发起方失去了直接的联系，这就造成队列数据有效性（通常是采用轮询超时的方式处理）无法保障。<br>
+当过载发生时，用户不断的刷新请求，这也就意味着此时系统请求队列中大部分访问请求已经无效（用户用新的刷新访问代替了上一次的访问请求），但此时队列中的“无效访问请求“尚未超出设定的超时阀值，后端系统（往往是系统的瓶颈所在）还在按FIFO的原则继续处理，这样的结果是：</p>
+<ol>
+<li>系统的宝贵资源都用来处理无效的访问请求，极大的浪费了资源；</li>
+<li>用户得不到及时的反馈，不断的刷新访问请求，导致滚雪球效应；</li>
+<li>请求的涌入使得瓶颈资源无法处理，LB作出调度使得过载扩散，导致多米诺骨牌效应；<br>
+从以上分析我们可知，请求队列机制无法及时剔除无效数据，从而控制雪球的增长，也无法控制过载的扩散，故 有了请求队列，仍然需要丰富的过载保护机制</li>
+</ol>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2020-07-16</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/load_balance2/index.md" target="_blank">Read Markdown</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="http://chestnutheng.github.io/load_balance2/" data-title="[后台]负载均衡（二）能力篇" data-hashtags="负载均衡,后台,名字服务,过载保护"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="http://chestnutheng.github.io/load_balance2/" data-hashtag="负载均衡"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Hacker News" data-sharer="hackernews" data-url="http://chestnutheng.github.io/load_balance2/" data-title="[后台]负载均衡（二）能力篇"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="http://chestnutheng.github.io/load_balance2/" data-title="[后台]负载均衡（二）能力篇"><i data-svg-src="/lib/simple-icons/icons/line.min.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="http://chestnutheng.github.io/load_balance2/" data-title="[后台]负载均衡（二）能力篇" data-ralateuid="2461859532"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw" aria-hidden="true"></i>&nbsp;<a href="/tags/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/">负载均衡</a>,&nbsp;<a href="/tags/%E5%90%8E%E5%8F%B0/">后台</a>,&nbsp;<a href="/tags/%E5%90%8D%E5%AD%97%E6%9C%8D%E5%8A%A1/">名字服务</a>,&nbsp;<a href="/tags/%E8%BF%87%E8%BD%BD%E4%BF%9D%E6%8A%A4/">过载保护</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/load_balance/" class="prev" rel="prev" title="[后台]负载均衡 （一）算法篇"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>[后台]负载均衡 （一）算法篇</a>
+            <a href="/load_balance3/" class="next" rel="next" title="[后台]负载均衡 （三）限流篇">[后台]负载均衡 （三）限流篇<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
+</div>
+<div id="comments"><div id="giscus" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://giscus.app">Giscus</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.118.2">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2015 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="about" target="_blank">子恒</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/lightgallery/css/lightgallery-bundle.min.css"><link rel="stylesheet" href="/lib/katex/katex.min.css"><script type="text/javascript" src="/lib/autocomplete/autocomplete.min.js"></script><script type="text/javascript" src="/lib/lunr/lunr.min.js"></script><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/lightgallery/lightgallery.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/thumbnail/lg-thumbnail.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/zoom/lg-zoom.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript" src="/lib/sharer/sharer.min.js"></script><script type="text/javascript" src="/lib/katex/katex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/auto-render.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/copy-tex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{"giscus":{"category":"Announcements","categoryId":"DIC_kwDOA9ikP84CQT5Y","darkTheme":"dark","emitMetadata":"0","inputPosition":"bottom","lang":"en","lazyLoading":true,"lightTheme":"light","mapping":"pathname","reactionsEnabled":"1","repo":"chestnutheng/chestnutheng.github.io","repoId":"MDEwOlJlcG9zaXRvcnk2NDUyOTQ3MQ=="}},"lightgallery":true,"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":true,"left":"\\begin{equation}","right":"\\end{equation}"},{"display":true,"left":"\\begin{equation*}","right":"\\end{equation*}"},{"display":true,"left":"\\begin{align}","right":"\\end{align}"},{"display":true,"left":"\\begin{align*}","right":"\\end{align*}"},{"display":true,"left":"\\begin{alignat}","right":"\\end{alignat}"},{"display":true,"left":"\\begin{alignat*}","right":"\\end{alignat*}"},{"display":true,"left":"\\begin{gather}","right":"\\end{gather}"},{"display":true,"left":"\\begin{CD}","right":"\\end{CD}"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"highlightTag":"em","lunrIndexURL":"/index.json","maxResultLength":10,"noResultsFound":"No results found","snippetLength":50,"type":"lunr"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

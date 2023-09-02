@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>[Redis]Redis 应用篇 - 子恒的博客</title><meta name="Description" content="本文介绍了Redis的一些应用，包括分布式锁、消息/延迟队列、hyperloglog、位图、布隆过滤器、限流、地理位置等。"><meta property="og:title" content="[Redis]Redis 应用篇" />
+<meta property="og:description" content="本文介绍了Redis的一些应用，包括分布式锁、消息/延迟队列、hyperloglog、位图、布隆过滤器、限流、地理位置等。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://chestnutheng.github.io/redis_1/" /><meta property="og:image" content="http://chestnutheng.github.io/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2020-09-24T15:57:27+08:00" />
+<meta property="article:modified_time" content="2020-09-24T15:57:32+08:00" /><meta property="og:site_name" content="子恒的博客" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="http://chestnutheng.github.io/logo.png"/>
+
+<meta name="twitter:title" content="[Redis]Redis 应用篇"/>
+<meta name="twitter:description" content="本文介绍了Redis的一些应用，包括分布式锁、消息/延迟队列、hyperloglog、位图、布隆过滤器、限流、地理位置等。"/>
+<meta name="application-name" content="我的网站">
+<meta name="apple-mobile-web-app-title" content="我的网站"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://chestnutheng.github.io/redis_1/" /><link rel="prev" href="http://chestnutheng.github.io/cpp_11_4/" /><link rel="next" href="http://chestnutheng.github.io/go/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[Redis]Redis 应用篇",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/chestnutheng.github.io\/redis_1\/"
+        },"genre": "posts","keywords": "Redis, 中间件, 后台","wordcount":  861 ,
+        "url": "http:\/\/chestnutheng.github.io\/redis_1\/","datePublished": "2020-09-24T15:57:27+08:00","dateModified": "2020-09-24T15:57:32+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "子恒"
+            },"description": "本文介绍了Redis的一些应用，包括分布式锁、消息/延迟队列、hyperloglog、位图、布隆过滤器、限流、地理位置等。"
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="子恒的博客">子恒的博客</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/"> 主页 </a><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/freinds/"> 友链 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="子恒的博客">子恒的博客</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        Cancel
+                    </a>
+                </div><a class="menu-item" href="/" title="">主页</a><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/freinds/" title="">友链</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><div class="search-dropdown desktop">
+        <div id="search-dropdown-desktop"></div>
+    </div>
+    <div class="search-dropdown mobile">
+        <div id="search-dropdown-mobile"></div>
+    </div><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">[Redis]Redis 应用篇</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="about" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>子恒</a></span>&nbsp;<span class="post-category">included in <a href="/categories/%E5%90%8E%E5%8F%B0/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>后台</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2020-09-24">2020-09-24</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;861 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;5 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#分布式锁">分布式锁</a>
+      <ul>
+        <li><a href="#简单加锁">简单加锁</a></li>
+        <li><a href="#处理set之后进程崩溃的死锁问题">处理set之后进程崩溃的死锁问题</a></li>
+        <li><a href="#处理非原子性问题">处理非原子性问题</a></li>
+        <li><a href="#处理超时问题">处理超时问题</a></li>
+        <li><a href="#获得不了锁的处理">获得不了锁的处理</a></li>
+      </ul>
+    </li>
+    <li><a href="#消息队列">消息队列</a>
+      <ul>
+        <li><a href="#多次消费">多次消费</a></li>
+        <li><a href="#延时队列">延时队列</a></li>
+        <li><a href="#redis-stream">Redis Stream</a></li>
+      </ul>
+    </li>
+    <li><a href="#hyperloglog-做基数uv统计">hyperloglog 做基数(UV)统计</a></li>
+    <li><a href="#位图和布隆过滤器">位图和布隆过滤器</a>
+      <ul>
+        <li><a href="#位图">位图</a>
+          <ul>
+            <li><a href="#setbitgetbit">setbit/getbit</a></li>
+            <li><a href="#bitcount">bitcount</a></li>
+          </ul>
+        </li>
+        <li><a href="#布隆过滤器">布隆过滤器</a></li>
+      </ul>
+    </li>
+    <li><a href="#限流">限流</a>
+      <ul>
+        <li><a href="#简单限流">简单限流</a></li>
+        <li><a href="#漏桶限流-redis-cell">漏桶限流 Redis-Cell</a></li>
+      </ul>
+    </li>
+    <li><a href="#geohash-附近的人">GeoHash 附近的人</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="分布式锁">分布式锁</h1>
+<h2 id="简单加锁">简单加锁</h2>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">// 思想：利用setnx检测有没有set过，如果set过就表示没有抢到锁
+</span></span><span class="line"><span class="cl">&gt; setnx locker true
+</span></span><span class="line"><span class="cl">OK
+</span></span><span class="line"><span class="cl">// ... do somthing ...
+</span></span><span class="line"><span class="cl">&gt; del locker
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="处理set之后进程崩溃的死锁问题">处理set之后进程崩溃的死锁问题</h2>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">// 思想：给锁加上过期时间，即使set之后进程挂掉，也不会死锁
+</span></span><span class="line"><span class="cl">&gt; setnx locker true
+</span></span><span class="line"><span class="cl">OK
+</span></span><span class="line"><span class="cl">&gt; expire locker 5
+</span></span><span class="line"><span class="cl">// ... do somthing ...
+</span></span><span class="line"><span class="cl">&gt; del locker
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="处理非原子性问题">处理非原子性问题</h2>
+<p>setnx之后，expire之前，进程挂了，也会死锁。怎么处理这种情况？</p>
+<ol>
+<li>使用redis事务吗？事务里没有if else，要么全部执行，要么全部不执行。需求是setnx成功才执行expire，有依赖关系，没法用事务</li>
+<li>使用新的原子命令，如下</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">&gt; set locker true ex5 nx
+</span></span><span class="line"><span class="cl">OK
+</span></span><span class="line"><span class="cl">// ... do somthing ...
+</span></span><span class="line"><span class="cl">&gt; del locker
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="处理超时问题">处理超时问题</h2>
+<p>上面的方案设定了超时时间。但是如果少数操作的时间超过了超时时间怎么办？有两个问题：</p>
+<ol>
+<li>这个时候其他线程就会抢占到锁，导致资源发生竞争。</li>
+<li>如果锁是超时释放的，当前进程处理完操作之后又会释放锁，会把别人的锁释放<br>
+我们先来解决问题2。我们可以把locker的value设置为随机数，保证锁只会被当前线程释放。这个操作也要保证原子性，我们用lua脚本实现：</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-lua" data-lang="lua"><span class="line"><span class="cl"><span class="o">//</span> <span class="n">del</span> <span class="n">lua</span>
+</span></span><span class="line"><span class="cl"><span class="kr">if</span> <span class="n">redis.call</span><span class="p">(</span><span class="s2">&#34;get&#34;</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="n">tag</span> <span class="kr">then</span>
+</span></span><span class="line"><span class="cl">	<span class="kr">return</span> <span class="n">redis.call</span><span class="p">(</span><span class="s2">&#34;del&#34;</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="kr">else</span>
+</span></span><span class="line"><span class="cl">	<span class="kr">return</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl"><span class="kr">end</span>
+</span></span><span class="line"><span class="cl"><span class="o">//</span> <span class="n">set</span> <span class="n">java</span>
+</span></span><span class="line"><span class="cl"><span class="n">tag</span> <span class="o">=</span> <span class="n">random.nextint</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="kr">if</span> <span class="n">redis.set</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">nx</span><span class="o">=</span><span class="n">True</span><span class="p">,</span> <span class="n">ex</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">	<span class="n">do_somthing</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="o">//</span> <span class="n">eval</span> <span class="n">del</span> <span class="n">lua</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="获得不了锁的处理">获得不了锁的处理</h2>
+<p>上面介绍了锁的实现，现在我们需要关注获取锁失败的分支。这个时候资源正在被其他过程占用，我们有几个处理办法：</p>
+<ol>
+<li>直接抛出异常，比如管理端场景</li>
+<li>sleep一会重试，但是sleep会阻塞处理线程，并不好</li>
+<li>把请求放到一个延时队列，延后处理</li>
+</ol>
+<h1 id="消息队列">消息队列</h1>
+<p>使用list和lpush/rpop，生产者使用lpush推入队列，消费者通过rpop推出队列。因为redis的命令是原子的，所以这里不会有竞争的问题。</p>
+<p>我们该什么时候调用pop？<br>
+一种常见的方法是pull，定时去消费（pop），比如每隔1s，但是这样消息会有一定的延时<br>
+另一种方法是调用b开头的阻塞函数，比如brpop，会阻塞到队列里有消息才会返回。需要注意的是，如果阻塞过久，redis会认为这个网络连接是闲置连接，会断开这些连接，所以客户端里要做好重试</p>
+<p>还会有什么问题？</p>
+<ol>
+<li>做消费确认ACK比较麻烦，就是不能保证消费者在读取之后，未处理后的宕机问题。导致消息意外丢失。通常需要自己维护一个Pending列表，保证消息的处理确认。</li>
+<li>不能广播、分组消费、重复消费</li>
+</ol>
+<h2 id="多次消费">多次消费</h2>
+<p>如果要有多个消费者需要消费同一条消息，list就无法满足。Redis提供了pub/sub模式来解决这一问题。有下面几个操作：</p>
+<ol>
+<li>SUBSCRIBE，用于订阅信道</li>
+<li>PUBLISH，向信道发送消息</li>
+<li>UNSUBSCRIBE，取消订阅</li>
+</ol>
+<p>生产者和消费者通过一个队列进行交互。通常会有多个消费者，多个消费者订阅同一个信道，当生产者向信道发布消息时，该信道会立即将消息逐一发布给每个消费者。</p>
+<p>优点：</p>
+<ol>
+<li>典型的广播模式，一个消息可以发布到多个消费者</li>
+<li>多信道订阅，消费者可以同时订阅多个信道，从而接收多类消息</li>
+<li>消息即时发送，消息不用等待消费者读取，消费者会自动接收到信道发布的消息</li>
+</ol>
+<p>缺点：</p>
+<ol>
+<li>消息一旦发布，不能接收。换句话就是发布时若客户端不在线，则消息丢失，不能寻回</li>
+<li>不能保证每个消费者接收的时间是一致的</li>
+<li>若消费者客户端出现消息积压，到一定程度，会被强制断开，导致消息意外丢失。通常发生在消息的生产远大于消费速度时</li>
+</ol>
+<p>可见，Pub/Sub 模式不适合做消息存储，消息积压类的业务，而是擅长处理广播，即时通讯，即时反馈的业务。</p>
+<h2 id="延时队列">延时队列</h2>
+<p>我们实现一个五秒后再处理消息的延时队列。</p>
+<ol>
+<li>使用一个zset，score存放到期的时间戳。</li>
+<li>然后用一个循环，zrangebyscore查出到期的消息，进行处理，如果没有消息就sleep一小会</li>
+<li>如果有消息，用zrem先删除消息，然后再处理，确保只有一个线程处理</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">delay</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">	<span class="n">msg</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span> <span class="c1"># 保证 value 值唯一</span>
+</span></span><span class="line"><span class="cl">	<span class="n">value</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">retry_ts</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="mi">5</span> <span class="c1"># 5 秒后重试</span>
+</span></span><span class="line"><span class="cl">	<span class="n">redis</span><span class="o">.</span><span class="n">zadd</span><span class="p">(</span><span class="s2">&#34;delay-queue&#34;</span><span class="p">,</span> <span class="n">retry_ts</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">loop</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">	<span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">		<span class="c1"># 最多取 1 条</span>
+</span></span><span class="line"><span class="cl">		<span class="n">values</span> <span class="o">=</span> <span class="n">redis</span><span class="o">.</span><span class="n">zrangebyscore</span><span class="p">(</span><span class="s2">&#34;delay-queue&#34;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="ow">not</span> <span class="n">values</span><span class="p">:</span> 
+</span></span><span class="line"><span class="cl">			<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># 延时队列空的，休息 1s</span>
+</span></span><span class="line"><span class="cl">			<span class="k">continue</span>
+</span></span><span class="line"><span class="cl">		<span class="n">value</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="c1"># 拿第一条，也只有一条</span>
+</span></span><span class="line"><span class="cl">		<span class="n">success</span> <span class="o">=</span> <span class="n">redis</span><span class="o">.</span><span class="n">zrem</span><span class="p">(</span><span class="s2">&#34;delay-queue&#34;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="c1"># 从消息队列中移除该消息</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="n">success</span><span class="p">:</span> <span class="c1"># 因为有多进程并发的可能，最终只会有一个进程可以抢到消息</span>
+</span></span><span class="line"><span class="cl">			<span class="n">msg</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">			<span class="n">handle_msg</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> 
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="redis-stream">Redis Stream</h2>
+<p><a href="http://www.hellokang.net/redis/stream.html" target="_blank" rel="noopener noreffer ">Redis对消息队列（MQ，Message Queue）的完善实现</a></p>
+<h1 id="hyperloglog-做基数uv统计">hyperloglog 做基数(UV)统计</h1>
+<p>对于一些网站统计uv的场景，常见的做法用set是记录下访问过站点的uid，然后返回set的大小。<br>
+hyperloglog不存储具体的uid，只是做一个数学估计。</p>
+<p>每次进来一个数字，我们看他从低位开始全是0的位有多少个。然后取<br>
+maxbit = max(maxbit, now0bit)<br>
+我们看看一次添加后发生了什么。比如这个命令：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp"><span class="line"><span class="cl"><span class="n">PFADD</span> <span class="n">runoobkey</span> <span class="s">&#34;r&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 第一步，r的二进制为 01110010，得到最后只有1个0
+</span></span></span><span class="line"><span class="cl"><span class="c1">// now0bit=1，maxbit=max(maxbit, now0bit)=1
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>我们会发现maxbit和总共的基数N有一定的关系。多次测试后，发现N和maxbit的关系大概是：<br>
+$$N=2^{maxbit}$$<br>
+但是这里可能会有很大的误差。只要有一个数字的now0bit非常大，就会把这个估计拉的很远。所以这里要用分组平均一下。<br>
+假设我们分为1024个桶，然后对每个桶分别估计的N取调和平均值，这样误差就会比较小。当取1024个桶时，误差大概在10%以内。此时N和maxbit的关系大概是（n=1024）：<br>
+$$ N={\frac{n}{\sum_{i=1}^{n}{\frac{1}{maxbit_{i}}}}}$$<br>
+Note: redis把数字分为16384(2^14)个桶，每个桶的maxbit占用6bit，所以占用的空间大概为2^14*6/8=12KB，误差在1%以内。</p>
+<h1 id="位图和布隆过滤器">位图和布隆过滤器</h1>
+<h2 id="位图">位图</h2>
+<p>redis提供了位图操作</p>
+<ol>
+<li><code>setbit key offset value</code> 设置某个位</li>
+<li><code>getbit key offset</code> 获取某个位</li>
+<li><code>bitcount key start end</code> 获取某个区间之间的1的数量</li>
+<li><code>bitop and/or/not/xor key1 key2</code></li>
+</ol>
+<p>数据结构：这里面的存储结构实际上是一个SDS。在Redis Object里有一个char数组buf，里面存放着位信息，每个char能存8个位。在buf数组的末尾有一个<code>'\0'</code>表示位图的结尾。</p>
+<h3 id="setbitgetbit">setbit/getbit</h3>
+<p>如何实现：setbit和getbit，都只要通过模余运算得到对应的buf下标和位，就可以拿到对应的值。<br>
+我们怎么拿到第n位的值？需要一个第n位为1的掩码 <code>1&lt;&lt;(7 - n)</code></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp"><span class="line"><span class="cl"><span class="c1">// getbit
+</span></span></span><span class="line"><span class="cl"><span class="c1">// 计算出 offset 所指定的位所在的字节 = offset/8
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">byte</span> <span class="o">=</span> <span class="n">bitoffset</span> <span class="o">&gt;&gt;</span> <span class="mi">3</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 计算出位所在的位置 = offset%8, bitoffset &amp; 0x7得到后三位（offset%8）
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">bit</span> <span class="o">=</span> <span class="mi">7</span> <span class="o">-</span> <span class="p">(</span><span class="n">bitoffset</span> <span class="o">&amp;</span> <span class="mh">0x7</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="n">bitval</span> <span class="o">=</span> <span class="p">((</span><span class="kt">uint8_t</span><span class="o">*</span><span class="p">)</span><span class="n">buf</span><span class="p">)[</span><span class="n">byte</span><span class="p">]</span> <span class="o">&amp;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">bit</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 第17位为例子 getbit [key] 17
+</span></span></span><span class="line"><span class="cl"><span class="c1">// 除以8得到第几个byte，byte = 17 &gt;&gt; 3 = 2
+</span></span></span><span class="line"><span class="cl"><span class="c1">// 模8取得字节数，取后三位 17 &amp; 0111 = 01 0001 &amp; 0111 = 0001
+</span></span></span><span class="line"><span class="cl"><span class="c1">// 得到掩码 7 - 0001 = 6，1 &lt;&lt; 6 = 0100 0000
+</span></span></span><span class="line"><span class="cl"><span class="c1">// 取出第3个字节的第二位 buf[2] &amp; 0100 0000
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>setbit稍微麻烦一些。在设置位的基础上还要考虑到SDS扩容的情况，如果setbit的offset超过了最大值，那么需要进行扩容并把扩好的空间初始化位0。</p>
+<h3 id="bitcount">bitcount</h3>
+<p>计算二进制中1的个数，有几种方法：</p>
+<ol>
+<li>查表。预处理好0000 0001 ~ 1111 1111 和其中1的个数的映射，比如0000 0001(1)，后面来了直接查表。我们最高可以建16位的表，仅需百KB左右的内存</li>
+<li>variable-precision swar算法。</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp"><span class="line"><span class="cl"><span class="n">i</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">&amp;</span> <span class="mh">0x55555555</span><span class="p">)</span> <span class="o">+</span> <span class="p">((</span><span class="n">i</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x55555555</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="n">i</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">&amp;</span> <span class="mh">0x33333333</span><span class="p">)</span> <span class="o">+</span> <span class="p">((</span><span class="n">i</span> <span class="o">&gt;&gt;</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x33333333</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="n">i</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">&amp;</span> <span class="mh">0x0F0F0F0F</span><span class="p">)</span> <span class="o">+</span> <span class="p">((</span><span class="n">i</span> <span class="o">&gt;&gt;</span> <span class="mi">4</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x0F0F0F0F</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="n">i</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="p">(</span><span class="mh">0x01010101</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">24</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="k">return</span> <span class="n">i</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Redis中，不足128位的bitmap会查表，有一个8位的表查16次；超过8位的，每次载入128位，然后调用四次SWAR算法计算汉明重量。</p>
+<h2 id="布隆过滤器">布隆过滤器</h2>
+<p>布隆过滤器，是用来判断元素在不在set里的一种方法。上面的hyperloglog只能支持count操作，但是不支持contains操作。要大概地判断元素是否出现过就可以用布隆过滤器，他会用很多个哈希函数对元素进行哈希，把对应的位都设置；查找时也同样哈希，并查看对应的位是否被设置。布隆过滤器有一定的概率会把不存在的元素判定为存在（取决于要求的占用空间，），但是存在的元素一定不会判断错。</p>
+<ol>
+<li>bf.add</li>
+<li>bf.exists</li>
+</ol>
+<h1 id="限流">限流</h1>
+<h2 id="简单限流">简单限流</h2>
+<p>每一个行为到来时，都维护一次时间窗口。将时间窗口外的记录全部清理掉，只保留窗口内的记录。zset 集合中只有 score 值非常重要，value 值没有特别的意义，只需要保证它是唯一的就可以了（也可以用uuid，这里用了毫秒）。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="c1"># 业务代码 调用这个接口 , 一分钟内只允许最多回复 5 个帖子</span>
+</span></span><span class="line"><span class="cl"><span class="n">can_reply</span> <span class="o">=</span> <span class="n">is_action_allowed</span><span class="p">(</span><span class="s2">&#34;laoqian&#34;</span><span class="p">,</span> <span class="s2">&#34;reply&#34;</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="n">can_reply</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">	<span class="n">do_reply</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">is_action_allowed</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">action_key</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">max_count</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">	<span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;hist:</span><span class="si">%s</span><span class="s1">:</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">action_key</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">now_ts</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span> <span class="c1"># 毫秒时间戳</span>
+</span></span><span class="line"><span class="cl">	<span class="k">with</span> <span class="n">client</span><span class="o">.</span><span class="n">pipeline</span><span class="p">()</span> <span class="k">as</span> <span class="n">pipe</span><span class="p">:</span> <span class="c1"># client 是 StrictRedis 实例</span>
+</span></span><span class="line"><span class="cl">		<span class="c1"># 记录行为</span>
+</span></span><span class="line"><span class="cl">		<span class="n">pipe</span><span class="o">.</span><span class="n">zadd</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">now_ts</span><span class="p">,</span> <span class="n">now_ts</span><span class="p">)</span> <span class="c1"># value 和 score 都使用毫秒时间戳</span>
+</span></span><span class="line"><span class="cl">		<span class="c1"># 移除时间窗口之前的行为记录，剩下的都是时间窗口内的</span>
+</span></span><span class="line"><span class="cl">		<span class="n">pipe</span><span class="o">.</span><span class="n">zremrangebyscore</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">now_ts</span> <span class="o">-</span> <span class="n">period</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="c1"># 获取窗口内的行为数量</span>
+</span></span><span class="line"><span class="cl">		<span class="n">pipe</span><span class="o">.</span><span class="n">zcard</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="c1"># 设置 zset 过期时间，避免冷用户持续占用内存</span>
+</span></span><span class="line"><span class="cl">		<span class="c1"># 过期时间应该等于时间窗口的长度，再多宽限 1s</span>
+</span></span><span class="line"><span class="cl">		<span class="n">pipe</span><span class="o">.</span><span class="n">expire</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">period</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="c1"># 批量执行</span>
+</span></span><span class="line"><span class="cl">	<span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">current_count</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="c1"># 比较数量是否超标</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="n">current_count</span> <span class="o">&lt;=</span> <span class="n">max_count</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="漏桶限流-redis-cell">漏桶限流 Redis-Cell</h2>
+<p>Redis4.0之后提供了更好用的限流组件。<br>
+<code>CL.THROTTLE reply 15 30 60 1</code><br>
+<code>CL.THROTTLE key 初始容量 次数 秒数 每次加几个资格</code><br>
+这条命令限定了回复行为的频率为每 60s 最多 30 次(漏水速率)，漏斗的初始容量为 15，也就是说一开始可以连续回复 15 个帖子，然后才开始受漏水速率的影响。返回值也很有用：<br>
+参数1： 0 表示允许，1 表示拒绝<br>
+参数2： 漏斗容量 capacity<br>
+参数3： 漏斗剩余空间 left_quota<br>
+参数4： 如果拒绝了，需要多长时间后再试(漏斗有空间了，单位秒)<br>
+参数5： 多长时间后，漏斗完全空出来(left_quota==capacity，单位秒)</p>
+<p>我们来看漏桶的一个python实现。每个漏桶</p>
+<ol>
+<li>会存一个上一次漏水时间；</li>
+<li>每次有请求过来就得到<code>新增资格数=(计算当前时间-上次漏水时间)*每秒加入资格数</code>，加到剩余空间上，但要保证剩余空间不大于capacity</li>
+<li>剩余空间减掉请求的空间，并更新上次漏水时间</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">time</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">Funnel</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">capacity</span><span class="p">,</span> <span class="n">leaking_rate</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">		<span class="bp">self</span><span class="o">.</span><span class="n">capacity</span> <span class="o">=</span> <span class="n">capacity</span> <span class="c1"># 漏斗容量</span>
+</span></span><span class="line"><span class="cl">		<span class="bp">self</span><span class="o">.</span><span class="n">leaking_rate</span> <span class="o">=</span> <span class="n">leaking_rate</span> <span class="c1"># 漏嘴流水速率</span>
+</span></span><span class="line"><span class="cl">		<span class="bp">self</span><span class="o">.</span><span class="n">left_quota</span> <span class="o">=</span> <span class="n">capacity</span> <span class="c1"># 漏斗剩余空间</span>
+</span></span><span class="line"><span class="cl">		<span class="bp">self</span><span class="o">.</span><span class="n">leaking_ts</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="c1"># 上一次漏水时间</span>
+</span></span><span class="line"><span class="cl">	<span class="k">def</span> <span class="nf">make_space</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">		<span class="n">now_ts</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">		<span class="n">delta_ts</span> <span class="o">=</span> <span class="n">now_ts</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">leaking_ts</span> <span class="c1"># 距离上一次漏水过去了多久</span>
+</span></span><span class="line"><span class="cl">		<span class="n">delta_quota</span> <span class="o">=</span> <span class="n">delta_ts</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">leaking_rate</span> <span class="c1"># 又可以腾出不少空间了</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="n">delta_quota</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span> <span class="c1"># 腾的空间太少，那就等下次吧</span>
+</span></span><span class="line"><span class="cl">			<span class="k">return</span>
+</span></span><span class="line"><span class="cl">		<span class="bp">self</span><span class="o">.</span><span class="n">left_quota</span> <span class="o">+=</span> <span class="n">delta_quota</span> <span class="c1"># 增加剩余空间</span>
+</span></span><span class="line"><span class="cl">		<span class="bp">self</span><span class="o">.</span><span class="n">leaking_ts</span> <span class="o">=</span> <span class="n">now_ts</span> <span class="c1"># 记录漏水时间</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">left_quota</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">capacity</span><span class="p">:</span> <span class="c1"># 剩余空间不得高于容量</span>
+</span></span><span class="line"><span class="cl">			<span class="bp">self</span><span class="o">.</span><span class="n">left_quota</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">capacity</span>
+</span></span><span class="line"><span class="cl">	<span class="k">def</span> <span class="nf">watering</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quota</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">		<span class="bp">self</span><span class="o">.</span><span class="n">make_space</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">left_quota</span> <span class="o">&gt;=</span> <span class="n">quota</span><span class="p">:</span> <span class="c1"># 判断剩余空间是否足够</span>
+</span></span><span class="line"><span class="cl">			<span class="bp">self</span><span class="o">.</span><span class="n">left_quota</span> <span class="o">-=</span> <span class="n">quota</span>
+</span></span><span class="line"><span class="cl">			<span class="k">return</span> <span class="kc">True</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="kc">False</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">funnels</span> <span class="o">=</span> <span class="p">{}</span> <span class="c1"># 所有的漏斗</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># capacity 漏斗容量</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># leaking_rate 漏嘴流水速率 quota/s</span>
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">is_action_allowed</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">action_key</span><span class="p">,</span> <span class="n">capacity</span><span class="p">,</span> <span class="n">leaking_rate</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">	<span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">:</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">action_key</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">funnel</span> <span class="o">=</span> <span class="n">funnels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="ow">not</span> <span class="n">funnel</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">		<span class="n">funnel</span> <span class="o">=</span> <span class="n">Funnel</span><span class="p">(</span><span class="n">capacity</span><span class="p">,</span> <span class="n">leaking_rate</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="n">funnels</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">funnel</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="n">funnel</span><span class="o">.</span><span class="n">watering</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">	<span class="nb">print</span> <span class="n">is_action_allowed</span><span class="p">(</span><span class="s1">&#39;laoqian&#39;</span><span class="p">,</span> <span class="s1">&#39;reply&#39;</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h1 id="geohash-附近的人">GeoHash 附近的人</h1>
+<p>业务中经常有判断两个地址是否靠近，寻找某个地址周边的餐厅或超市，类似这样的需求。请求量不大时，我们可以用mysql解决，用一个半径圈出范围：<br>
+<code>select id from positions where x0-r &lt; x &lt; x0+r and y0-r &lt; y &lt; y0+r</code><br>
+请求量比较大时，我们就要借助redis 3.2以后的GeoHash的指令：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">// 添加地址
+</span></span><span class="line"><span class="cl">geoadd company 116.48105 39.996794 juejin
+</span></span><span class="line"><span class="cl">geoadd company 116.489033 40.007669 meituan
+</span></span><span class="line"><span class="cl">// 列出地址
+</span></span><span class="line"><span class="cl">geodist company juejin meituan km
+</span></span><span class="line"><span class="cl">// 列出某个地址周围20km的最近三个地址
+</span></span><span class="line"><span class="cl">georadiusbymember company juejin 20 km count 3 asc
+</span></span><span class="line"><span class="cl">// 列出某个经纬度附近的三个地址
+</span></span><span class="line"><span class="cl">georadius company 116.514202 39.905409 20 km withdist count 3 asc
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>实际上，GeoHash内部是一个zset，score是经纬度映射到一维后的一个数字。平面上靠的越近，zset中score值也会越接近。那么要怎么做这种映射呢？数学上有很多二位空间到一维空间的映射，参见<br>
+<a href="https://halfrost.com/go_spatial_search/" target="_blank" rel="noopener noreffer ">https://halfrost.com/go_spatial_search/</a><br>
+<a href="https://www.jianshu.com/p/2fd0cf12e5ba" target="_blank" rel="noopener noreffer ">https://www.jianshu.com/p/2fd0cf12e5ba</a></p>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2020-09-24</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/redis_1/index.md" target="_blank">Read Markdown</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="http://chestnutheng.github.io/redis_1/" data-title="[Redis]Redis 应用篇" data-hashtags="Redis,中间件,后台"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="http://chestnutheng.github.io/redis_1/" data-hashtag="Redis"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Hacker News" data-sharer="hackernews" data-url="http://chestnutheng.github.io/redis_1/" data-title="[Redis]Redis 应用篇"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="http://chestnutheng.github.io/redis_1/" data-title="[Redis]Redis 应用篇"><i data-svg-src="/lib/simple-icons/icons/line.min.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="http://chestnutheng.github.io/redis_1/" data-title="[Redis]Redis 应用篇" data-ralateuid="2461859532"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw" aria-hidden="true"></i>&nbsp;<a href="/tags/redis/">Redis</a>,&nbsp;<a href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/">中间件</a>,&nbsp;<a href="/tags/%E5%90%8E%E5%8F%B0/">后台</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/cpp_11_4/" class="prev" rel="prev" title="[C&#43;&#43;]C&#43;&#43; 11/14 笔记（四）"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>[C++]C++ 11/14 笔记（四）</a>
+            <a href="/go/" class="next" rel="next" title="[Go]Go语言的设计和坑">[Go]Go语言的设计和坑<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
+</div>
+<div id="comments"><div id="giscus" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://giscus.app">Giscus</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.118.2">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2015 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="about" target="_blank">子恒</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/lightgallery/css/lightgallery-bundle.min.css"><link rel="stylesheet" href="/lib/katex/katex.min.css"><script type="text/javascript" src="/lib/autocomplete/autocomplete.min.js"></script><script type="text/javascript" src="/lib/lunr/lunr.min.js"></script><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/lightgallery/lightgallery.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/thumbnail/lg-thumbnail.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/zoom/lg-zoom.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript" src="/lib/sharer/sharer.min.js"></script><script type="text/javascript" src="/lib/katex/katex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/auto-render.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/copy-tex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{"giscus":{"category":"Announcements","categoryId":"DIC_kwDOA9ikP84CQT5Y","darkTheme":"dark","emitMetadata":"0","inputPosition":"bottom","lang":"en","lazyLoading":true,"lightTheme":"light","mapping":"pathname","reactionsEnabled":"1","repo":"chestnutheng/chestnutheng.github.io","repoId":"MDEwOlJlcG9zaXRvcnk2NDUyOTQ3MQ=="}},"lightgallery":true,"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":true,"left":"\\begin{equation}","right":"\\end{equation}"},{"display":true,"left":"\\begin{equation*}","right":"\\end{equation*}"},{"display":true,"left":"\\begin{align}","right":"\\end{align}"},{"display":true,"left":"\\begin{align*}","right":"\\end{align*}"},{"display":true,"left":"\\begin{alignat}","right":"\\end{alignat}"},{"display":true,"left":"\\begin{alignat*}","right":"\\end{alignat*}"},{"display":true,"left":"\\begin{gather}","right":"\\end{gather}"},{"display":true,"left":"\\begin{CD}","right":"\\end{CD}"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"highlightTag":"em","lunrIndexURL":"/index.json","maxResultLength":10,"noResultsFound":"No results found","snippetLength":50,"type":"lunr"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

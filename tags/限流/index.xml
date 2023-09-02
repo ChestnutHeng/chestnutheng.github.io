@@ -1,0 +1,26 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>限流 - Tag - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/tags/%E9%99%90%E6%B5%81/</link>
+        <description>限流 - Tag - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Mon, 27 Jul 2020 17:28:37 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/tags/%E9%99%90%E6%B5%81/" rel="self" type="application/rss+xml" /><item>
+    <title>[后台]负载均衡 （三）限流篇</title>
+    <link>http://chestnutheng.github.io/load_balance3/</link>
+    <pubDate>Mon, 27 Jul 2020 17:28:37 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/load_balance3/</guid>
+    <description><![CDATA[限流 限流能力是高并发系统中，对于服务提供方的一种保护手段。通过限流功能，我们可以通过控制QPS的方式，以避免被瞬时的流量高峰冲垮，从而保障系统的高可用性。
+考虑的问题 完成一个限流系统， 我们可以结合场景的需要做下面的考虑
+多规则匹配：是否会存在有多重规则的限流？比如有的规则限制每天1000次，有的规则限制每分钟1次？是同时生效还是优先生效某个？ 资源类型：能限流什么？QPS，连接数，并发数 全局限流/单机限流：多个服务的实例共享一个全局的流量限额，比如所有机器共享1000QPS。或者单个实例的限流，比如被调限定每台机器不超过1000QPS 限流阈值：单位时间内的最大配额数。是按照每秒种一次，还是按照每分钟60次？ 限流处理：客户端如何处理超出限额的请求？超额后直接拒绝，还是超额后进行排队？ 抽象出一个方案
+接口级别限流：每个接口分配一个appid和key，各自计算各自的配额
+多维度限流：支持每秒N次、每分钟N次、每天N次等维度
+匀速防刷：假设配置了每分钟60次，依然可能出现第一秒访问了60次用光了配额。匀速防刷可以匀速消耗配额，解决这个问题
+多级限流：支持不同的限流规则，并有采用的优先级，采用优先级最高的方案进行限流
+限流算法 固定窗口 固定窗口是在一段时间内可以限制访问次数的方法。
+将时间划分为多个窗口 在每个窗口内每有一次请求就将计数器加一 如果计数器超过了限制数量,则本窗口内所有的请求都被丢弃。当时间到达下一个窗口时,计数器重置 这样有一定的限流效果，但是限制住的流量可能是有毛刺的。比如1000次/分钟，可能00:59的时候有1000流量，01:00的时候也有1000流量，这样这两秒内就有2000流量！
+具体实现：用一个变量C标记访问次数，一个事件定时过期，并在过期时把变量C清零：
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 type FixedWindowCounter struct { TimeSlice time.Duration NowCount int32 AllowCount int32 } func (p *FixedWindowCounter) Take() bool { once.Do(func() { go func() { for { select { case &lt;-time.]]></description>
+</item>
+</channel>
+</rss>

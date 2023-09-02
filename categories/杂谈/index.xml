@@ -1,0 +1,20 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>杂谈 - Category - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/categories/%E6%9D%82%E8%B0%88/</link>
+        <description>杂谈 - Category - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Wed, 10 Aug 2022 16:57:25 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/categories/%E6%9D%82%E8%B0%88/" rel="self" type="application/rss+xml" /><item>
+    <title>[杂谈]我怎么选择笔记软件</title>
+    <link>http://chestnutheng.github.io/notes/</link>
+    <pubDate>Wed, 10 Aug 2022 16:57:25 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/notes/</guid>
+    <description><![CDATA[折腾了这么久笔记软件，终于有了一个最终的方案，给大家分享下
+用过的软件对比 软件 优点 缺点 用途 印象笔记 云/多端 丑，难用，残疾md 手机查看 OneNote 多目录/手写 同步难，没有md 读书、网课笔记 Typora 好看/导出 没有云、收费 离线编辑 马克飞象 比较好看 没有云、收费 离线编辑 Obsdian 比较好看 没有云、不能导出 离线编辑 CmdMarkdown 有云 难看 备份，网页版查看 StackEdit 简单 太卡了 没用 MarginNote 知识图谱 无win 读pdf书 备忘录 多端同步、轻量 格式难用 速记 Notion 多端同步、复杂 md不好用，手写不支持 替代onenote 诉求 支持markdown，且美观 支持Latex，脚注 支持云存储，移动端同步 支持mac/windows/ios/网页版 支持3级目录，支持搜索 支持手写插入 支持网页剪裁 支持离线编辑 可以导出pdf，html 支持代码块，代码块染色，行号 支持大纲 工作流 没有一个通用的工作流，所以我需要根据不同的场景来决定采用哪些软件。
+速记 （todo list，check list）
+备忘录
+写博客 Obsdian -&gt; github -&gt; hugo]]></description>
+</item>
+</channel>
+</rss>

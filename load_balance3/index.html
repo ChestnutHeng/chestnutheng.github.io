@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>[后台]负载均衡 （三）限流篇 - 子恒的博客</title><meta name="Description" content="负载均衡是集群中一个重要的组成部分。这个模块一般集成了名字服务、负载均衡、过载保护、限流等功能。第二部分是针对限流算法和实现的介绍。"><meta property="og:title" content="[后台]负载均衡 （三）限流篇" />
+<meta property="og:description" content="负载均衡是集群中一个重要的组成部分。这个模块一般集成了名字服务、负载均衡、过载保护、限流等功能。第二部分是针对限流算法和实现的介绍。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://chestnutheng.github.io/load_balance3/" /><meta property="og:image" content="http://chestnutheng.github.io/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2020-07-27T17:28:37+08:00" />
+<meta property="article:modified_time" content="2020-07-27T17:28:37+08:00" /><meta property="og:site_name" content="子恒的博客" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="http://chestnutheng.github.io/logo.png"/>
+
+<meta name="twitter:title" content="[后台]负载均衡 （三）限流篇"/>
+<meta name="twitter:description" content="负载均衡是集群中一个重要的组成部分。这个模块一般集成了名字服务、负载均衡、过载保护、限流等功能。第二部分是针对限流算法和实现的介绍。"/>
+<meta name="application-name" content="我的网站">
+<meta name="apple-mobile-web-app-title" content="我的网站"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://chestnutheng.github.io/load_balance3/" /><link rel="prev" href="http://chestnutheng.github.io/load_balance2/" /><link rel="next" href="http://chestnutheng.github.io/cpp_11_4/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[后台]负载均衡 （三）限流篇",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/chestnutheng.github.io\/load_balance3\/"
+        },"genre": "posts","keywords": "负载均衡, 限流","wordcount":  621 ,
+        "url": "http:\/\/chestnutheng.github.io\/load_balance3\/","datePublished": "2020-07-27T17:28:37+08:00","dateModified": "2020-07-27T17:28:37+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "子恒"
+            },"description": "负载均衡是集群中一个重要的组成部分。这个模块一般集成了名字服务、负载均衡、过载保护、限流等功能。第二部分是针对限流算法和实现的介绍。"
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="子恒的博客">子恒的博客</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/"> 主页 </a><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/freinds/"> 友链 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="子恒的博客">子恒的博客</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        Cancel
+                    </a>
+                </div><a class="menu-item" href="/" title="">主页</a><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/freinds/" title="">友链</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><div class="search-dropdown desktop">
+        <div id="search-dropdown-desktop"></div>
+    </div>
+    <div class="search-dropdown mobile">
+        <div id="search-dropdown-mobile"></div>
+    </div><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">[后台]负载均衡 （三）限流篇</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="about" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>子恒</a></span>&nbsp;<span class="post-category">included in <a href="/categories/%E5%90%8E%E5%8F%B0/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>后台</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2020-07-27">2020-07-27</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;621 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;3 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#限流">限流</a></li>
+    <li><a href="#考虑的问题">考虑的问题</a></li>
+    <li><a href="#限流算法">限流算法</a>
+      <ul>
+        <li><a href="#固定窗口">固定窗口</a></li>
+        <li><a href="#滑动窗口">滑动窗口</a></li>
+        <li><a href="#漏桶">漏桶</a></li>
+        <li><a href="#令牌桶">令牌桶</a></li>
+        <li><a href="#预热桶">预热桶</a></li>
+        <li><a href="#redis实现的简单限流模型">redis实现的简单限流模型</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="限流">限流</h1>
+<p>限流能力是高并发系统中，对于服务提供方的一种保护手段。通过限流功能，我们可以通过控制QPS的方式，以避免被瞬时的流量高峰冲垮，从而保障系统的高可用性。</p>
+<h1 id="考虑的问题">考虑的问题</h1>
+<p>完成一个限流系统， 我们可以结合场景的需要做下面的考虑</p>
+<ol>
+<li>多规则匹配：是否会存在有多重规则的限流？比如有的规则限制每天1000次，有的规则限制每分钟1次？是同时生效还是优先生效某个？</li>
+<li>资源类型：能限流什么？QPS，连接数，并发数</li>
+<li>全局限流/单机限流：多个服务的实例共享一个全局的流量限额，比如所有机器共享1000QPS。或者单个实例的限流，比如被调限定每台机器不超过1000QPS</li>
+<li>限流阈值：单位时间内的最大配额数。是按照每秒种一次，还是按照每分钟60次？</li>
+<li>限流处理：客户端如何处理超出限额的请求？超额后直接拒绝，还是超额后进行排队？</li>
+</ol>
+<p>抽象出一个方案<br>
+接口级别限流：每个接口分配一个appid和key，各自计算各自的配额<br>
+多维度限流：支持每秒N次、每分钟N次、每天N次等维度<br>
+匀速防刷：假设配置了每分钟60次，依然可能出现第一秒访问了60次用光了配额。匀速防刷可以匀速消耗配额，解决这个问题<br>
+多级限流：支持不同的限流规则，并有采用的优先级，采用优先级最高的方案进行限流</p>
+<h1 id="限流算法">限流算法</h1>
+<h2 id="固定窗口">固定窗口</h2>
+<p>固定窗口是在一段时间内可以限制访问次数的方法。</p>
+<ul>
+<li>将时间划分为多个窗口</li>
+<li>在每个窗口内每有一次请求就将计数器加一</li>
+<li>如果计数器超过了限制数量,则本窗口内所有的请求都被丢弃。当时间到达下一个窗口时,计数器重置</li>
+</ul>
+<p>这样有一定的限流效果，但是限制住的流量可能是有毛刺的。比如1000次/分钟，可能<code>00:59</code>的时候有1000流量，<code>01:00</code>的时候也有1000流量，这样这两秒内就有2000流量！<br>
+具体实现：用一个变量C标记访问次数，一个事件定时过期，并在过期时把变量C清零：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span> <span class="nx">FixedWindowCounter</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">TimeSlice</span>  <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">NowCount</span>   <span class="kt">int32</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">AllowCount</span> <span class="kt">int32</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="o">*</span><span class="nx">FixedWindowCounter</span><span class="p">)</span> <span class="nf">Take</span><span class="p">()</span> <span class="kt">bool</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">once</span><span class="p">.</span><span class="nf">Do</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="k">for</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">				<span class="k">select</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">				<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">time</span><span class="p">.</span><span class="nf">After</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">TimeSlice</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">					<span class="nx">atomic</span><span class="p">.</span><span class="nf">StoreInt32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">p</span><span class="p">.</span><span class="nx">NowCount</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">				<span class="p">}</span>
+</span></span><span class="line"><span class="cl">			<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}()</span>
+</span></span><span class="line"><span class="cl">	<span class="p">})</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nx">nowCount</span> <span class="o">:=</span> <span class="nx">atomic</span><span class="p">.</span><span class="nf">LoadInt32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">p</span><span class="p">.</span><span class="nx">NowCount</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">nowCount</span> <span class="o">&gt;=</span> <span class="nx">p</span><span class="p">.</span><span class="nx">AllowCount</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="kc">false</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">!</span><span class="nx">atomic</span><span class="p">.</span><span class="nf">CompareAndSwapInt32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">p</span><span class="p">.</span><span class="nx">NowCount</span><span class="p">,</span> <span class="nx">nowCount</span><span class="p">,</span> <span class="nx">nowCount</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="kc">false</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="kc">true</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="滑动窗口">滑动窗口</h2>
+<p>滑动窗口把一个固定窗口划分为多个小区间，以固定的窗口大小在区间上滑动，在一定程度上缓解了固定窗口的毛刺问题（我们假设某一区间qps非常高）。当然性能损耗也比较大。</p>
+<ul>
+<li>将时间划分为多个区间</li>
+<li>在每个区间内每有一次请求就将当前区间的计数器加一</li>
+<li>每经过一个区间的时间,则抛弃窗口中最老的一个区间,并纳入最新的一个区间；</li>
+<li>如果当前窗口内区间的请求计数总和超过了限制数量,则本窗口内所有的请求都被丢弃</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span> <span class="nx">SlideWindowCounter</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">lastWindowCount</span> <span class="kt">int32</span>         <span class="c1">// 当前区间请求计数
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">window</span>          <span class="kd">chan</span> <span class="kt">int32</span>    <span class="c1">// 滑动窗口
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">windowSlice</span>     <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span> <span class="c1">// 单区间大小
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">nowCount</span>        <span class="kt">int32</span>         <span class="c1">// 滑动窗口请求计数
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">AllowCount</span>      <span class="kt">int32</span>         <span class="c1">// 滑动窗口内允许的请求数
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">NewSlideWindowCounter</span><span class="p">(</span><span class="nx">timeSlice</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">windowLen</span> <span class="kt">int32</span><span class="p">,</span> <span class="nx">AllowCount</span> <span class="kt">int32</span><span class="p">)</span> <span class="o">*</span><span class="nx">SlideWindowCounter</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">obj</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">SlideWindowCounter</span><span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">window</span><span class="p">:</span>      <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kt">int32</span><span class="p">,</span> <span class="nx">windowLen</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">windowSlice</span><span class="p">:</span> <span class="nx">timeSlice</span> <span class="o">/</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="nx">windowLen</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">AllowCount</span><span class="p">:</span>  <span class="nx">AllowCount</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">go</span> <span class="nx">obj</span><span class="p">.</span><span class="nf">sliding</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">obj</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">l</span> <span class="o">*</span><span class="nx">SlideWindowCounter</span><span class="p">)</span> <span class="nf">Take</span><span class="p">()</span> <span class="kt">bool</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">nowCount</span> <span class="o">:=</span> <span class="nx">atomic</span><span class="p">.</span><span class="nf">LoadInt32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">l</span><span class="p">.</span><span class="nx">nowCount</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">nowCount</span> <span class="o">&gt;=</span> <span class="nx">l</span><span class="p">.</span><span class="nx">AllowCount</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="kc">false</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">!</span><span class="nx">atomic</span><span class="p">.</span><span class="nf">CompareAndSwapInt32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">l</span><span class="p">.</span><span class="nx">nowCount</span><span class="p">,</span> <span class="nx">nowCount</span><span class="p">,</span> <span class="nx">nowCount</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="kc">false</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// 当前区间的请求数
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">atomic</span><span class="p">.</span><span class="nf">AddInt32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">l</span><span class="p">.</span><span class="nx">lastWindowCount</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="kc">true</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">l</span> <span class="o">*</span><span class="nx">SlideWindowCounter</span><span class="p">)</span> <span class="nf">sliding</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// 窗口没满的时候
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">notFull</span> <span class="o">:=</span> <span class="kc">true</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="nx">notFull</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">select</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">time</span><span class="p">.</span><span class="nf">After</span><span class="p">(</span><span class="nx">l</span><span class="p">.</span><span class="nx">windowSlice</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">			<span class="c1">// 经过了一个区间的时间，把这个区间的请求数放入窗口，并开始新的区间
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="c1">// 等于 l.window &lt;- l.lastWindowCount; l.lastWindowCount = 0
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="nx">t</span> <span class="o">:=</span> <span class="nx">atomic</span><span class="p">.</span><span class="nf">SwapInt32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">l</span><span class="p">.</span><span class="nx">lastWindowCount</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">l</span><span class="p">.</span><span class="nx">window</span> <span class="o">&lt;-</span> <span class="nx">t</span>
+</span></span><span class="line"><span class="cl">			<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">l</span><span class="p">.</span><span class="nx">window</span><span class="p">)</span> <span class="o">==</span> <span class="nb">cap</span><span class="p">(</span><span class="nx">l</span><span class="p">.</span><span class="nx">window</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">				<span class="nx">notFull</span> <span class="p">=</span> <span class="kc">false</span>
+</span></span><span class="line"><span class="cl">			<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// 窗口满了，开始滑动，每经过一个区间的时间,则抛弃最老的一个区间,并纳入最新的一个区间
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">for</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">select</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">time</span><span class="p">.</span><span class="nf">After</span><span class="p">(</span><span class="nx">l</span><span class="p">.</span><span class="nx">windowSlice</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">t</span> <span class="o">:=</span> <span class="o">&lt;-</span><span class="nx">l</span><span class="p">.</span><span class="nx">window</span>
+</span></span><span class="line"><span class="cl">			<span class="k">if</span> <span class="nx">t</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">				<span class="nx">atomic</span><span class="p">.</span><span class="nf">AddInt32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">l</span><span class="p">.</span><span class="nx">nowCount</span><span class="p">,</span> <span class="o">-</span><span class="nx">t</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">			<span class="p">}</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">newt</span> <span class="o">:=</span> <span class="nx">atomic</span><span class="p">.</span><span class="nf">SwapInt32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">l</span><span class="p">.</span><span class="nx">lastWindowCount</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">l</span><span class="p">.</span><span class="nx">window</span> <span class="o">&lt;-</span> <span class="nx">newt</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="漏桶">漏桶</h2>
+<p>漏桶的思想其实大家都非常熟悉，就是一个用来缓冲的队列。不过，出队的速度是均匀的，比如每秒只出队一百个，就会有一百个请求发出去。入队的速度没有限制，但是如果队列满了，请求就会被抛弃。<br>
+漏洞算法其实是一种流量整形算法，</p>
+<ol>
+<li>优点：简单、高效，能恰当拦截容量外的暴力流量。</li>
+<li>缺点：无法对流量做频率处理。比如:桶设置的过大（比如每秒一百个），桶容量又不可以设置的过小，否则容易卡死正常用户</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span> <span class="nx">LeakyBucket</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">TimeSlice</span>  <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">AllowCount</span> <span class="kt">int32</span>       <span class="c1">// 上面的时间段内匀速漏出多少请求
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">Bucket</span>     <span class="kd">chan</span> <span class="kd">func</span><span class="p">()</span> <span class="c1">// 桶
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">NewLeakyBucket</span><span class="p">(</span><span class="nx">timeSlice</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span><span class="p">,</span> <span class="nx">bucketSize</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">allowCount</span> <span class="kt">int32</span><span class="p">)</span> <span class="o">*</span><span class="nx">LeakyBucket</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">obj</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">LeakyBucket</span><span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">TimeSlice</span><span class="p">:</span>  <span class="nx">timeSlice</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">Bucket</span><span class="p">:</span>     <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kd">func</span><span class="p">(),</span> <span class="nx">bucketSize</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">AllowCount</span><span class="p">:</span> <span class="nx">allowCount</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="c1">// 定时漏出去一个请求
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="k">for</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="k">select</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">time</span><span class="p">.</span><span class="nf">After</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="nx">obj</span><span class="p">.</span><span class="nx">TimeSlice</span><span class="p">.</span><span class="nf">Nanoseconds</span><span class="p">()</span> <span class="o">/</span> <span class="nb">int64</span><span class="p">(</span><span class="nx">obj</span><span class="p">.</span><span class="nx">AllowCount</span><span class="p">))):</span>
+</span></span><span class="line"><span class="cl">				<span class="nx">task</span> <span class="o">:=</span> <span class="o">&lt;-</span><span class="nx">obj</span><span class="p">.</span><span class="nx">Bucket</span>
+</span></span><span class="line"><span class="cl">				<span class="nf">task</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">			<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}()</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">obj</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <span class="o">*</span><span class="nx">LeakyBucket</span><span class="p">)</span> <span class="nf">Take</span><span class="p">(</span><span class="nx">task</span> <span class="kd">func</span><span class="p">())</span> <span class="kt">bool</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">select</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">case</span> <span class="nx">t</span><span class="p">.</span><span class="nx">Bucket</span> <span class="o">&lt;-</span> <span class="nx">task</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="kc">true</span>
+</span></span><span class="line"><span class="cl">	<span class="k">default</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="kc">false</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="令牌桶">令牌桶</h2>
+<p>令牌桶的思想是在一个桶中按一定速度加入资格，接受流量的时候消耗资格，没有资格则拒绝请求</p>
+<ol>
+<li>每秒会有 r 个令牌放入桶中，或者说，每过 1/r 秒桶中增加一个令牌；</li>
+<li>桶中最多存放 b 个令牌，如果桶满了，新放入的令牌会被丢弃；</li>
+<li>当一个 n 字节的数据包到达时，消耗 n 个令牌，然后发送该数据包；</li>
+<li>如果桶中可用令牌小于 n，则该数据包将被缓存或丢弃。<br>
+优缺点:</li>
+<li>令牌桶的一个好处是可以方便的改变速度。 一旦需要提高速率，则按需提高放入桶中的令牌的速率。</li>
+<li>可以限制总请求大小，还限制平均频率大小；能允许某种程度的突发传输</li>
+<li>还是容易导致误判等问题</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span> <span class="nx">TokenBucket</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">TimeSlice</span>  <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">AllowCount</span> <span class="kt">int32</span>         <span class="c1">// 上面的时间段内生成多少个令牌
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">Bucket</span>     <span class="kd">chan</span> <span class="kd">struct</span><span class="p">{}</span> <span class="c1">// 桶
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">NewTokenBucket</span><span class="p">(</span><span class="nx">timeSlice</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span><span class="p">,</span> <span class="nx">bucketSize</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">allowCount</span> <span class="kt">int32</span><span class="p">)</span> <span class="o">*</span><span class="nx">TokenBucket</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">obj</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">TokenBucket</span><span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">TimeSlice</span><span class="p">:</span>  <span class="nx">timeSlice</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">Bucket</span><span class="p">:</span>     <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{},</span> <span class="nx">bucketSize</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">AllowCount</span><span class="p">:</span> <span class="nx">allowCount</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="c1">// 定时漏出去一个令牌
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="k">for</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="k">select</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">time</span><span class="p">.</span><span class="nf">After</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="nx">obj</span><span class="p">.</span><span class="nx">TimeSlice</span><span class="p">.</span><span class="nf">Nanoseconds</span><span class="p">()</span> <span class="o">/</span> <span class="nb">int64</span><span class="p">(</span><span class="nx">obj</span><span class="p">.</span><span class="nx">AllowCount</span><span class="p">))):</span>
+</span></span><span class="line"><span class="cl">				<span class="nx">obj</span><span class="p">.</span><span class="nx">Bucket</span> <span class="o">&lt;-</span> <span class="kd">struct</span><span class="p">{}{}</span>
+</span></span><span class="line"><span class="cl">			<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}()</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">obj</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <span class="o">*</span><span class="nx">TokenBucket</span><span class="p">)</span> <span class="nf">Take</span><span class="p">()</span> <span class="kt">bool</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">select</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">t</span><span class="p">.</span><span class="nx">Bucket</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="kc">true</span>
+</span></span><span class="line"><span class="cl">	<span class="k">default</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="kc">false</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="预热桶">预热桶</h2>
+<p>在机器刚刚启动时，可能缓存尚未建立，或者正在初始化，直接打入大量请求可能会导致系统崩溃。所以我们需要一个预热的过程，在请求较少时，缓慢放开请求的量级；在请求正常后恢复正常量级。这里就要用到预热桶。</p>
+<p>预热桶其实就是令牌桶的升级版，主要区别在于：我们假设系统的阈值QPS为count，在令牌桶中获取单个令牌的时间是固定的1/count 。而从预热桶中获取单个令牌的时间是随着存量令牌的数量而变化的。</p>
+<p>我们假设系统刚启动或者长时间没有收到请求处于冷却状态，这个时候令牌达到令牌数上限（饱和状态）。此时从预热桶中获取令牌的时间要比稳定状态要长。随着令牌的减少，获取单个令牌的时间会慢慢变短，最终到达一个稳定值。<br>
+所以我们可以设一个函数，获取单个令牌的时间 = k * 1 / QPS</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb3_1.jpg"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb3_1.jpg, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb3_1.jpg 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb3_1.jpg 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb3_1.jpg"
+        title="预热算法" /></p>
+<p>假设我们用一条垂直于X轴的竖线表示当前的请求状态，竖线从右向左移动时，表示系统接收到请求（预热中），令牌正在被消耗，假设系统连续接收到 k 个请求，获取对应令牌所需要的时间为[令牌数上限-k, 令牌数上限]的定积分，就是包围的面积。<br>
+反过来，竖线从左向右移动时，表示系统正在冷却。</p>
+<h2 id="redis实现的简单限流模型">redis实现的简单限流模型</h2>
+<p><a href="http://doc.redisfans.com/string/incr.html" target="_blank" rel="noopener noreffer ">http://doc.redisfans.com/string/incr.html</a><br>
+多机限流的方案中，使用redis的自增incr和过期expire是一种最简单的方案。假设我们要在1秒内限制100次，那么只需要保留一个一秒过期的key，每次incr并判断incr之后的值是否会超过100。<br>
+要注意：</p>
+<ol>
+<li>incr这个操作本身是原子的，并且每次递增后会返回incr的值</li>
+<li>incr和expire这两个操作必须当一个事务，否则expire失败了，或者incr和expire之间插入的别的incr都会有问题。我们这里用一个lua脚本在redis中EVAL解决这个问题</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-lua" data-lang="lua"><span class="line"><span class="cl"><span class="kd">local</span> <span class="n">current</span>
+</span></span><span class="line"><span class="cl"><span class="n">current</span> <span class="o">=</span> <span class="n">redis.call</span><span class="p">(</span><span class="s2">&#34;incr&#34;</span><span class="p">,</span><span class="n">KEYS</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</span></span><span class="line"><span class="cl"><span class="kr">if</span> <span class="n">tonumber</span><span class="p">(</span><span class="n">current</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="kr">then</span>
+</span></span><span class="line"><span class="cl">    <span class="n">redis.call</span><span class="p">(</span><span class="s2">&#34;expire&#34;</span><span class="p">,</span><span class="n">KEYS</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="kr">end</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div></div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2020-07-27</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/load_balance3/index.md" target="_blank">Read Markdown</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="http://chestnutheng.github.io/load_balance3/" data-title="[后台]负载均衡 （三）限流篇" data-hashtags="负载均衡,限流"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="http://chestnutheng.github.io/load_balance3/" data-hashtag="负载均衡"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Hacker News" data-sharer="hackernews" data-url="http://chestnutheng.github.io/load_balance3/" data-title="[后台]负载均衡 （三）限流篇"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="http://chestnutheng.github.io/load_balance3/" data-title="[后台]负载均衡 （三）限流篇"><i data-svg-src="/lib/simple-icons/icons/line.min.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="http://chestnutheng.github.io/load_balance3/" data-title="[后台]负载均衡 （三）限流篇" data-ralateuid="2461859532"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw" aria-hidden="true"></i>&nbsp;<a href="/tags/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/">负载均衡</a>,&nbsp;<a href="/tags/%E9%99%90%E6%B5%81/">限流</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/load_balance2/" class="prev" rel="prev" title="[后台]负载均衡（二）能力篇"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>[后台]负载均衡（二）能力篇</a>
+            <a href="/cpp_11_4/" class="next" rel="next" title="[C&#43;&#43;]C&#43;&#43; 11/14 笔记（四）">[C++]C++ 11/14 笔记（四）<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
+</div>
+<div id="comments"><div id="giscus" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://giscus.app">Giscus</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.118.2">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2015 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="about" target="_blank">子恒</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/lightgallery/css/lightgallery-bundle.min.css"><link rel="stylesheet" href="/lib/katex/katex.min.css"><script type="text/javascript" src="/lib/autocomplete/autocomplete.min.js"></script><script type="text/javascript" src="/lib/lunr/lunr.min.js"></script><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/lightgallery/lightgallery.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/thumbnail/lg-thumbnail.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/zoom/lg-zoom.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript" src="/lib/sharer/sharer.min.js"></script><script type="text/javascript" src="/lib/katex/katex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/auto-render.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/copy-tex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{"giscus":{"category":"Announcements","categoryId":"DIC_kwDOA9ikP84CQT5Y","darkTheme":"dark","emitMetadata":"0","inputPosition":"bottom","lang":"en","lazyLoading":true,"lightTheme":"light","mapping":"pathname","reactionsEnabled":"1","repo":"chestnutheng/chestnutheng.github.io","repoId":"MDEwOlJlcG9zaXRvcnk2NDUyOTQ3MQ=="}},"lightgallery":true,"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":true,"left":"\\begin{equation}","right":"\\end{equation}"},{"display":true,"left":"\\begin{equation*}","right":"\\end{equation*}"},{"display":true,"left":"\\begin{align}","right":"\\end{align}"},{"display":true,"left":"\\begin{align*}","right":"\\end{align*}"},{"display":true,"left":"\\begin{alignat}","right":"\\end{alignat}"},{"display":true,"left":"\\begin{alignat*}","right":"\\end{alignat*}"},{"display":true,"left":"\\begin{gather}","right":"\\end{gather}"},{"display":true,"left":"\\begin{CD}","right":"\\end{CD}"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"highlightTag":"em","lunrIndexURL":"/index.json","maxResultLength":10,"noResultsFound":"No results found","snippetLength":50,"type":"lunr"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

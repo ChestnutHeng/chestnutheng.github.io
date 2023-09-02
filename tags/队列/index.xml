@@ -1,0 +1,36 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>队列 - Tag - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/tags/%E9%98%9F%E5%88%97/</link>
+        <description>队列 - Tag - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Tue, 15 Nov 2016 13:38:03 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/tags/%E9%98%9F%E5%88%97/" rel="self" type="application/rss+xml" /><item>
+    <title>[普林斯顿算法公开课]双向队列和随机队列</title>
+    <link>http://chestnutheng.github.io/princeton_pa2_deque/</link>
+    <pubDate>Tue, 15 Nov 2016 13:38:03 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/princeton_pa2_deque/</guid>
+    <description><![CDATA[思路 这次的内容是写一个双向队列和随机队列, 双向队列自不必说, 用链表即可, 注意一下表头表尾的操作以及只有一个元素时的删除操作.
+随机队列实现随机的时候需要查询具体下标的元素, 是一个O(1)操作, 所以使用自增长内存池实现.
+刷到满分的过程中逐步解决的一些问题:
+1. 对题目要求的每一个Exception都要抛出.否则会有以下问题:
+case test 失败 测试中断:
+Warning: the grading output was truncated due to excessive length. 2. 删除的节点和数组需要置null释放, 比如Deque出队的节点, RandomizedQueue出队的元素, 否则会报
+- loitering observed during 71 of 100 deletions 3. 注意RandomizedQueue的capacity大小调节的时机, 在size到达capacity一半时扩大, 在size到达capacity四分之一时减小.否则会有以下问题:
+不缩小capacity: 会导致内存测试失败 调节时机不对: 会导致一半的时间测试失败, 或者测试中断:
+Warning: the grading output was truncated due to excessive length. size 不为正数的边界情况: 数组越界 = =这个capacity大小要求过于严格了, 导致我用自己习惯的增长方式没有AC&hellip;
+Deque.java 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 /** * Created by chestnutheng on 16-11-14.]]></description>
+</item>
+<item>
+    <title>[算法]最大值栈和最大值队列</title>
+    <link>http://chestnutheng.github.io/max_stack_and_max_queue/</link>
+    <pubDate>Mon, 26 Oct 2015 19:26:00 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/max_stack_and_max_queue/</guid>
+    <description><![CDATA[最大值栈和最大值队列(Tsinghua OJ,PA2) 最大值栈 要求 以O(1)的时间查询栈中的最大值.
+思路 维护一个最大值栈，在原栈中数据发生改变时最大值栈也跟着改变。
+每次输入一个数据，若最大值栈为空，则比较最大值栈栈顶和当前元素，如果当前元素较大或相等，就把当前元素推入栈中，反之出栈时，如果出栈元素和当前元素相等，则把最大值栈中元素也推出栈。
+实现 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 template &lt;typename T&gt; class MaxStack { private: Stack &lt;T&gt; max_stack; Stack &lt;T&gt; _data; public: T max(){ return max_stack.top(); } void push(T ele){ _data.push(ele); if(max_stack.empty() || ele &gt;= max_stack.top()){ max_stack.push(ele); } } T pop(){ T tmp = _data.top(); if(_data.]]></description>
+</item>
+</channel>
+</rss>

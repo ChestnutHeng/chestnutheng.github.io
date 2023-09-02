@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>[Linux]进程间通信 - 子恒的博客</title><meta name="Description" content="使用进程间通信来完成信息互换是很常见的场景。本文介绍了指令形式的通信（信号、信号量），文本形式的通信（共享内存，管道，FIFO，Unix域套接字）来完成这一基本的任务。"><meta property="og:title" content="[Linux]进程间通信" />
+<meta property="og:description" content="使用进程间通信来完成信息互换是很常见的场景。本文介绍了指令形式的通信（信号、信号量），文本形式的通信（共享内存，管道，FIFO，Unix域套接字）来完成这一基本的任务。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://chestnutheng.github.io/ipc/" /><meta property="og:image" content="http://chestnutheng.github.io/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2019-08-01T20:26:09+08:00" />
+<meta property="article:modified_time" content="2019-08-06T20:51:39+08:00" /><meta property="og:site_name" content="子恒的博客" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="http://chestnutheng.github.io/logo.png"/>
+
+<meta name="twitter:title" content="[Linux]进程间通信"/>
+<meta name="twitter:description" content="使用进程间通信来完成信息互换是很常见的场景。本文介绍了指令形式的通信（信号、信号量），文本形式的通信（共享内存，管道，FIFO，Unix域套接字）来完成这一基本的任务。"/>
+<meta name="application-name" content="我的网站">
+<meta name="apple-mobile-web-app-title" content="我的网站"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://chestnutheng.github.io/ipc/" /><link rel="prev" href="http://chestnutheng.github.io/linux_epoll/" /><link rel="next" href="http://chestnutheng.github.io/rocketmq/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[Linux]进程间通信",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/chestnutheng.github.io\/ipc\/"
+        },"genre": "posts","keywords": "Linux, AUPE","wordcount":  1139 ,
+        "url": "http:\/\/chestnutheng.github.io\/ipc\/","datePublished": "2019-08-01T20:26:09+08:00","dateModified": "2019-08-06T20:51:39+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "子恒"
+            },"description": "使用进程间通信来完成信息互换是很常见的场景。本文介绍了指令形式的通信（信号、信号量），文本形式的通信（共享内存，管道，FIFO，Unix域套接字）来完成这一基本的任务。"
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="子恒的博客">子恒的博客</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/"> 主页 </a><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/freinds/"> 友链 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="子恒的博客">子恒的博客</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        Cancel
+                    </a>
+                </div><a class="menu-item" href="/" title="">主页</a><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/freinds/" title="">友链</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><div class="search-dropdown desktop">
+        <div id="search-dropdown-desktop"></div>
+    </div>
+    <div class="search-dropdown mobile">
+        <div id="search-dropdown-mobile"></div>
+    </div><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">[Linux]进程间通信</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="about" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>子恒</a></span>&nbsp;<span class="post-category">included in <a href="/categories/linux/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>Linux</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2019-08-01">2019-08-01</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;1139 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;6 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#管道">管道</a></li>
+    <li><a href="#fifo">FIFO</a>
+      <ul>
+        <li><a href="#fifo用于复制输出流">FIFO用于复制输出流</a></li>
+        <li><a href="#fifo用于服务端和客户端通信">FIFO用于服务端和客户端通信</a></li>
+      </ul>
+    </li>
+    <li><a href="#xsi-ipc">XSI IPC</a>
+      <ul>
+        <li><a href="#ipc标识符">IPC标识符</a>
+          <ul>
+            <li><a href="#ftok">ftok</a></li>
+            <li><a href="#ipc_private">IPC_PRIVATE</a></li>
+            <li><a href="#ipc-权限">IPC 权限</a></li>
+            <li><a href="#ipc的缺点">IPC的缺点</a></li>
+          </ul>
+        </li>
+        <li><a href="#消息队列">消息队列</a></li>
+        <li><a href="#信号量">信号量</a></li>
+        <li><a href="#共享内存">共享内存</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="管道">管道</h1>
+<p>管道是进程间通信的最古老方式。它通过共享文件来完成进程间的通信。它有两个局限性：</p>
+<ol>
+<li>它是半双工的。数据只能从一个进程流向另一个进程。</li>
+<li>通信的进程之间必须另一个进程是fork出来的。通常，一个进程会创建一个管道，然后执行fork，这样管道就会在两个进程之间共享。<br>
+FIFO解决了第一种局限性，Unix域套接字解决了第二种。我们先来看管道。</li>
+</ol>
+<p><code>int pipe(int pipefd[2]);</code>管道由pipe函数创建。</p>
+<ol>
+<li>参数<code>pipefd</code>是一个两个元素的数组。<code>pipefd[0]</code>用来读，<code>pipefd[1]</code>用来写。</li>
+<li>成功返回0 。失败返回-1并设置errno。</li>
+<li>单进程的管道没有任何用处。在这个函数之后一般会fork，然后一个进程来写<code>pipefd[1]</code>，一个进程来读<code>pipefd[0]</code>。他们的另一个fd元素将会被关闭。</li>
+</ol>
+<p>下面是一段实例, 父进程通过管道向子进程传递了信息，子进程接收并把他们输出：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&#34;apue.h&#34;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">int</span>		<span class="n">n</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">int</span>		<span class="n">fd</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">	<span class="n">pid_t</span>	<span class="n">pid</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">char</span>	<span class="n">line</span><span class="p">[</span><span class="n">MAXLINE</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">pipe</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="n">err_sys</span><span class="p">(</span><span class="s">&#34;pipe error&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">((</span><span class="n">pid</span> <span class="o">=</span> <span class="n">fork</span><span class="p">())</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">err_sys</span><span class="p">(</span><span class="s">&#34;fork error&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">pid</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>		<span class="cm">/* parent */</span>
+</span></span><span class="line"><span class="cl">		<span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+</span></span><span class="line"><span class="cl">		<span class="n">write</span><span class="p">(</span><span class="n">fd</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s">&#34;hello world</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="mi">12</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>					<span class="cm">/* child */</span>
+</span></span><span class="line"><span class="cl">		<span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+</span></span><span class="line"><span class="cl">		<span class="n">n</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">line</span><span class="p">,</span> <span class="n">MAXLINE</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="n">write</span><span class="p">(</span><span class="n">STDOUT_FILENO</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><code>FILE *popen(const char *command, const char *type)</code> 函数popen执行一个命令，然后返回这个命令的文件指针。</p>
+<ol>
+<li><code>type</code>参数为&rsquo;r&rsquo;，表示这个文件可读，如果是&rsquo;w&rsquo;，表示可写。</li>
+<li><code>command</code>参数是要执行的命令</li>
+<li>使用完用<code>int pclose(FILE *stream)</code>关闭管道。</li>
+<li>这个函数是管道实现的一个例子。它先创建一个管道，然后fork一个子进程，关闭未使用的管道端（读或写），然后在子进程执行命令，最后等待执行完毕。</li>
+</ol>
+<h1 id="fifo">FIFO</h1>
+<p><code>int mkfifo(const char *pathname, mode_t mode)</code>提供了任意进程间通过文件通信的方式。</p>
+<ol>
+<li>参数<code>path</code>表示管道的路径。</li>
+<li>参数<code>mode</code>和<code>open</code>函数的模式一样。</li>
+</ol>
+<p><code>int mkfifoat(int dirfd, const char *pathname, mode_t mode)</code>提供了更多选择的路径控制。</p>
+<h2 id="fifo用于复制输出流">FIFO用于复制输出流</h2>
+<p>下面的命令展示了复制输出流的方法。输入文件先到达prog1，然后通过tee命令复制给fifo和prog2。fifo中的数据会流到prog3。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mkfifo fifo1
+</span></span><span class="line"><span class="cl">prog3 &lt; fifo1 <span class="p">&amp;</span>
+</span></span><span class="line"><span class="cl">prog1 &lt; infile <span class="p">|</span> tee fifo1 <span class="p">|</span>prog2
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="fifo用于服务端和客户端通信">FIFO用于服务端和客户端通信</h2>
+<p>使用FIFO可以用来做服务端-客户端通信。服务端提供一个FIFO让客户端写入，这样就可以接收到客户端的请求。那么如何响应客户端？可以让客户端在请求中携带进程ID，然后服务端为每个客户端都创建一个FIFO（和客户端约定好路径），然后让客户端从中读取。<br>
+这种方法有些问题：</p>
+<ol>
+<li>客户端可能随时进程消失，FIFO没有被回收</li>
+<li>客户端发起单向调用就终止时，FIFO没有被回收（监听SIGPIPE可以解决）</li>
+<li>客户进程从1变成0时，服务端需要处理EOF（请求FIFO可以设为读-写模式解决）</li>
+</ol>
+<h1 id="xsi-ipc">XSI IPC</h1>
+<h2 id="ipc标识符">IPC标识符</h2>
+<p>进行进程间通信，必须要有一个编号来表明所用的资源（IPC对象）是哪个。在Linux中，IPC标识符是一个key_t类型（一般实现为长整型，从0开始分配，每有一个IPC对象就加一，直到最大值后又从0开始）。使用IPC操作必须提供这个IPC标识符，那么不同进程如何共享这个标识符呢？</p>
+<h3 id="ftok">ftok</h3>
+<p><code>key_t ftok(const char *pathname, int proj_id)</code> 通过ftok函数，不同进程可以产生相同的key。</p>
+<ol>
+<li>参数 <code>pathname</code> 是进程间约定的已经存在的文件路径。</li>
+<li>参数 <code>proj_id</code> 是约定的0-255的值，也是一个约定的项目id。</li>
+<li>事实上，ftok取了<code>pathname</code>中文件的设备编号<code>st_dev</code>的低8bit、文件iNode<code>st_ino</code>的低16bit，和<code>proj_id</code>的低8bit合并成了返回的<code>key_t</code>值。</li>
+<li>这意味着如果文件在使用中被删除并重建，key会发生变化。如果<code>proj_id</code>一致，也有可能造成冲突。</li>
+</ol>
+<h3 id="ipc_private">IPC_PRIVATE</h3>
+<p><code>IPC_PRIVATE</code> 实际上是定义的值是0 。用这个做key时，系统将会产生一个新的IPC对象。一般用于不同进程间不需要约定key的时候，比如父进程在获得对象后传承给子进程。</p>
+<h3 id="ipc-权限">IPC 权限</h3>
+<p>所有的IPC对象都有一个权限字段来标识所属的线程。一般IPC对象只能由创建的进程或者超级权限进程来删除。这个权限信息里记录了一些创建者的信息。uid、gid、mode三个字段可以由用户通过msgctl、shmctl、semctl等函数来修改。修改者必须是创建进程或者超级权限进程。<br>
+<code>mode</code> 字段有一些特定的值表示权限，类似文件的<code>chmod</code>。下面给出了该字段每一位的含义。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">struct</span> <span class="nc">ipc_perm</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">key_t</span>          <span class="n">__key</span><span class="p">;</span>    <span class="cm">/* Key supplied to shmget(2) */</span>
+</span></span><span class="line"><span class="cl">    <span class="n">uid_t</span>          <span class="n">uid</span><span class="p">;</span>      <span class="cm">/* Effective UID of owner */</span>
+</span></span><span class="line"><span class="cl">    <span class="n">gid_t</span>          <span class="n">gid</span><span class="p">;</span>      <span class="cm">/* Effective GID of owner */</span>
+</span></span><span class="line"><span class="cl">    <span class="n">uid_t</span>          <span class="n">cuid</span><span class="p">;</span>     <span class="cm">/* Effective UID of creator */</span>
+</span></span><span class="line"><span class="cl">    <span class="n">gid_t</span>          <span class="n">cgid</span><span class="p">;</span>     <span class="cm">/* Effective GID of creator */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">mode</span><span class="p">;</span>     <span class="cm">/* Permissions + SHM_DEST and SHM_LOCKED flags */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">__seq</span><span class="p">;</span>    <span class="cm">/* Sequence number */</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// mode字段
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="mo">0400</span> <span class="err">用户读</span>
+</span></span><span class="line"><span class="cl"><span class="mo">0200</span> <span class="err">用户写</span>
+</span></span><span class="line"><span class="cl"><span class="mo">0040</span> <span class="err">组读</span>
+</span></span><span class="line"><span class="cl"><span class="mo">0020</span> <span class="err">组写</span>
+</span></span><span class="line"><span class="cl"><span class="mo">0004</span> <span class="err">其他读</span>
+</span></span><span class="line"><span class="cl"><span class="mo">0002</span> <span class="err">其他写</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="ipc的缺点">IPC的缺点</h3>
+<ol>
+<li>IPC不会主动回收资源。IPC是系统来维护的，没有引用计数。如果一个进程在一个消息队列中添加了消息然后终止，系统不会删除这些消息，直到下个进程显示地使用或删除他们。<br>
+PIPE会在最后一个使用的进程终止后自动销毁。FIFO虽然在最后一个使用的进程结束后会保留名字，但是其中的数据会删除。</li>
+<li>IPC在文件系统中没有名字。Linux是一切皆文件的，没有文件描述符有几个麻烦：a)无法ls，rm，chmod，无法像操作文件一样操作IPC对象，只能用其特定的函数。b)没办法使用select，poll这样的多路复用技术，这将导致进程无法同时监听两个消息队列。</li>
+</ol>
+<h2 id="消息队列">消息队列</h2>
+<p><code>int msgget(key_t key, int msgflg)</code>创建一个msg对象。</p>
+<ol>
+<li><code>key</code>可以是<code>IPC_PRIVATE</code>或者一个存在的IPC的key。</li>
+<li><code>msgflg</code>提供了创建消息队列的选项。a)为0时返回<code>key</code>的消息队列的标识符，不存在会报错 b) <code>PC_CREAT</code>：当msgflg&amp;IPC_CREAT为真时，则新建一个消息队列；如果存在这样的消息队列，返回此消息队列的标识符 c) <code>IPC_CREAT|IPC_EXCL</code> 不存在则创建一个key的消息队列，存在则返回错误。</li>
+<li>成功返回消息队列的标识符，失败返回-1，并写errno。</li>
+</ol>
+<p><code>int msgctl(int msqid, int cmd, struct msqid_ds *buf)</code> 读写msg对象的属性</p>
+<ol>
+<li><code>msqid</code>是一个消息队列的标识符。</li>
+<li><code>cmd</code> 提供了读写的选项。a) <code>IPC_STAT</code> 读取属性到buf中。 b) <code>IPC_SET</code> 写入属性到buf中 c) <code>IPC_RMID</code> 删除消息队列和队列中的所有消息。删除前会用<code>msg_perm</code>校验归属。</li>
+<li><code>buf</code> 是设置的详情，见下表。</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">struct</span> <span class="nc">msqid_ds</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">struct</span> <span class="nc">ipc_perm</span> <span class="n">msg_perm</span><span class="p">;</span>     <span class="c1">// Ownership and permissions 权限，初始化时填0 
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">time_t</span>          <span class="n">msg_stime</span><span class="p">;</span>    <span class="c1">// Time of last msgsnd(2) 初始化时填0 
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">time_t</span>          <span class="n">msg_rtime</span><span class="p">;</span>    <span class="c1">// Time of last msgrcv(2) 初始化时填0 
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">time_t</span>          <span class="n">msg_ctime</span><span class="p">;</span>    <span class="c1">// Time of last change 初始化时设置为当前时间 
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="kt">unsigned</span> <span class="kt">long</span>   <span class="n">__msg_cbytes</span><span class="p">;</span> <span class="c1">// Current number of bytes in queue (non-standard)  
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">msgqnum_t</span>       <span class="n">msg_qnum</span><span class="p">;</span>     <span class="c1">// Current number of messages in queue 初始化时填0 
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">msglen_t</span>        <span class="n">msg_qbytes</span><span class="p">;</span>   <span class="c1">// Maximum number of bytes allowed in queue 初始化时填系统值MSGMNB 
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">pid_t</span>           <span class="n">msg_lspid</span><span class="p">;</span>    <span class="c1">// PID of last msgsnd(2) 初始化时填0  
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">pid_t</span>           <span class="n">msg_lrpid</span><span class="p">;</span>    <span class="c1">// PID of last msgrcv(2) 初始化时填0  
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><code>int msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg)</code> 发送消息。如果消息队列已满，会阻塞等待。</p>
+<ol>
+<li>参数<code>msqid</code> 是发送消息的消息队列</li>
+<li>参数<code>msgp</code> 发送给队列的消息。msgp可以是任何类型的结构体，但第一个字段必须为long类型，即表明此发送消息的类型。msgp定义的参照格式如下：</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">struct</span> <span class="nc">s_msg</span><span class="p">{</span> <span class="cm">/*msgp定义的参照格式*/</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">long</span> <span class="n">type</span><span class="p">;</span> <span class="cm">/* 必须大于0,消息类型 */</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">char</span> <span class="n">mtext</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span> <span class="cm">/*消息正文，可以是其他任何类型*/</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span> <span class="n">msgp</span><span class="p">;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ol start="3">
+<li>参数<code>msgsz</code> 要发送消息的大小, 其中不含消息类型的4个字节。</li>
+<li>参数<code>msgflg</code> 设置发送的模式。<code>IPC_NOWAIT</code>类似一个非阻塞IO，写不进消息队列也会立即返回<code>IPC_NOERROR</code> 如果消息超过长度限制<code>msgsz</code>，会截断消息。</li>
+<li>成功返回0，失败返回-1，设置errno。EAGAIN 消息队列已满，EIDRM 消息队列已删除，EACCESS 无权限写入， EINVAL 参数错误。</li>
+<li>msgsnd会一直阻塞等待，直到 a) 消息队列有空余 b) 消息队列被删除 c) msgsnd函数被信号中断。</li>
+</ol>
+<p><code>size_t msgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp, int msgflg)</code> 会读取消息存入<code>msgp</code>指针，然后把消息从队列中删除。在此之前，此函数会一直阻塞。</p>
+<ol>
+<li>参数<code>msqid</code> 是接收消息的消息队列</li>
+<li>参数<code>msgp</code> 存放读出来的消息。结构体必须和上面的发送结构体相同。</li>
+<li>参数<code>msgsz</code> 读出来消息的大小, 其中不含消息类型的4个字节。</li>
+<li>参数<code>msgtyp</code>  a) 为0表示读第一个消息 b) 大于0表示读消息类型等于本参数的第一个消息 c) 小于0表示读消息类型小于等于本参数绝对值的第一个消息</li>
+<li>参数<code>msgflg</code> 设置读的模式。<code>IPC_NOWAIT</code>类似一个非阻塞IO，没有消息可读也会立即返回，此时错误为 ENOMSG。<code>IPC_NOERROR</code> 如果消息超过长度限制<code>msgsz</code>，会截断消息。</li>
+<li>成功返回消息长度，失败返回-1，设置errno。E2BIG 消息数据长度大于msgsz而msgflag没有设置IPC_NOERROR 。</li>
+</ol>
+<p>下面给出了一个两个进程间通过消息队列通信的样例。由于消息队列创建后不会自动删除，需要运行<code>ipcrm -q msqid</code>来手动删除队列。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;sys/ipc.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;sys/msg.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span>  <span class="cpf">&lt;time.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#define TEXT_SIZE  512
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="nc">msgbuf</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">long</span> <span class="n">mtype</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span>  <span class="n">status</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">time</span><span class="p">[</span><span class="mi">20</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">mtext</span><span class="p">[</span><span class="n">TEXT_SIZE</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">char</span>  <span class="o">*</span><span class="nf">getxtsj</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">time_t</span>  <span class="n">tv</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span>  <span class="nc">tm</span>   <span class="o">*</span><span class="n">tmp</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">static</span>  <span class="kt">char</span>  <span class="n">buf</span><span class="p">[</span><span class="mi">20</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="n">tv</span> <span class="o">=</span> <span class="n">time</span><span class="p">(</span> <span class="mi">0</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">tmp</span> <span class="o">=</span> <span class="n">localtime</span><span class="p">(</span> <span class="o">&amp;</span><span class="n">tv</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sprintf</span><span class="p">(</span> <span class="n">buf</span><span class="p">,</span> <span class="s">&#34;%02d:%02d:%02d&#34;</span><span class="p">,</span> <span class="n">tmp</span><span class="o">-&gt;</span><span class="n">tm_hour</span><span class="p">,</span> <span class="n">tmp</span><span class="o">-&gt;</span><span class="n">tm_min</span><span class="p">,</span> <span class="n">tmp</span><span class="o">-&gt;</span><span class="n">tm_sec</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span>   <span class="n">buf</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span> <span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span> <span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">msqid</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="nc">msqid_ds</span> <span class="n">info</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="nc">msgbuf</span> <span class="n">buf</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="nc">msgbuf</span> <span class="n">buf1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">flag</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">sendlength</span><span class="p">,</span> <span class="n">recvlength</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">key</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">key</span> <span class="o">=</span> <span class="n">ftok</span><span class="p">(</span> <span class="s">&#34;msg.tmp&#34;</span><span class="p">,</span> <span class="mh">0x01</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span> <span class="n">key</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">perror</span><span class="p">(</span> <span class="s">&#34;ftok key error&#34;</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="n">msqid</span> <span class="o">=</span> <span class="n">msgget</span><span class="p">(</span> <span class="n">key</span><span class="p">,</span> <span class="mo">0600</span> <span class="o">|</span> <span class="n">IPC_CREAT</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span> <span class="n">msqid</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">perror</span><span class="p">(</span> <span class="s">&#34;create message queue error&#34;</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="n">buf</span><span class="p">.</span><span class="n">mtype</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">buf</span><span class="p">.</span><span class="n">status</span> <span class="o">=</span> <span class="mi">9</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">strcpy</span><span class="p">(</span> <span class="n">buf</span><span class="p">.</span><span class="n">time</span><span class="p">,</span> <span class="n">getxtsj</span><span class="p">()</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">strcpy</span><span class="p">(</span> <span class="n">buf</span><span class="p">.</span><span class="n">mtext</span><span class="p">,</span> <span class="s">&#34;happy new year!&#34;</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sendlength</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="nc">msgbuf</span><span class="p">)</span> <span class="o">-</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">long</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">flag</span> <span class="o">=</span> <span class="n">msgsnd</span><span class="p">(</span> <span class="n">msqid</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">buf</span><span class="p">,</span> <span class="n">sendlength</span><span class="p">,</span> <span class="mi">0</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span> <span class="n">flag</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">perror</span><span class="p">(</span> <span class="s">&#34;send message error&#34;</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="n">buf</span><span class="p">.</span><span class="n">mtype</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">buf</span><span class="p">.</span><span class="n">status</span> <span class="o">=</span> <span class="mi">9</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">strcpy</span><span class="p">(</span> <span class="n">buf</span><span class="p">.</span><span class="n">time</span><span class="p">,</span> <span class="n">getxtsj</span><span class="p">()</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">strcpy</span><span class="p">(</span> <span class="n">buf</span><span class="p">.</span><span class="n">mtext</span><span class="p">,</span> <span class="s">&#34;good bye!&#34;</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sendlength</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="nc">msgbuf</span><span class="p">)</span> <span class="o">-</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">long</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">flag</span> <span class="o">=</span> <span class="n">msgsnd</span><span class="p">(</span> <span class="n">msqid</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">buf</span><span class="p">,</span> <span class="n">sendlength</span><span class="p">,</span> <span class="mi">0</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span> <span class="n">flag</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">perror</span><span class="p">(</span> <span class="s">&#34;send message error&#34;</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="n">system</span><span class="p">(</span> <span class="s">&#34;ipcs -q&#34;</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>接受消息：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;sys/ipc.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;sys/msg.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#define TEXT_SIZE  512
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span><span class="k">struct</span> <span class="nc">msgbuf</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">long</span> <span class="n">mtype</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span>  <span class="n">status</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">time</span><span class="p">[</span><span class="mi">20</span><span class="p">]</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">mtext</span><span class="p">[</span><span class="n">TEXT_SIZE</span><span class="p">]</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">msqid</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="nc">msqid_ds</span> <span class="n">info</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="nc">msgbuf</span> <span class="n">buf1</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">flag</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span>  <span class="n">recvlength</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">key</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">mtype</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">key</span> <span class="o">=</span> <span class="n">ftok</span><span class="p">(</span><span class="s">&#34;msg.tmp&#34;</span><span class="p">,</span> <span class="mh">0x01</span> <span class="p">)</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span> <span class="n">key</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">perror</span><span class="p">(</span><span class="s">&#34;ftok key error&#34;</span><span class="p">)</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="n">msqid</span> <span class="o">=</span> <span class="n">msgget</span><span class="p">(</span> <span class="n">key</span><span class="p">,</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span> <span class="n">msqid</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">perror</span><span class="p">(</span><span class="s">&#34;get ipc_id error&#34;</span><span class="p">)</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="n">recvlength</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="nc">msgbuf</span><span class="p">)</span> <span class="o">-</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">long</span><span class="p">)</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buf1</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="nc">msgbuf</span><span class="p">))</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">mtype</span> <span class="o">=</span> <span class="mi">1</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">flag</span> <span class="o">=</span> <span class="n">msgrcv</span><span class="p">(</span> <span class="n">msqid</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">buf1</span><span class="p">,</span> <span class="n">recvlength</span> <span class="p">,</span><span class="n">mtype</span><span class="p">,</span><span class="mi">0</span> <span class="p">)</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span> <span class="n">flag</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">perror</span><span class="p">(</span><span class="s">&#34;recv message error</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">)</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;type=%d,time=%s, message=%s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">buf1</span><span class="p">.</span><span class="n">mtype</span><span class="p">,</span> <span class="n">buf1</span><span class="p">.</span><span class="n">time</span><span class="p">,</span>  <span class="n">buf1</span><span class="p">.</span><span class="n">mtext</span><span class="p">)</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">system</span><span class="p">(</span><span class="s">&#34;ipcs -q&#34;</span><span class="p">)</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span> <span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="信号量">信号量</h2>
+<p>信号量是一个计数器，用于控制多个进程对资源的访问。当一个进程访问信号量控制的资源时，以以下步骤执行：</p>
+<ol>
+<li>取信号量的值。如果值是正，则进程可以继续执行。进程访问资源，并把信号量的值减一，表示他占用了一个资源。</li>
+<li>如果值是0，进程会休眠，直到信号量的值大于0，进程被唤醒，再执行1。</li>
+<li>当进程释放资源时，信号量值加一，并唤醒正在等待的进程。</li>
+</ol>
+<p>实际上，XSI中的信号量要复杂一些，他有几个缺点：</p>
+<ol>
+<li>信号量并非是一个数值，而是一个多个值的集合。创建时要指定值的数量。</li>
+<li>信号量的创建和初始化是分开的，并非一个原子操作。这样就没法原子地创建一个信号量。</li>
+<li>即使已经没有进程再使用信号量，他们依然不会销毁。</li>
+</ol>
+<p>关于信号量不再展开描述，参见 <a href="https://blog.csdn.net/ljianhui/article/details/10243617">Linux进程间通信——使用信号量</a></p>
+<h2 id="共享内存">共享内存</h2>
+<p>进程间通信最方便的方法，就是一起读写内存。由于进程不需要把这块内存复制到自己的进程空间内，所以共享内存的方法非常快。需要注意的是，在一个进程写内存的时候，其他进程不能操作这块内存。这里可以用记录锁、信号量或者互斥量来同步。</p>
+<p>通过<code>mmap</code>把文件映射到内存中也是一种共享内存的实现。于这种方式不同的是，XSI中的共享内存没有文件映射，是一个内存的匿名段。</p>
+<p><code>int shmget(key_t key, size_t size, int shmflg)</code> 用于创建一个共享内存。</p>
+<ol>
+<li><code>key</code>可以是<code>IPC_PRIVATE</code>或者一个存在的共享内存的key（可能是ftok生成）。</li>
+<li><code>size</code> 表示要创建的共享内存的大小，必须为内存页大小的整数倍。如果是读取线程获取已经存在的共享内存，填0。</li>
+<li><code>shmflg</code>提供了创建消息队列的选项。a)为0时返回<code>key</code>的共享内存的标识符，不存在会报错 b) <code>IPC_CREAT</code>：当<code>shmflg&amp;IPC_CREAT</code>为真时，则新建一个共享内存；如果存在这样的共享内存，返回此共享内存的标识符 c) <code>IPC_CREAT|IPC_EXCL</code> 不存在则创建一个key的共享内存，存在则返回错误。</li>
+<li>成功返回0，失败返回-1。<code>EINVAL</code> 参数size小于SHMMIN或大于SHMMAX。<code>EEXIST</code> 预建立key所指的共享内存，但已经存在。 <code>EIDRM</code>参数key所指的共享内存已经删除。 <code>ENOSPC</code>超过了系统允许建立的共享内存的最大值(SHMALL)。 <code>ENOENT</code>参数key所指的共享内存不存在，而参数shmflg未设IPC_CREAT位。<code>EACCES</code>没有权限 <code>ENOMEM</code> 核心内存不足。</li>
+</ol>
+<p><code>int shmctl(int shmid, int cmd, struct shmid_ds *buf)</code> 设置共享内存。</p>
+<ol>
+<li>参数 <code>shmid</code>是共享内存的id 。</li>
+<li>参数 <code>cmd</code> 指定了本次操作的行为。<code>IPC_STAT</code> 得到共享内存的状态，把共享内存的<code>shmid_ds</code>结构复制到buf中。<code>IPC_SET</code>改变共享内存的状态，把buf所指的<code>shmid_ds</code>结构中的uid、gid、mode复制到共享内存的<code>shmid_ds</code>结构内<code>IPC_RMID</code>删除这片共享内存。</li>
+<li>参数 <code>shmid_ds</code>是一些共享内存的设置。创建新字段时，应按照下面的初始化设置进行初始化。</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">struct</span> <span class="nc">shmid_ds</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">struct</span> <span class="nc">ipc_perm</span> <span class="n">shm_perm</span><span class="p">;</span>    <span class="c1">// Ownership and permissions 权限初始化
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">size_t</span>          <span class="n">shm_segsz</span><span class="p">;</span>   <span class="c1">// Size of segment (bytes) 初始化设置为请求的size
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">time_t</span>          <span class="n">shm_atime</span><span class="p">;</span>   <span class="c1">// Last attach time 初始化设置为0
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">time_t</span>          <span class="n">shm_dtime</span><span class="p">;</span>   <span class="c1">// Last detach time 初始化设置为0
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">time_t</span>          <span class="n">shm_ctime</span><span class="p">;</span>   <span class="c1">// Last change time 初始化设置为当前时间
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">pid_t</span>           <span class="n">shm_cpid</span><span class="p">;</span>    <span class="c1">// PID of creator 
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">pid_t</span>           <span class="n">shm_lpid</span><span class="p">;</span>    <span class="c1">// PID of last shmat(2)/shmdt(2) 初始化设置为0
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">shmatt_t</span>        <span class="n">shm_nattch</span><span class="p">;</span>  <span class="c1">// No. of current attaches 初始化设置为0
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="p">...</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><code>void *shmat(int shmid, const void *shmaddr, int shmflg)</code> 连接指定id的共享内存。连接后，这片共享内存就可以在进程空间内访问。</p>
+<ol>
+<li>参数<code>shmid</code>是共享内存的id。</li>
+<li>参数<code>shmaddr</code>指定本进程内内存的地址，之后这片地址会映射到共享内存。如果设为NULL，由系统决定地址（没有特殊需要就设为NULL）。</li>
+<li>参数<code>shmflg</code> 提供了一些选项。<code>SHM_RDONLY</code> 为只读模式，其他为读写模式。</li>
+<li>成功返回连接的本进程内存地址，失败返回-1。</li>
+<li>函数fork后，子进程会继承已连接的这片地址。exec后，子进程会和这片共享内存结束连接。</li>
+</ol>
+<p><code>int shmdt(const void *shmaddr)</code> 结束这片共享内存的映射。</p>
+<ol>
+<li>参数<code>shmaddr</code>指定本进程内内存的地址，是上面的<code>shmat</code>返回的。</li>
+<li>成功返回0，失败返回-1。</li>
+<li><code>shmdt</code>执行后，<code>shm_nattch</code>会减一。</li>
+</ol>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2019-08-06</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/ipc/index.md" target="_blank">Read Markdown</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="http://chestnutheng.github.io/ipc/" data-title="[Linux]进程间通信" data-hashtags="Linux,AUPE"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="http://chestnutheng.github.io/ipc/" data-hashtag="Linux"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Hacker News" data-sharer="hackernews" data-url="http://chestnutheng.github.io/ipc/" data-title="[Linux]进程间通信"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="http://chestnutheng.github.io/ipc/" data-title="[Linux]进程间通信"><i data-svg-src="/lib/simple-icons/icons/line.min.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="http://chestnutheng.github.io/ipc/" data-title="[Linux]进程间通信" data-ralateuid="2461859532"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw" aria-hidden="true"></i>&nbsp;<a href="/tags/linux/">Linux</a>,&nbsp;<a href="/tags/aupe/">AUPE</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/linux_epoll/" class="prev" rel="prev" title="[Linux]高级IO"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>[Linux]高级IO</a>
+            <a href="/rocketmq/" class="next" rel="next" title="[后台]RocketMQ的架构和设计">[后台]RocketMQ的架构和设计<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
+</div>
+<div id="comments"><div id="giscus" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://giscus.app">Giscus</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.118.2">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2015 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="about" target="_blank">子恒</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/lightgallery/css/lightgallery-bundle.min.css"><link rel="stylesheet" href="/lib/katex/katex.min.css"><script type="text/javascript" src="/lib/autocomplete/autocomplete.min.js"></script><script type="text/javascript" src="/lib/lunr/lunr.min.js"></script><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/lightgallery/lightgallery.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/thumbnail/lg-thumbnail.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/zoom/lg-zoom.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript" src="/lib/sharer/sharer.min.js"></script><script type="text/javascript" src="/lib/katex/katex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/auto-render.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/copy-tex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{"giscus":{"category":"Announcements","categoryId":"DIC_kwDOA9ikP84CQT5Y","darkTheme":"dark","emitMetadata":"0","inputPosition":"bottom","lang":"en","lazyLoading":true,"lightTheme":"light","mapping":"pathname","reactionsEnabled":"1","repo":"chestnutheng/chestnutheng.github.io","repoId":"MDEwOlJlcG9zaXRvcnk2NDUyOTQ3MQ=="}},"lightgallery":true,"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":true,"left":"\\begin{equation}","right":"\\end{equation}"},{"display":true,"left":"\\begin{equation*}","right":"\\end{equation*}"},{"display":true,"left":"\\begin{align}","right":"\\end{align}"},{"display":true,"left":"\\begin{align*}","right":"\\end{align*}"},{"display":true,"left":"\\begin{alignat}","right":"\\end{alignat}"},{"display":true,"left":"\\begin{alignat*}","right":"\\end{alignat*}"},{"display":true,"left":"\\begin{gather}","right":"\\end{gather}"},{"display":true,"left":"\\begin{CD}","right":"\\end{CD}"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"highlightTag":"em","lunrIndexURL":"/index.json","maxResultLength":10,"noResultsFound":"No results found","snippetLength":50,"type":"lunr"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

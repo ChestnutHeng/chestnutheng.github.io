@@ -1,0 +1,33 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>Go - Category - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/categories/go/</link>
+        <description>Go - Category - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Tue, 02 Feb 2021 20:31:09 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/categories/go/" rel="self" type="application/rss+xml" /><item>
+    <title>[Go]Go语言的设计和坑</title>
+    <link>http://chestnutheng.github.io/go/</link>
+    <pubDate>Tue, 02 Feb 2021 20:31:09 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/go/</guid>
+    <description><![CDATA[本文介绍了Go的语言设计和一些容易踩坑的细节：
+理解Go为什么X，摆脱原语言的思维 解决写代码时比较困惑和不满的点，对容易出错的语法有个印象 Go学起来非常简单，但是这是语言设计者刻意为之，很多复杂的细节都藏在语言实现里，导致我们迅速学会Go之后不断踩坑
+Why Go 2007年，Google设计Go，目的在于提高在并行编程（多核CPU越来越多）、分布式部署、大型代码库（以及维护他们的非常多的开发人员）的情况下的开发效率。设计时，在吸收C++优点的基础上，收集于很多工程师之间流传的的“不要像C++”
+Go like C++：
+内存消耗少 执行速度快 启动快 Go not like C++：
+程序编译时间短（按照我过去的经验，一个C++大型项目即使make -j8也需要编译一个小时以上） 像动态语言一样灵活（runtime、interface、闭包、反射） 内置并发支持（C++的协程至少得等到std23才有，非常落后） 丰富的原生库（C++解析json，建立http服务器，使用redis这种都很难找到靠谱的库） 多语义（取消了指针运算、取消隐式类型转换、取消类型别名，取消重载，++和赋值作为表达式&hellip;） Go的优点：
+面向工程：简单。只有25个关键字，代码风格统一，可读性高，go mod包丰富 自动垃圾回收：语言运行时内置垃圾回收 语言级并发：非常好用的routine和channel，更高层次的并发抽象 静态语言动态特性 Go的缺点：
+runtime的性能还需要提高 没有泛型 冗余的错误处理 Go mod不够完善 Go语⾔将⾛向何⽅?
+我为什么放弃Go语言
+Go的设计哲学 创始人Rob Pike在SPLASH上的演讲，阐述了设计Go的初衷
+许式伟，Go和Java在继承观念上的对比
+对面向对象的批评
+王垠：解密“设计模式”，对设计模式的批评
+少即是多（less is more）：如果一个特性并不对解决任何问题有显著价值，那么go就不提供它；如果需要一个特性，那么只有一种方法去实现 面向接口编程：非侵入式接口，反对继承、反对虚函数和虚函数重载（多态）、删除构造和析构函数 正交+组合的语言特性：语言的特性之间相互独立，不相互影响。比如类型和方法是互相独立的，类型之间也是相互独立的，没有子类，包也没有子包。不同特性用组合的方式来松耦合 并发在语言层面支持：并发更好利用多核，有更强的表现力来模拟真实世界 在设计上，Go秉承了C的简单粗暴。
+为什么没有继承？ Go没有子类型的概念，只能把类型嵌入到另一个类型中，所以没有类型系统。Go的作者认为类型系统被过度使用了，应该在这个方向上退一步。
+使用伸缩性良好的组合，而不是继承 数据和方法不再绑定在一起，数据的集合用struct，方法的集合用interface，保持正交 类似子类父类的系统造成非常脆弱的代码。类型的层次必须在早期进行设计，通常会是程序设计的第一步，但是一旦写出程序后，早期的决策就很难进行改变了。所以，类型层次结构会促成早期的过度设计，因为程序员要尽力对软件可能需要的各种可能的用法进行预测，不断地为了避免挂一漏万，不断的增加类型和抽象的层次。这种做法有点颠倒了，系统各个部分之间交互的方式本应该随着系统的发展而做出相应的改变，而不应该在一开始就固定下来。
+作者附了一个例子，是一些以接口为参数并且其返回结果也是一个接口的函数：
+1 2 3 4 5 6 // 入参是接口的函数，而不是成员方法 func ReadAll(r io.Reader) ([]byte, error) // 封装器 - 出入参都是接口 func LoggingReader(r io.]]></description>
+</item>
+</channel>
+</rss>

@@ -1,0 +1,87 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title> Python - Tag - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/tags/python/</link>
+        <description> Python - Tag - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Wed, 20 Mar 2019 23:00:25 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/tags/python/" rel="self" type="application/rss+xml" /><item>
+    <title>[Python]Scrapy Scan</title>
+    <link>http://chestnutheng.github.io/scrapy/</link>
+    <pubDate>Wed, 20 Mar 2019 23:00:25 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/scrapy/</guid>
+    <description><![CDATA[scrapy是个很简单强大的python爬虫框架，不需要处理网络相关逻辑就可以轻松爬取。本文介绍了一些基本的内容。需要注意的是，本文档中所有的●表示非必须内容。
+本教程基于官方文档：官方文档
+安装scrapy CentOS 1 2 yum install python34-devel.x86_64 pip3 install scrapy 创建项目 1 2 3 4 //创建项目hello scrapy startproject hello //创建一个爬虫（在项目根目录运行，不要加http://），名字为baidu，域名为www.baidu.com scrapy genspider baidu &#34;www.baidu.com&#34; ● 需要注意的是，如果要无视robots.txt文件，请在下面的settings.py中设置ROBOTSTXT_OBEY = False
+● 刚才建好的项目目录文件树如下：
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 tree hello hello |-- hello | |-- __init__.py | |-- items.py // 输出结构体定义 | |-- middlewares.py | |-- pipelines.py | |-- __pycache__ | |-- settings.]]></description>
+</item>
+<item>
+    <title>[Python]Python版socket十行模板</title>
+    <link>http://chestnutheng.github.io/socket_in_10_lines/</link>
+    <pubDate>Fri, 20 Jan 2017 10:15:13 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/socket_in_10_lines/</guid>
+    <description><![CDATA[以下的socket
+都是python实现的服务端接受客户端键盘输入的信息，改为大写返回客户端的模板
+都是同步、阻塞的
+都会在数据长度大于1024时产生错误，请自己写协议
+端口都是8080，请确保未被占用
+tcp_server.py 6行控制监听的最大tcp链接数。
+tcp是有链接的。9行建立链接，10行接受数据，11行发送数据，12行关闭链接。
+1 2 3 4 5 6 7 8 9 10 11 12 import socket server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) server.bind((&#34;0.0.0.0&#34;, 8080)) server.listen(1) while True: conn, addr = server.accept() data_from_client = conn.recv(1024).decode(&#39;utf8&#39;) conn.sendall(data_from_client.upper().encode(&#39;utf8&#39;)) conn.close() tcp_client.py 5行链接，6行发送数据，7行接收数据，9行关闭链接。
+1 2 3 4 5 6 7 8 9 import socket while True: client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) client.connect((&#34;0.0.0.0&#34;, 8080)) client.sendall(input().encode(&#39;utf8&#39;)) data_from_server = client.recv(1024).decode(&#39;utf8&#39;) print(&#39;GET &#39; + data_from_server) client.]]></description>
+</item>
+<item>
+    <title>[后台]在Python中使用epoll</title>
+    <link>http://chestnutheng.github.io/epoll/</link>
+    <pubDate>Sat, 07 Jan 2017 16:07:35 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/epoll/</guid>
+    <description><![CDATA[学期初写代理的时候发现阻塞式socket并不能满足需要，多线程也不是一个很好的解决方案。这篇文章系统地介绍了epoll是什么以及如何使用。
+英文好的同学可以直接看
+How To Use Linux epoll with Python
+本博客的大部分内容都是基于这篇文章的。
+什么是epoll （维基百科）
+于Linux 2.5.44首度登场的epoll是Linux内核的可扩展I/O事件通知机制。它设计目的只在替换既有POSIX select(2)与poll(2)系统函数，让需要大量操作文件描述符的程序得以发挥更优异的性能(举例来说：旧有的系统函数所花费的时间复杂度为O(n)，epoll则耗时O(1))。epoll与FreeBSD的kqueue类似，底层都是由可配置的操作系统内核对象建构而成，并以文件描述符(file descriptor)的形式呈现于用户空间。
+为什么使用epoll 首先理解同步异步的概念：
+怎样理解阻塞非阻塞与同步异步的区别？- 知乎
+同步与异步
+同步和异步关注的是消息通信机制 (synchronous communication/ asynchronous communication)
+所谓同步，就是在发出一个调用时，在没有得到结果之前，该调用就不返回。但是一旦调用返回，就得到返回值了。
+换句话说，就是由调用者主动等待这个调用的结果。
+而异步则是相反，调用在发出之后，这个调用就直接返回了，所以没有返回结果。换句话说，当一个异步过程调用发出后，调用者不会立刻得到结果。而是在调用发出后，被调用者通过状态、通知来通知调用者，或通过回调函数处理这个调用。
+阻塞与非阻塞
+阻塞和非阻塞关注的是程序在等待调用结果（消息，返回值）时的状态.
+阻塞调用是指调用结果返回之前，当前线程会被挂起。调用线程只有在得到结果之后才会返回。
+非阻塞调用指在不能立刻得到结果之前，该调用不会阻塞当前线程。
+阻塞式socket：
+阻塞式socket使用单线程进行通信。主线程创建一个新的socket线程并侦听该socket，它一次性接受所有连接，然后让这个线程与客户端进行交互。因为创建的线程都只和一个客户端通信，所以阻塞并不妨碍其他线程工作
+虽然多线程的阻塞式通信编码简单，但是在多线程共享资源时非常困难，在多核下表现也很差
+非阻塞的socket：
+于是很多替代并发阻塞式socket的方法出现了，例如基于事件系统设计的epoll，它并不会阻塞线程，它可以使用一个线程实现，大大节约了资源.
+可见epoll是一个同步的非阻塞解决方案。
+一般步骤 使用python中的epoll一般有如下步骤：
+创建epoll对象 告诉epoll对象监视特定socket上的特定事件 询问epoll对象哪些socket可能有自上次查询以来的指定事件 对这些socket执行一些操作 告诉epoll对象修改要监视的socket和事件的列表 重复步骤3到5直到完成 销毁epoll对象 代码实例 epoll设有水平触发和边沿触发两种模式。
+在边沿触发操作模式下，socket发生读或写事件后，调用epoll.poll()只会给socket返回一次事件。调用程序必须处理与该事件相关的所有数据。当事件的数据为空时，对socket的继续操作将导致异常。 在水平触发操作模式中，对epoll.poll()的重复调用将导致注册事件的重复通知，直到与该事件相关联的所有数据都已被处理。 边沿触发往往被用于程序员不想使用系统的事件管理机制时。
+下面的示例是一个水平触发的典型样例。
+需要注意的是，event &amp; select.EPOLLIN 表示事件的掩码，当掩码值为0时对应的事件发生。
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 import socket, select EOL1 = b&#39;\n\n&#39; EOL2 = b&#39;\n\r\n&#39; response = b&#39;HTTP/1.]]></description>
+</item>
+<item>
+    <title>[Python]Python性能分析工具</title>
+    <link>http://chestnutheng.github.io/python_profile/</link>
+    <pubDate>Tue, 09 Aug 2016 13:04:30 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/python_profile/</guid>
+    <description><![CDATA[时间分析 time 命令 用*nix自带的系统命令
+1 2 3 4 5 $ time python3 reg.py real	0m1.617s user	0m1.504s sys	0m0.112s sys 系统调用时间
+user 用户空间花费时间
+real 实际时间
+如果user + sys &lt; real 说明时间被花费在IO上。
+profile和cProfile python自带了两个函数时间分析工具，cProfile和profile。cProfile是纯C写的，所以用起来快了很多。
+查看帮助:
+1 2 3 4 5 6 7 8 9 $ python3 -m cProfile -h Usage: cProfile.py [-o output_file_path] [-s sort] scriptfile [arg] ... Options: -h, --help show this help message and exit -o OUTFILE, --outfile=OUTFILE Save stats to &lt;outfile&gt; -s SORT, --sort=SORT Sort order when printing to stdout, based on pstats.]]></description>
+</item>
+</channel>
+</rss>

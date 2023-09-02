@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>[Linux]谈一谈并行Counting - 子恒的博客</title><meta name="Description" content="多线程计数依然是处理多线程问题中最基础的操作之一。本文讨论了简单的并行计数、最终一致的并行计数、有上限的并行计数等，视图从这个最简单的问题中学习并行设计的思维。"><meta property="og:title" content="[Linux]谈一谈并行Counting" />
+<meta property="og:description" content="多线程计数依然是处理多线程问题中最基础的操作之一。本文讨论了简单的并行计数、最终一致的并行计数、有上限的并行计数等，视图从这个最简单的问题中学习并行设计的思维。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://chestnutheng.github.io/counting/" /><meta property="og:image" content="http://chestnutheng.github.io/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2019-07-26T16:49:50+08:00" />
+<meta property="article:modified_time" content="2019-07-26T18:26:43+08:00" /><meta property="og:site_name" content="子恒的博客" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="http://chestnutheng.github.io/logo.png"/>
+
+<meta name="twitter:title" content="[Linux]谈一谈并行Counting"/>
+<meta name="twitter:description" content="多线程计数依然是处理多线程问题中最基础的操作之一。本文讨论了简单的并行计数、最终一致的并行计数、有上限的并行计数等，视图从这个最简单的问题中学习并行设计的思维。"/>
+<meta name="application-name" content="我的网站">
+<meta name="apple-mobile-web-app-title" content="我的网站"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://chestnutheng.github.io/counting/" /><link rel="prev" href="http://chestnutheng.github.io/pthread/" /><link rel="next" href="http://chestnutheng.github.io/linux_epoll/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[Linux]谈一谈并行Counting",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/chestnutheng.github.io\/counting\/"
+        },"genre": "posts","keywords": "Linux, perfbook","wordcount":  721 ,
+        "url": "http:\/\/chestnutheng.github.io\/counting\/","datePublished": "2019-07-26T16:49:50+08:00","dateModified": "2019-07-26T18:26:43+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "子恒"
+            },"description": "多线程计数依然是处理多线程问题中最基础的操作之一。本文讨论了简单的并行计数、最终一致的并行计数、有上限的并行计数等，视图从这个最简单的问题中学习并行设计的思维。"
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="子恒的博客">子恒的博客</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/"> 主页 </a><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/freinds/"> 友链 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="子恒的博客">子恒的博客</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        Cancel
+                    </a>
+                </div><a class="menu-item" href="/" title="">主页</a><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/freinds/" title="">友链</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><div class="search-dropdown desktop">
+        <div id="search-dropdown-desktop"></div>
+    </div>
+    <div class="search-dropdown mobile">
+        <div id="search-dropdown-mobile"></div>
+    </div><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">[Linux]谈一谈并行Counting</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="about" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>子恒</a></span>&nbsp;<span class="post-category">included in <a href="/categories/%E5%90%8E%E5%8F%B0/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>后台</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2019-07-26">2019-07-26</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;721 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;4 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#简单的并行计数">简单的并行计数</a></li>
+    <li><a href="#经常写计数偶尔读计数">经常写计数，偶尔读计数</a>
+      <ul>
+        <li><a href="#利用数组分开计数">利用数组分开计数</a></li>
+        <li><a href="#定时刷新最终一致">定时刷新，最终一致</a></li>
+        <li><a href="#线程私有的__thread">线程私有的__thread</a></li>
+      </ul>
+    </li>
+    <li><a href="#近似上限的计数">近似上限的计数</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="简单的并行计数">简单的并行计数</h1>
+<p>在一个简单的多线程计数程序中，我们假设要每个线程去把sum的值多加100m，同时进行。代码如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;pthread.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="cp">#if 0</span><span class="c">
+</span></span></span><span class="line"><span class="cl"><span class="c">  #define ADD_P(x) __sync_fetch_and_add((x), 1)
+</span></span></span><span class="line"><span class="cl"><span class="c"></span><span class="cp">#else
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>  <span class="cp">#define ADD_P(x) (++(*x))
+</span></span></span><span class="line"><span class="cl"><span class="cp">#endif
+</span></span></span><span class="line"><span class="cl"><span class="cp">#define TC 8
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="o">*</span><span class="nf">thgo</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">  <span class="kt">long</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1000</span><span class="o">*</span><span class="mi">1000</span><span class="o">*</span><span class="mi">100</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="k">while</span><span class="p">(</span><span class="n">i</span><span class="o">--</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">){</span><span class="nf">ADD_P</span><span class="p">((</span><span class="kt">long</span> <span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">);};</span>
+</span></span><span class="line"><span class="cl">  <span class="kt">pthread_t</span> <span class="n">me</span> <span class="o">=</span> <span class="nf">pthread_self</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;thread sum: %ld tid: %lu </span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span>  <span class="o">*</span><span class="p">(</span><span class="kt">long</span> <span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">,</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span><span class="n">me</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span> <span class="p">(){</span>
+</span></span><span class="line"><span class="cl">  <span class="kt">long</span> <span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="kt">pthread_t</span> <span class="n">ths</span><span class="p">[</span><span class="n">TC</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">// threads
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">TC</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">      <span class="nf">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ths</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">thgo</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sum</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">// main thread
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="nf">thgo</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sum</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">// join
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">TC</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">      <span class="nf">pthread_join</span><span class="p">(</span><span class="n">ths</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="nb">NULL</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;all final sum : %ld</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">sum</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>如果使用一般的计数，会出现严重的数据踩踏问题，导致结果只能取得一定近似的值：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">$ time ./t
+</span></span><span class="line"><span class="cl">thread sum_added : 96683538 tid: 139864218973952 
+</span></span><span class="line"><span class="cl">thread sum_added : 97597912 tid: 139864210581248 
+</span></span><span class="line"><span class="cl">thread sum_added : 98631229 tid: 139864202188544 
+</span></span><span class="line"><span class="cl">thread sum_added : 106625687 tid: 139864228308800 
+</span></span><span class="line"><span class="cl">all final sum : 106628420
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">real  0m1.079s
+</span></span><span class="line"><span class="cl">user  0m4.240s
+</span></span><span class="line"><span class="cl">sys	  0m0.000s
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>如果切换原子原语，性能会下降大约八倍（4个线程，在一亿的计数时）。原因是一个变量被4个线程同时竞争，等待的时间大大加长。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">thread sum_added : 297410188 tid: 140249129400064 
+</span></span><span class="line"><span class="cl">thread sum_added : 323862913 tid: 140249121007360 
+</span></span><span class="line"><span class="cl">thread sum_added : 325497470 tid: 140249137792768 
+</span></span><span class="line"><span class="cl">thread sum_added : 399999202 tid: 140249147127616 
+</span></span><span class="line"><span class="cl">all final sum : 400000000
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">real 0m8.323s
+</span></span><span class="line"><span class="cl">user 0m31.044s
+</span></span><span class="line"><span class="cl">sys  0m0.000s
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><img src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/count1.png" width="400"></img></p>
+<p>上面是一个使用原子原语时，线程个数和花费时间的关系。随着线程个数的增多，耗时几乎是等比例增长。</p>
+<h1 id="经常写计数偶尔读计数">经常写计数，偶尔读计数</h1>
+<p>有一个程序每秒钟处理1亿左右的包，我们需要每五秒查看一下总包长。这是一个典型的经常写计数，偶尔读计数的场景。</p>
+<h2 id="利用数组分开计数">利用数组分开计数</h2>
+<p>一个经典的方法是，取消上一节中进程们共享的变量，改为每个进程独有的变量，然后再做加和。在下面的代码中，用线程id作为key，线程自己的计数作为value建立了map，各个线程分别写入自己的计数器内，避免了冲突。伪代码如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="n">counts</span> <span class="o">=</span> <span class="p">{}</span>
+</span></span><span class="line"><span class="cl"><span class="n">void</span> <span class="n">write_count</span><span class="p">(){</span>
+</span></span><span class="line"><span class="cl">   <span class="n">tid</span> <span class="o">=</span> <span class="n">pthread_self</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">   <span class="n">counts</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">long</span> <span class="n">read_count</span><span class="p">(){</span>
+</span></span><span class="line"><span class="cl">    <span class="nb">sum</span> <span class="o">=</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="n">tid</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">sum</span> <span class="o">+=</span> <span class="n">c</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="nb">sum</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>这种方法有两个问题：</p>
+<ol>
+<li>读操作时，写操作依然在进行，导致结果不准确。读到的不同线程的计数，介于开始读到读结束的窗口之间。</li>
+<li>读操作需要聚合所有线程，对读取端而言比较复杂</li>
+</ol>
+<h2 id="定时刷新最终一致">定时刷新，最终一致</h2>
+<p>为了解决上述的两个问题，我们设计了最终一致的版本：每隔1ms把所有线程的计数加和，存入全局变量中。这样有两个优点：</p>
+<ol>
+<li>不一致窗口最多为1ms</li>
+<li>读取的时候只要直接读变量就可以了，不用加和</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="n">counts</span> <span class="o">=</span> <span class="p">{}</span>
+</span></span><span class="line"><span class="cl"><span class="n">global_count</span> <span class="o">=</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl"><span class="n">void</span> <span class="n">write_count</span><span class="p">(){</span>
+</span></span><span class="line"><span class="cl">   <span class="n">tid</span> <span class="o">=</span> <span class="n">pthread_self</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">   <span class="n">counts</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">long</span> <span class="n">read_count</span><span class="p">(){</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">global_count</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">//</span> <span class="n">另起一个线程用来计数</span>
+</span></span><span class="line"><span class="cl"><span class="n">void</span> <span class="n">eventual_count</span><span class="p">(){</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">sum</span> <span class="o">=</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl">        <span class="k">for</span> <span class="n">tid</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="nb">sum</span> <span class="o">+=</span> <span class="n">c</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="n">global_count</span> <span class="o">=</span> <span class="nb">sum</span>
+</span></span><span class="line"><span class="cl">        <span class="n">sleep</span> <span class="mi">1</span><span class="n">ms</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Note: 线程数量增多时，<code>eventual_count</code>可能会越来越不准确。解决这个问题的方法是对线程分组，每组线程让一个<code>eventual_count</code>线程来处理计数，这样每个<code>eventual_count</code>线程都不会耗费太多的时间处理。必要的时候，可以采用树状的<code>eventual_count</code>线程，层级处理。</p>
+<h2 id="线程私有的__thread">线程私有的__thread</h2>
+<p><code>__thread</code> gcc提供的关键字，修饰线程私有的变量。修饰后每个线程都有一份该变量实体，且值互不干扰。<br>
+<code>counter</code> 是每个线程自己的计数器，long类型。<br>
+<code>counterp</code> 是一个用于存放线程私有变量指针的数组。初始化时，把线程私有变量的地址写进数组。读取时，读取所有指针的值加和。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp"><span class="line"><span class="cl"><span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">__thread</span> <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">unsigned</span> <span class="kt">long</span> <span class="o">*</span><span class="n">counterp</span><span class="p">[</span><span class="n">NR_THREADS</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="nb">NULL</span> <span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">finalcount</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">DEFINE_SPINLOCK</span><span class="p">(</span><span class="n">final_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">inc_count</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">counter</span><span class="o">++</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">unsigned</span> <span class="kt">long</span> <span class="nf">read_count</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">int</span> <span class="n">t</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">sum</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">spin_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">final_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">sum</span> <span class="o">=</span> <span class="n">finalcount</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">for_each_thread</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">(</span><span class="n">counterp</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">			<span class="n">sum</span> <span class="o">+=</span> <span class="o">*</span><span class="n">counterp</span><span class="p">[</span><span class="n">t</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">	<span class="n">spin_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">final_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="n">sum</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">count_register_thread</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">int</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">smp_thread_id</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">spin_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">final_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">counterp</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">counter</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">spin_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">final_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h1 id="近似上限的计数">近似上限的计数</h1>
+<p>有一些场景需要我们限制计数器的上限，比如限制一个广告曝光的次数。各个线程处理广告的请求，每返回一个广告就给计数器加一，直到总上限到达，就不再返回广告。<br>
+比较理想的方案是把任务平均分给每个线程，当他们都达到上限时，认为总上限也已经到达。这样会有几个问题：</p>
+<ol>
+<li>每个线程曝光广告的速度不同，可能有点线程很快到达上限了，有的却没有曝光，攒了大量的指标。</li>
+<li>这时候如果曝光满了的线程还要继续处理曝光，就要写别的线程的计数器。这会造成昂贵的跨线程通信。</li>
+</ol>
+<p>我们可以从上一节的最终一致的方法得到启发，把计数任务分割给各个线程。我们维护一个每个线程的计数器<code>counter</code>和每个线程的计数上限<code>countermax</code>，以及一个全局的计数器<code>globalcount</code>和全局的计数上限<code>globalcountmax</code>。<br>
+需要注意的是，我们额外引入了一个<code>globalreserve</code>。它在数值上是<code>countermax</code>的和，用来表示预分配给每个counter的名额，也算在已经用掉的指标里。</p>
+<p>这个方法的思想在于，先预分配给每个线程一些指标。如果有一个线程指标都用掉了，那么就收集里面的计数，并给他分配新的指标。直到所有的指标都用尽为止。收集计数的过程，就是<code>globalize_count</code>。分配计数的过程，就是<code>balance_count</code>。流程如下图</p>
+<p><img src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/counters_add.png"></img></p>
+<p><img src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/counterflow.png"></img></p>
+<p>这种设计就是一个并行快速路径的例子，这是一种重要的设计模式，适用于下面这种情况：在多数情况没有线程间通信和交互的开销，而偶尔进行的跨进程通信又使用了精心设计的（但是开销仍然很大）全局算法。<br>
+在阅读代码之后，还有几点需要思考：</p>
+<ol>
+<li>这种计数会有误差。这个方法给每个线程预分配了计数值，但是这些计数值未必有被真实使用。所以最大会有<code>globalreserve</code>大小的误差。</li>
+<li>在每个线程刚开始计数时，<code>countermax</code>被设置为总上限除以线程数的值。此时<code>globalreserve</code>和总上限值相等，这意味着最差情况下，如果一直请求某一个特定线程，很快就到达上限了。</li>
+<li>我们设置了<code>MAX_COUNTERMAX</code>来缓解第二点的问题。这样<code>globalreserve</code>不会迅速增长的过大。</li>
+<li><code>countermax</code>的值直接决定了误差。当离上限还比较远时，可以给每线程变量countermax赋值一个比较大的数，这样对性能和扩展性比较有好处。当靠近上限时，可以给这些countermax赋值一个较小的数，这样可以降低超过<code>globalcountmax</code>的风险。</li>
+<li>在balance操作的时候，我们把<code>counter</code> 设为 <code>countermax/2</code>，这样就可以保证，a)每次计数器把计数交还给总数时，至少有一半的计数被使用了。b)加减计数都能在快速路径中 c)第二点的问题得到缓解</li>
+<li><code>MAX_COUNTERMAX</code> 导致不能进入快速路径的线程增加了，这会导致性能的降低。</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp"><span class="line"><span class="cl"><span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">__thread</span> <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">__thread</span> <span class="n">countermax</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">globalcountmax</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">globalcount</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">globalreserve</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">unsigned</span> <span class="kt">long</span> <span class="o">*</span><span class="n">counterp</span><span class="p">[</span><span class="n">NR_THREADS</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="nb">NULL</span> <span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="n">DEFINE_SPINLOCK</span><span class="p">(</span><span class="n">gblcnt_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#define MAX_COUNTERMAX 100
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">void</span> <span class="nf">globalize_count</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">globalcount</span> <span class="o">+=</span> <span class="n">counter</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">globalreserve</span> <span class="o">-=</span> <span class="n">countermax</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">countermax</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">void</span> <span class="nf">balance_count</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">countermax</span> <span class="o">=</span> <span class="n">globalcountmax</span> <span class="o">-</span> <span class="n">globalcount</span> <span class="o">-</span> <span class="n">globalreserve</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">countermax</span> <span class="o">/=</span> <span class="n">num_online_threads</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">countermax</span> <span class="o">&gt;</span> <span class="n">MAX_COUNTERMAX</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="n">countermax</span> <span class="o">=</span> <span class="n">MAX_COUNTERMAX</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">globalreserve</span> <span class="o">+=</span> <span class="n">countermax</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">counter</span> <span class="o">=</span> <span class="n">countermax</span> <span class="o">/</span> <span class="mi">2</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">counter</span> <span class="o">&gt;</span> <span class="n">globalcount</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="n">counter</span> <span class="o">=</span> <span class="n">globalcount</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">globalcount</span> <span class="o">-=</span> <span class="n">counter</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">add_count</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">delta</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// 减，而不是countermax + delta。防止整形溢出。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">if</span> <span class="p">(</span><span class="n">countermax</span> <span class="o">-</span> <span class="n">counter</span> <span class="o">&gt;=</span> <span class="n">delta</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">counter</span> <span class="o">+=</span> <span class="n">delta</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// 所有的全局变量访问都会上锁
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="n">spin_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">gblcnt_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">globalize_count</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">globalcountmax</span> <span class="o">-</span> <span class="n">globalcount</span> <span class="o">-</span> <span class="n">globalreserve</span> <span class="o">&lt;</span> <span class="n">delta</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">spin_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">gblcnt_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="n">globalcount</span> <span class="o">+=</span> <span class="n">delta</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">balance_count</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">	<span class="n">spin_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">gblcnt_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">unsigned</span> <span class="kt">long</span> <span class="nf">read_count</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">int</span> <span class="n">t</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">sum</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">spin_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">gblcnt_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">sum</span> <span class="o">=</span> <span class="n">globalcount</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">for_each_thread</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">(</span><span class="n">counterp</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">			<span class="n">sum</span> <span class="o">+=</span> <span class="o">*</span><span class="n">counterp</span><span class="p">[</span><span class="n">t</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">	<span class="n">spin_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">gblcnt_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="n">sum</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">count_register_thread</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">int</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">smp_thread_id</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">spin_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">gblcnt_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">counterp</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">counter</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">spin_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">gblcnt_mutex</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div></div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2019-07-26</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/counting/index.md" target="_blank">Read Markdown</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="http://chestnutheng.github.io/counting/" data-title="[Linux]谈一谈并行Counting" data-hashtags="Linux,perfbook"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="http://chestnutheng.github.io/counting/" data-hashtag="Linux"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Hacker News" data-sharer="hackernews" data-url="http://chestnutheng.github.io/counting/" data-title="[Linux]谈一谈并行Counting"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="http://chestnutheng.github.io/counting/" data-title="[Linux]谈一谈并行Counting"><i data-svg-src="/lib/simple-icons/icons/line.min.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="http://chestnutheng.github.io/counting/" data-title="[Linux]谈一谈并行Counting" data-ralateuid="2461859532"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw" aria-hidden="true"></i>&nbsp;<a href="/tags/linux/">Linux</a>,&nbsp;<a href="/tags/perfbook/">perfbook</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/pthread/" class="prev" rel="prev" title="[Linux]并行编程：进程、线程和同步"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>[Linux]并行编程：进程、线程和同步</a>
+            <a href="/linux_epoll/" class="next" rel="next" title="[Linux]高级IO">[Linux]高级IO<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
+</div>
+<div id="comments"><div id="giscus" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://giscus.app">Giscus</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.118.2">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2015 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="about" target="_blank">子恒</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/lightgallery/css/lightgallery-bundle.min.css"><link rel="stylesheet" href="/lib/katex/katex.min.css"><script type="text/javascript" src="/lib/autocomplete/autocomplete.min.js"></script><script type="text/javascript" src="/lib/lunr/lunr.min.js"></script><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/lightgallery/lightgallery.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/thumbnail/lg-thumbnail.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/zoom/lg-zoom.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript" src="/lib/sharer/sharer.min.js"></script><script type="text/javascript" src="/lib/katex/katex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/auto-render.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/copy-tex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{"giscus":{"category":"Announcements","categoryId":"DIC_kwDOA9ikP84CQT5Y","darkTheme":"dark","emitMetadata":"0","inputPosition":"bottom","lang":"en","lazyLoading":true,"lightTheme":"light","mapping":"pathname","reactionsEnabled":"1","repo":"chestnutheng/chestnutheng.github.io","repoId":"MDEwOlJlcG9zaXRvcnk2NDUyOTQ3MQ=="}},"lightgallery":true,"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":true,"left":"\\begin{equation}","right":"\\end{equation}"},{"display":true,"left":"\\begin{equation*}","right":"\\end{equation*}"},{"display":true,"left":"\\begin{align}","right":"\\end{align}"},{"display":true,"left":"\\begin{align*}","right":"\\end{align*}"},{"display":true,"left":"\\begin{alignat}","right":"\\end{alignat}"},{"display":true,"left":"\\begin{alignat*}","right":"\\end{alignat*}"},{"display":true,"left":"\\begin{gather}","right":"\\end{gather}"},{"display":true,"left":"\\begin{CD}","right":"\\end{CD}"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"highlightTag":"em","lunrIndexURL":"/index.json","maxResultLength":10,"noResultsFound":"No results found","snippetLength":50,"type":"lunr"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

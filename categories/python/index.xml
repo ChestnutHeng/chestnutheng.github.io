@@ -1,0 +1,51 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>Python - Category - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/categories/python/</link>
+        <description>Python - Category - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Wed, 20 Mar 2019 23:00:25 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/categories/python/" rel="self" type="application/rss+xml" /><item>
+    <title>[Python]Scrapy Scan</title>
+    <link>http://chestnutheng.github.io/scrapy/</link>
+    <pubDate>Wed, 20 Mar 2019 23:00:25 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/scrapy/</guid>
+    <description><![CDATA[scrapy是个很简单强大的python爬虫框架，不需要处理网络相关逻辑就可以轻松爬取。本文介绍了一些基本的内容。需要注意的是，本文档中所有的●表示非必须内容。
+本教程基于官方文档：官方文档
+安装scrapy CentOS 1 2 yum install python34-devel.x86_64 pip3 install scrapy 创建项目 1 2 3 4 //创建项目hello scrapy startproject hello //创建一个爬虫（在项目根目录运行，不要加http://），名字为baidu，域名为www.baidu.com scrapy genspider baidu &#34;www.baidu.com&#34; ● 需要注意的是，如果要无视robots.txt文件，请在下面的settings.py中设置ROBOTSTXT_OBEY = False
+● 刚才建好的项目目录文件树如下：
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 tree hello hello |-- hello | |-- __init__.py | |-- items.py // 输出结构体定义 | |-- middlewares.py | |-- pipelines.py | |-- __pycache__ | |-- settings.]]></description>
+</item>
+<item>
+    <title>[Python]Python版socket十行模板</title>
+    <link>http://chestnutheng.github.io/socket_in_10_lines/</link>
+    <pubDate>Fri, 20 Jan 2017 10:15:13 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/socket_in_10_lines/</guid>
+    <description><![CDATA[以下的socket
+都是python实现的服务端接受客户端键盘输入的信息，改为大写返回客户端的模板
+都是同步、阻塞的
+都会在数据长度大于1024时产生错误，请自己写协议
+端口都是8080，请确保未被占用
+tcp_server.py 6行控制监听的最大tcp链接数。
+tcp是有链接的。9行建立链接，10行接受数据，11行发送数据，12行关闭链接。
+1 2 3 4 5 6 7 8 9 10 11 12 import socket server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) server.bind((&#34;0.0.0.0&#34;, 8080)) server.listen(1) while True: conn, addr = server.accept() data_from_client = conn.recv(1024).decode(&#39;utf8&#39;) conn.sendall(data_from_client.upper().encode(&#39;utf8&#39;)) conn.close() tcp_client.py 5行链接，6行发送数据，7行接收数据，9行关闭链接。
+1 2 3 4 5 6 7 8 9 import socket while True: client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) client.connect((&#34;0.0.0.0&#34;, 8080)) client.sendall(input().encode(&#39;utf8&#39;)) data_from_server = client.recv(1024).decode(&#39;utf8&#39;) print(&#39;GET &#39; + data_from_server) client.]]></description>
+</item>
+<item>
+    <title>[Python]Python性能分析工具</title>
+    <link>http://chestnutheng.github.io/python_profile/</link>
+    <pubDate>Tue, 09 Aug 2016 13:04:30 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/python_profile/</guid>
+    <description><![CDATA[时间分析 time 命令 用*nix自带的系统命令
+1 2 3 4 5 $ time python3 reg.py real	0m1.617s user	0m1.504s sys	0m0.112s sys 系统调用时间
+user 用户空间花费时间
+real 实际时间
+如果user + sys &lt; real 说明时间被花费在IO上。
+profile和cProfile python自带了两个函数时间分析工具，cProfile和profile。cProfile是纯C写的，所以用起来快了很多。
+查看帮助:
+1 2 3 4 5 6 7 8 9 $ python3 -m cProfile -h Usage: cProfile.py [-o output_file_path] [-s sort] scriptfile [arg] ... Options: -h, --help show this help message and exit -o OUTFILE, --outfile=OUTFILE Save stats to &lt;outfile&gt; -s SORT, --sort=SORT Sort order when printing to stdout, based on pstats.]]></description>
+</item>
+</channel>
+</rss>

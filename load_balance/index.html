@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>[后台]负载均衡 （一）算法篇 - 子恒的博客</title><meta name="Description" content="负载均衡是集群中一个重要的组成部分。这个模块一般集成了名字服务、负载均衡、过载保护、限流等功能。第一部分是针对均衡本身算法的介绍。"><meta property="og:title" content="[后台]负载均衡 （一）算法篇" />
+<meta property="og:description" content="负载均衡是集群中一个重要的组成部分。这个模块一般集成了名字服务、负载均衡、过载保护、限流等功能。第一部分是针对均衡本身算法的介绍。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://chestnutheng.github.io/load_balance/" /><meta property="og:image" content="http://chestnutheng.github.io/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2020-05-06T20:24:30+08:00" />
+<meta property="article:modified_time" content="2020-05-21T17:13:47+08:00" /><meta property="og:site_name" content="子恒的博客" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="http://chestnutheng.github.io/logo.png"/>
+
+<meta name="twitter:title" content="[后台]负载均衡 （一）算法篇"/>
+<meta name="twitter:description" content="负载均衡是集群中一个重要的组成部分。这个模块一般集成了名字服务、负载均衡、过载保护、限流等功能。第一部分是针对均衡本身算法的介绍。"/>
+<meta name="application-name" content="我的网站">
+<meta name="apple-mobile-web-app-title" content="我的网站"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://chestnutheng.github.io/load_balance/" /><link rel="prev" href="http://chestnutheng.github.io/linux_io/" /><link rel="next" href="http://chestnutheng.github.io/load_balance2/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[后台]负载均衡 （一）算法篇",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/chestnutheng.github.io\/load_balance\/"
+        },"genre": "posts","keywords": "负载均衡, 算法, 后台","wordcount":  1483 ,
+        "url": "http:\/\/chestnutheng.github.io\/load_balance\/","datePublished": "2020-05-06T20:24:30+08:00","dateModified": "2020-05-21T17:13:47+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "子恒"
+            },"description": "负载均衡是集群中一个重要的组成部分。这个模块一般集成了名字服务、负载均衡、过载保护、限流等功能。第一部分是针对均衡本身算法的介绍。"
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="子恒的博客">子恒的博客</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/"> 主页 </a><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/freinds/"> 友链 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="子恒的博客">子恒的博客</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        Cancel
+                    </a>
+                </div><a class="menu-item" href="/" title="">主页</a><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/freinds/" title="">友链</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><div class="search-dropdown desktop">
+        <div id="search-dropdown-desktop"></div>
+    </div>
+    <div class="search-dropdown mobile">
+        <div id="search-dropdown-mobile"></div>
+    </div><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">[后台]负载均衡 （一）算法篇</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="about" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>子恒</a></span>&nbsp;<span class="post-category">included in <a href="/categories/%E5%90%8E%E5%8F%B0/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>后台</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2020-05-06">2020-05-06</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;1483 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;7 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#nginx用的负载均衡算法">nginx用的负载均衡算法</a>
+      <ul>
+        <li><a href="#随机访问">随机访问</a></li>
+        <li><a href="#加权轮询">加权轮询</a></li>
+        <li><a href="#ip_hash">ip_hash</a></li>
+        <li><a href="#least_conn">least_conn</a></li>
+        <li><a href="#一致哈希">一致哈希</a></li>
+        <li><a href="#恐慌阈值-envoy">恐慌阈值 Envoy</a></li>
+      </ul>
+    </li>
+    <li><a href="#lb用的负载均衡算法">LB用的负载均衡算法</a>
+      <ul>
+        <li><a href="#edf调度算法">EDF调度算法</a>
+          <ul>
+            <li><a href="#实现1">实现1</a></li>
+            <li><a href="#实现2">实现2</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><p>当单机的访问压力很大时，就需要引入集群。集群一个很重要的事情就是把请求均匀地分配在各个机器上，这就是负载均衡的雏形。<br>
+有基于MAC地址的二层负载均衡和基于IP地址的三层负载均衡。 二层负载均衡会通过一个虚拟MAC地址接收请求，然后再分配到真实的MAC地址；三层负载均衡会通过一个虚拟IP地址接收请求，然后再分配到真实的IP地址；<br>
+四层通过虚拟IP+端口接收请求，然后再分配到真实的服务器（比如LVS，F5）；七层通过虚拟的URL或主机名接收请求，然后再分配到真实的服务器（Haproxy和Nginx）。<br>
+四层和七层是最常见的负载均衡模型。<br>
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/load_ban1.jpg"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/load_ban1.jpg, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/load_ban1.jpg 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/load_ban1.jpg 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/load_ban1.jpg"
+        title="七层和四层模型" /><br>
+**四层：**以常见的TCP为例，负载均衡设备在接收到第一个来自客户端的SYN请求时，通过负载均衡算法选择服务器，并对报文中目标IP地址进行修改（改为后端服务器IP），直接转发给该服务器。TCP的连接建立，即三次握手是客户端和服务器直接建立的，负载均衡设备只是起到一个类似路由器的转发动作。在某些部署情况下，为保证服务器回包可以正确返回给负载均衡设备，在转发报文的同时可能还会对报文原来的源地址进行修改。<br>
+**七层：**以常见的TCP为例，负载均衡设备如果要根据真正的应用层内容再选择服务器，只能先代理最终的服务器和客户端建立连接(三次握手)后，才可能接受到客户端发送的真正应用层内容的报文，然后再根据该报文中的特定字段，再加上设置的负载均衡算法，选择内部某台服务器。负载均衡设备在这种情况下，更类似于一个代理服务器。负载均衡和前端的客户端以及后端的服务器会分别建立TCP连接。所以从这个技术原理上来看，七层负载均衡明显的对负载均衡设备的要求更高，处理七层的能力也必然会低于四层模式的部署方式。<br>
+<a href="https://kb.cnblogs.com/page/188170/" target="_blank" rel="noopener noreffer ">参考资料：四层和七层负载均衡的区别</a></p>
+<h1 id="nginx用的负载均衡算法">nginx用的负载均衡算法</h1>
+<p>Nginx可以作为HTTP反向代理，把访问本机的HTTP请求，均分到后端集群的若干台服务器上。负载均衡的核心就是负载均衡所使用的平衡算法，适用于各种场景。<br>
+<a href="https://www.kancloud.cn/digest/sknginx/130029" target="_blank" rel="noopener noreffer ">Nginx的负载均衡算法</a><br>
+Nginx目前提供的负载均衡模块：<br>
+ngx_http_upstream_round_robin，加权轮询，可均分请求，是默认的HTTP负载均衡算法，集成在框架中。<br>
+ngx_http_upstream_ip_hash_module，IP哈希，可保持会话。<br>
+ngx_http_upstream_least_conn_module，最少连接数，可均分连接。适用于链接数体现资源的服务，比如FTP。<br>
+ngx_http_upstream_hash_module，一致性哈希，可减少缓存数据的失效。</p>
+<h2 id="随机访问">随机访问</h2>
+<p>在介绍nginx的模式前，先介绍下普通的负载均衡方法。假设有7个请求，我们给A、B、C三个节点分别4、2、1的权重。最朴素的负载均衡方式有下面几种：</p>
+<ol>
+<li>完全轮询：访问完A去访问B，访问完B去访问C，再去访问A。缺点是没有权重，不能根据负载调节。</li>
+<li>列表轮询：构造一个数组[A, A, A, A, B, B, C]，每次pop出去一个访问。缺点是pop出去的元素太随机，可能一次集中访问A ，而且占用内存太大，对于几万的权重范围不合适。</li>
+<li>随机数：我们按照A、B、C的权重划分好区间，A（0、1、2、3），B（4、5），C（6），然后取一个随机数，模余7，看看最后的结果在哪个区间内，就取哪个节点。缺点是完全随机，无法避免集中访问。</li>
+</ol>
+<h2 id="加权轮询">加权轮询</h2>
+<p>假设有7个请求，我们给A、B、C三个节点分别4、2、1的权重。如果随机按照概率来选，那么很可能出现连续四个请求都在A上面的情况，这样只能保证结果看起来均衡，但是时间段内不均衡。Nginx采用了一种平滑的加权平均算法来选取节点（Weighted Round Robin）。<br>
+先引入三个概念，都用来描述服务器节点的权重：</p>
+<ol>
+<li>$W$ : weight 我们指定的权重，就是上面例子中的4、2、1。</li>
+<li>$W_{ew}$: effective_weight 有效权重，初始值为$W$。用来对故障节点降权。<br>
+如果通信中有错误产生，就减小effective_weight。（故障降权）<br>
+此后有新的请求过来时，再逐步增加effective_weight，最终又恢复到weight。（自动恢复）</li>
+<li>$W_{cw}$ : current_weight 当前真实权重，每次都会选到最大的真实权重的节点去请求</li>
+</ol>
+<p>真实权重$W_{cw}$计算方式：</p>
+<ol>
+<li>初始化：$W_{cw}$ 起始值为0</li>
+<li>获得实时权重：请求到来后，给每个节点的真实权重加上有效权重，即$每个节点 W_{cw} = W_{cw} + W_{ew}$</li>
+<li>选出最大权重：选择真实权重最大的节点最为本次请求的目标</li>
+<li>回避刚选的节点：最选择的节点的实时权重减去所有节点（包括自己）的有效权重和。即$选中节点 W_{cw} = W_{cw} - (W_{ew1} + W_{ew2} + &hellip; + W_{ewn})$</li>
+</ol>
+<p>来看一个具体的例子：<br>
+假设A、B、C三个节点的权重分别为4、2、1。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">请求序号</th>
+<th style="text-align:center">请求后的current_weight</th>
+<th style="text-align:center">选择的节点</th>
+<th style="text-align:center">选择后的current_weight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">未请求</td>
+<td style="text-align:center">{0,0,0}</td>
+<td style="text-align:center">/</td>
+<td style="text-align:center">/</td>
+</tr>
+<tr>
+<td style="text-align:center">1</td>
+<td style="text-align:center">{4,2,1}</td>
+<td style="text-align:center">A</td>
+<td style="text-align:center">{-3,2,1}</td>
+</tr>
+<tr>
+<td style="text-align:center">2</td>
+<td style="text-align:center">{1,4,2}</td>
+<td style="text-align:center">B</td>
+<td style="text-align:center">{1,-3,2}</td>
+</tr>
+<tr>
+<td style="text-align:center">3</td>
+<td style="text-align:center">{5,-1,3}</td>
+<td style="text-align:center">A</td>
+<td style="text-align:center">{-2,-1,3}</td>
+</tr>
+<tr>
+<td style="text-align:center">4</td>
+<td style="text-align:center">{2,1,4}</td>
+<td style="text-align:center">C</td>
+<td style="text-align:center">{2,1,-3}</td>
+</tr>
+<tr>
+<td style="text-align:center">5</td>
+<td style="text-align:center">{6,3,-2}</td>
+<td style="text-align:center">A</td>
+<td style="text-align:center">{-1,3,-2}</td>
+</tr>
+<tr>
+<td style="text-align:center">6</td>
+<td style="text-align:center">{3,5,-1}</td>
+<td style="text-align:center">B</td>
+<td style="text-align:center">{3,-2,-1}</td>
+</tr>
+<tr>
+<td style="text-align:center">7</td>
+<td style="text-align:center">{7,0,0}</td>
+<td style="text-align:center">A</td>
+<td style="text-align:center">{0,0,0}</td>
+</tr>
+<tr>
+<td style="text-align:center">三个结论：每个节点被选中的次数是符合权重的；A没有被连续选取；七次之后权重会归零，是一个循环。</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">ngx_http_upstream_rr_peer_t</span> <span class="o">*</span><span class="nf">ngx_http_upstream_get_peer</span><span class="p">(</span><span class="kt">ngx_http_upstream_rr_peer_data_t</span> <span class="o">*</span><span class="n">rrp</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">time_t</span>                        <span class="n">now</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">uintptr_t</span>                     <span class="n">m</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">ngx_int_t</span>                     <span class="n">total</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">ngx_uint_t</span>                    <span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">ngx_http_upstream_rr_peer_t</span>  <span class="o">*</span><span class="n">peer</span><span class="p">,</span> <span class="o">*</span><span class="n">best</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">now</span> <span class="o">=</span> <span class="nf">ngx_time</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">best</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">...</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="cm">/* 遍历集群中的所有后端 */</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="p">(</span><span class="n">peer</span> <span class="o">=</span> <span class="n">rrp</span><span class="o">-&gt;</span><span class="n">peers</span><span class="o">-&gt;</span><span class="n">peer</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">         <span class="n">peer</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">         <span class="n">peer</span> <span class="o">=</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">,</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">n</span> <span class="o">=</span> <span class="n">i</span> <span class="o">/</span> <span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">uintptr_t</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">        <span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="kt">uintptr_t</span><span class="p">)</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">i</span> <span class="o">%</span> <span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">uintptr_t</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="cm">/* 检查该后端服务器在位图中对应的位，为1时表示不可用 */</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">rrp</span><span class="o">-&gt;</span><span class="n">tried</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">&amp;</span> <span class="n">m</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">       
+</span></span><span class="line"><span class="cl">        <span class="cm">/* 永久不可用的标志 */</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">peer</span><span class="o">-&gt;</span><span class="n">down</span><span class="p">)</span> 
+</span></span><span class="line"><span class="cl">            <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        
+</span></span><span class="line"><span class="cl">       <span class="cm">/* 在一段时间内，如果此后端服务器的失败次数，超过了允许的最大值，那么不允许使用此后端了 */</span>
+</span></span><span class="line"><span class="cl">       <span class="k">if</span> <span class="p">(</span><span class="n">peer</span><span class="o">-&gt;</span><span class="n">max_fails</span>
+</span></span><span class="line"><span class="cl">            <span class="o">&amp;&amp;</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">fails</span> <span class="o">&gt;=</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">max_fails</span>
+</span></span><span class="line"><span class="cl">            <span class="o">&amp;&amp;</span> <span class="n">now</span> <span class="o">-</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">checked</span> <span class="o">&lt;=</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">fail_timeout</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        
+</span></span><span class="line"><span class="cl">        <span class="n">peer</span><span class="o">-&gt;</span><span class="n">current_weight</span> <span class="o">+=</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">effective_weight</span><span class="p">;</span> <span class="cm">/* 对每个后端，增加其当前权重 */</span>
+</span></span><span class="line"><span class="cl">        <span class="n">total</span> <span class="o">+=</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">effective_weight</span><span class="p">;</span> <span class="cm">/* 累加所有后端的有效权重 */</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="cm">/* 如果之前此后端发生了失败，会减小其effective_weight来降低它的权重。          
+</span></span></span><span class="line"><span class="cl"><span class="cm">         * 此后在选取后端的过程中，又通过增加其effective_weight来恢复它的权重。          
+</span></span></span><span class="line"><span class="cl"><span class="cm">         */</span>        
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">peer</span><span class="o">-&gt;</span><span class="n">effective_weight</span> <span class="o">&lt;</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">weight</span><span class="p">)</span> 
+</span></span><span class="line"><span class="cl">            <span class="n">peer</span><span class="o">-&gt;</span><span class="n">effective_weight</span><span class="o">++</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        
+</span></span><span class="line"><span class="cl">        <span class="cm">/* 选取当前权重最大者，作为本次选定的后端 */</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">best</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="o">||</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">current_weight</span> <span class="o">&gt;</span> <span class="n">best</span><span class="o">-&gt;</span><span class="n">current_weight</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="n">best</span> <span class="o">=</span> <span class="n">peer</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="n">p</span> <span class="o">=</span> <span class="n">i</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">best</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="cm">/* 没有可用的后端 */</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="n">rrp</span><span class="o">-&gt;</span><span class="n">current</span> <span class="o">=</span> <span class="n">best</span><span class="p">;</span> <span class="cm">/* 保存本次选定的后端 */</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">n</span> <span class="o">=</span> <span class="n">p</span> <span class="o">/</span> <span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">uintptr_t</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">    <span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="kt">uintptr_t</span><span class="p">)</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">p</span> <span class="o">%</span> <span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">uintptr_t</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="cm">/* 对于本次请求，如果之后需要再次选取后端，不能再选取这个后端了 */</span>    
+</span></span><span class="line"><span class="cl">    <span class="n">rrp</span><span class="o">-&gt;</span><span class="n">tried</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">|=</span> <span class="n">m</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">best</span><span class="o">-&gt;</span><span class="n">current_weight</span> <span class="o">-=</span> <span class="n">total</span><span class="p">;</span> <span class="cm">/* 选定后端后，需要降低其当前权重 */</span>  
+</span></span><span class="line"><span class="cl">    <span class="cm">/* 更新checked时间 */</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">now</span> <span class="o">-</span> <span class="n">best</span><span class="o">-&gt;</span><span class="n">checked</span> <span class="o">&gt;</span> <span class="n">best</span><span class="o">-&gt;</span><span class="n">fail_timeout</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">best</span><span class="o">-&gt;</span><span class="n">checked</span> <span class="o">=</span> <span class="n">now</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">best</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="ip_hash">ip_hash</h2>
+<p>ip_hash是基于客户端IP的哈希值来选择服务器。同一个客户端的请求，都会发往同一台后端，除非该后端不可用了。ip_hash能够达到保持会话的效果。<br>
+和随机加权哈希一样，ip哈希借鉴了权重分段的思想，先算出哈希值, 然后模余total_weight，得到初始权重W [0, total_weight)，开始遍历节点。如果哈希值小于当前节点的权重，就选择当前节点；如果哈希值大于等于当前节点的权重，就减去当前节点的权重，再去尝试下个节点。我们还是讨论A，B，C三个节点的情况，假设权重分别为2、4、1 。<br>
+权重的和是7，那么哈希值应该是0~6 （因为模了哈希值）<br>
+6的情况：6 &gt;= 2 , 所以不选A，减去2。 6-2 &gt;= 4，所以不选B，减去4。2-4 &lt; 1，所以选C<br>
+5的情况：5 &gt;= 2 , 所以不选A，减去2。 5-2 &lt; 4，所以选B<br>
+4的情况：4 &gt;= 2 , 所以不选A，减去2。 4-2 &lt; 4，所以选B 。哈希值为3、2的情况也一样。<br>
+1、0的情况：1 &lt; 2，所以选A<br>
+可以看到最后四个选B，两个选A，一个选C，还是均衡的。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">for</span> <span class="p">(</span> <span class="p">;</span> <span class="p">;</span> <span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/* 1.根据客户端IP、本次选取的初始hash值，计算得到本次最终的hash值 */</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/* hash1 = (hash0 * 113 + addr[0]) % 6271; hash2 = (hash1 * 113 + addr[1]) % 6271;...; */</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="p">(</span><span class="kt">ngx_uint_t</span><span class="p">)</span> <span class="n">iphp</span><span class="o">-&gt;</span><span class="n">addrlen</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">hash</span> <span class="o">=</span> <span class="p">(</span><span class="n">hash</span> <span class="o">*</span> <span class="mi">113</span> <span class="o">+</span> <span class="n">iphp</span><span class="o">-&gt;</span><span class="n">addr</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">%</span> <span class="mi">6271</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="cm">/* 2. 先给w赋值为所有节点的权重和。total_weight和weight都是固定值 */</span>
+</span></span><span class="line"><span class="cl">    <span class="n">w</span> <span class="o">=</span> <span class="n">hash</span> <span class="o">%</span> <span class="n">iphp</span><span class="o">-&gt;</span><span class="n">rrp</span><span class="p">.</span><span class="n">peers</span><span class="o">-&gt;</span><span class="n">total_weight</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">peer</span> <span class="o">=</span> <span class="n">iphp</span><span class="o">-&gt;</span><span class="n">rrp</span><span class="p">.</span><span class="n">peers</span><span class="o">-&gt;</span><span class="n">peer</span><span class="p">;</span> <span class="cm">/* 第一台后端 */</span>
+</span></span><span class="line"><span class="cl">    <span class="n">p</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="cm">/* 3.遍历后端链表时，依次减去每个后端的权重，直到w小于某个后端的权重 */</span>
+</span></span><span class="line"><span class="cl">    <span class="k">while</span> <span class="p">(</span><span class="n">w</span> <span class="o">&gt;=</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">weight</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">w</span> <span class="o">-=</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">weight</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">peer</span> <span class="o">=</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">p</span><span class="o">++</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="nf">choose</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="least_conn">least_conn</h2>
+<p>有的场景下，把请求转发给连接数较少的后端，能够达到更好的负载均衡效果。<br>
+least_conn算法很简单，首选遍历后端集群，比较每个后端的conns/weight，选取该值最小的后端。如果有多个后端的conns/weight值同为最小的，那么对它们采用加权轮询算法。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">for</span> <span class="p">(</span><span class="n">peer</span> <span class="o">=</span> <span class="n">peers</span><span class="o">-&gt;</span><span class="n">peer</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">peer</span><span class="p">;</span> <span class="n">peer</span> <span class="o">=</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">,</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/* 检查此后端在状态位图中对应的位，为1时表示不可用 */</span> 
+</span></span><span class="line"><span class="cl">    <span class="n">n</span> <span class="o">=</span> <span class="n">i</span> <span class="o">/</span> <span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">uintptr_t</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">    <span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="kt">uintptr_t</span><span class="p">)</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">i</span> <span class="o">%</span> <span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">uintptr_t</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">rrp</span><span class="o">-&gt;</span><span class="n">tried</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">&amp;</span> <span class="n">m</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">       <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="cm">/* server指令中携带了down属性，表示后端永久不可用 */</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">peer</span><span class="o">-&gt;</span><span class="n">down</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="cm">/* 在一段时间内，如果此后端服务器的失败次数，超过了允许的最大值，那么不允许使用此后端了 */</span>
+</span></span><span class="line"><span class="cl">     <span class="k">if</span> <span class="p">(</span><span class="n">peer</span><span class="o">-&gt;</span><span class="n">max_fails</span> <span class="o">&amp;&amp;</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">fails</span> <span class="o">&gt;=</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">max_fails</span>
+</span></span><span class="line"><span class="cl">         <span class="o">&amp;&amp;</span> <span class="n">now</span> <span class="o">-</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">checked</span> <span class="o">&lt;=</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">fail_timeout</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        
+</span></span><span class="line"><span class="cl">    <span class="cm">/* 比较各个后端的conns/weight，选取最小者；
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * 如果有多个最小者，记录第一个的序号p，且设置many标志。
+</span></span></span><span class="line"><span class="cl"><span class="cm">     */</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">best</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="o">||</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">conns</span> <span class="o">*</span> <span class="n">best</span><span class="o">-&gt;</span><span class="n">weight</span> <span class="o">&lt;</span> <span class="n">best</span><span class="o">-&gt;</span><span class="n">conns</span> <span class="o">*</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">weight</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">best</span> <span class="o">=</span> <span class="n">peer</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">many</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">p</span> <span class="o">=</span> <span class="n">i</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">peer</span><span class="o">-&gt;</span><span class="n">conns</span> <span class="o">*</span> <span class="n">best</span><span class="o">-&gt;</span><span class="n">weight</span> <span class="o">==</span> <span class="n">best</span><span class="o">-&gt;</span><span class="n">conns</span> <span class="o">*</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">weight</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">many</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="cm">/* 如果有多个后端的conns/weight同为最小者，则对它们使用轮询算法 */</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="n">many</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="p">(</span><span class="n">peer</span> <span class="o">=</span> <span class="n">best</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="n">p</span><span class="p">;</span> <span class="n">peer</span><span class="p">;</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">peer</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">,</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">       <span class="cm">/* conns/weight必须为最小的 */</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">peer</span><span class="o">-&gt;</span><span class="n">conns</span> <span class="o">*</span> <span class="n">best</span><span class="o">-&gt;</span><span class="n">weight</span> <span class="o">!=</span> <span class="n">best</span><span class="o">-&gt;</span><span class="n">conns</span> <span class="o">*</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">weight</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">peer</span><span class="o">-&gt;</span><span class="n">current_weight</span> <span class="o">+=</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">effective_weight</span><span class="p">;</span> <span class="cm">/* 对每个后端，增加其当前权重 */</span>
+</span></span><span class="line"><span class="cl">        <span class="n">total</span> <span class="o">+=</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">effective_weight</span><span class="p">;</span> <span class="cm">/* 累加所有后端的有效权重 */</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">       <span class="cm">/* 如果之前此后端发生了失败，会减小其effective_weight来降低它的权重。          
+</span></span></span><span class="line"><span class="cl"><span class="cm">          * 此后在选取后端的过程中，又通过增加其effective_weight来恢复它的权重。          
+</span></span></span><span class="line"><span class="cl"><span class="cm">          */</span>        
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">peer</span><span class="o">-&gt;</span><span class="n">effective_weight</span> <span class="o">&lt;</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">weight</span><span class="p">)</span> 
+</span></span><span class="line"><span class="cl">            <span class="n">peer</span><span class="o">-&gt;</span><span class="n">effective_weight</span><span class="o">++</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">        <span class="cm">/* 选取当前权重最大者，作为本次选定的后端 */</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">best</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="o">||</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">current_weight</span> <span class="o">&gt;</span> <span class="n">best</span><span class="o">-&gt;</span><span class="n">current_weight</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="n">best</span> <span class="o">=</span> <span class="n">peer</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="n">p</span> <span class="o">=</span> <span class="n">i</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="一致哈希">一致哈希</h2>
+<p>当后端是缓存服务器时，经常使用一致性哈希算法来进行负载均衡。使用一致性哈希的好处在于，增减集群的缓存服务器时，只有少量的缓存会失效，回源量较小。常见的CDN架构都是使用一致性哈希。<br>
+我们知道的<a href="https://www.codeproject.com/Articles/56138/Consistent-hashing" target="_blank" rel="noopener noreffer ">一致性哈希</a>是一个环，每个哈希值对应的请求属于哈希值在环上遇到的下一个节点。为了使得请求分布更加均衡，我们建立了很多虚拟节点，请求会对应到虚拟节点的真实节点上。</p>
+<ol>
+<li>创造虚拟节点<br>
+在nginx中，为了保证节点的权重，一般一个真实节点对应weight * 160个虚拟节点。<br>
+每个虚拟节点的hash值hash = crc32(base_hash PREV_HASH)，其中，PREV_HASH表示上个虚拟节点的哈希值，这样就可以不断产出虚拟节点。base_hash 表示对应真实节点的哈希值（crc32(HOST 0 PORT)）。<br>
+创造完所有数量后，我们对虚拟节点按照哈希值排序。</li>
+<li>请求分配<br>
+先对请求做哈希，得出hash值，然后使用二分查找，寻找第一个hash值大于等于请求的哈希值的虚拟节点，即顺时针方向最近的一个虚拟节点。</li>
+<li>找到真实节点<br>
+遍历真实节点数组，寻找可用的、该虚拟节点归属的真实节点(server成员相同)，如果有多个真实节点同时符合条件，那么使用轮询来从中选取一个真实节点。</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">for</span> <span class="p">(</span> <span class="p">;</span> <span class="p">;</span> <span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/* 在peer.init中，已根据请求的哈希值，找到顺时针方向最近的一个虚拟节点，
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * hash为该虚拟节点在数组中的索引。
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * 一开始hash值肯定小于number，之后每尝试一个虚拟节点后，hash++。取模是为了防止越界访问。
+</span></span></span><span class="line"><span class="cl"><span class="cm">     */</span>
+</span></span><span class="line"><span class="cl">    <span class="n">server</span> <span class="o">=</span> <span class="n">point</span><span class="p">[</span><span class="n">hp</span><span class="o">-&gt;</span><span class="n">hash</span> <span class="o">%</span> <span class="n">points</span><span class="o">-&gt;</span><span class="n">number</span><span class="p">].</span><span class="n">server</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">best</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">best_i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="cm">/* 遍历真实节点数组，寻找可用的、该虚拟节点归属的真实节点(server成员相同)，
+</span></span></span><span class="line"><span class="cl"><span class="cm">      * 如果有多个真实节点同时符合条件，那么使用轮询来从中选取一个真实节点。
+</span></span></span><span class="line"><span class="cl"><span class="cm">      */</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="p">(</span><span class="n">peer</span> <span class="o">=</span> <span class="n">hp</span><span class="o">-&gt;</span><span class="n">rrp</span><span class="p">.</span><span class="n">peers</span><span class="o">-&gt;</span><span class="n">peer</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">peer</span><span class="p">;</span> <span class="n">peer</span> <span class="o">=</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">,</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="cm">/* 检查此真实节点在状态位图中对应的位，为1时表示不可用 */</span>
+</span></span><span class="line"><span class="cl">        <span class="n">n</span> <span class="o">=</span> <span class="n">i</span> <span class="o">/</span> <span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">uintptr_t</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">        <span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="kt">uintptr_t</span><span class="p">)</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">i</span> <span class="o">%</span> <span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">uintptr_t</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">hp</span><span class="o">-&gt;</span><span class="n">rrp</span><span class="p">.</span><span class="n">tried</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">&amp;</span> <span class="n">m</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="k">continue</span><span class="p">;</span>            
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="cm">/* server指令中携带了down属性，表示后端永久不可用 */</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">peer</span><span class="o">-&gt;</span><span class="n">down</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="cm">/* 如果真实节点的server成员和虚拟节点的不同，表示虚拟节点不属于此真实节点 */</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">peer</span><span class="o">-&gt;</span><span class="n">server</span><span class="p">.</span><span class="n">len</span> <span class="o">!=</span> <span class="n">server</span><span class="o">-&gt;</span><span class="n">len</span> <span class="o">||</span> 
+</span></span><span class="line"><span class="cl">            <span class="nf">ngx_strncmp</span><span class="p">(</span><span class="n">peer</span><span class="o">-&gt;</span><span class="n">server</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">server</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">,</span> <span class="n">server</span><span class="o">-&gt;</span><span class="n">len</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">       <span class="cm">/* 在一段时间内，如果此真实节点的失败次数，超过了允许的最大值，那么不允许使用了 */</span>
+</span></span><span class="line"><span class="cl">       <span class="k">if</span> <span class="p">(</span><span class="n">peer</span><span class="o">-&gt;</span><span class="n">max_fails</span>
+</span></span><span class="line"><span class="cl">            <span class="o">&amp;&amp;</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">fails</span> <span class="o">&gt;=</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">max_fails</span>
+</span></span><span class="line"><span class="cl">            <span class="o">&amp;&amp;</span> <span class="n">now</span> <span class="o">-</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">checked</span> <span class="o">&lt;=</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">fail_timeout</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">        <span class="n">peer</span><span class="o">-&gt;</span><span class="n">current_weight</span> <span class="o">+=</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">effective_weight</span><span class="p">;</span> <span class="cm">/* 对每个真实节点，增加其当前权重 */</span>
+</span></span><span class="line"><span class="cl">        <span class="n">total</span> <span class="o">+=</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">effective_weight</span><span class="p">;</span> <span class="cm">/* 累加所有真实节点的有效权重 */</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="cm">/* 如果之前此真实节点发生了失败，会减小其effective_weight来降低它的权重。          
+</span></span></span><span class="line"><span class="cl"><span class="cm">         * 此后又通过增加其effective_weight来恢复它的权重。          
+</span></span></span><span class="line"><span class="cl"><span class="cm">         */</span>        
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">peer</span><span class="o">-&gt;</span><span class="n">effective_weight</span> <span class="o">&lt;</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">weight</span><span class="p">)</span> 
+</span></span><span class="line"><span class="cl">            <span class="n">peer</span><span class="o">-&gt;</span><span class="n">effective_weight</span><span class="o">++</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">        <span class="cm">/* 选取当前权重最大者，作为本次选定的真实节点 */</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">best</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="o">||</span> <span class="n">peer</span><span class="o">-&gt;</span><span class="n">current_weight</span> <span class="o">&gt;</span> <span class="n">best</span><span class="o">-&gt;</span><span class="n">current_weight</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="n">best</span> <span class="o">=</span> <span class="n">peer</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="n">best_i</span> <span class="o">=</span> <span class="n">i</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="cm">/* 如果选定了一个真实节点 */</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">best</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	    <span class="n">best</span><span class="o">-&gt;</span><span class="n">current_weight</span> <span class="o">-=</span> <span class="n">total</span><span class="p">;</span> <span class="cm">/* 如果使用了轮询，需要降低选定节点的当前权重 */</span>
+</span></span><span class="line"><span class="cl">	    <span class="k">goto</span> <span class="n">found</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	
+</span></span><span class="line"><span class="cl">	<span class="n">hp</span><span class="o">-&gt;</span><span class="n">hash</span><span class="o">++</span><span class="p">;</span> <span class="cm">/* 增加虚拟节点的索引，即“沿着顺时针方向” */</span>
+</span></span><span class="line"><span class="cl">	<span class="n">hp</span><span class="o">-&gt;</span><span class="n">tries</span><span class="o">++</span><span class="p">;</span> <span class="cm">/* 已经尝试的虚拟节点数 */</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="恐慌阈值-envoy">恐慌阈值 Envoy</h2>
+<p>负载均衡一般是根据集群中主机的健康情况灵活变动的。当某台主机跪了，LB算法将会把它从候选列表中踢出去，这也是很合理的。</p>
+<p>但是我们假设这么一种情况，某一时间，所有服务主机的负载情况是最大负载的80%，（负载800；最大处理能力1000）<br>
+因为某种原因，导致20.0%的机器彻底崩溃。（负载800；最大处理能力800）<br>
+LB策略忽略20%的机器，导致剩下的80%的机器都在最大处理负载上运行；<br>
+又来了一个网络波动，造成所有的服务器一个接一个崩溃，整个集群雪崩。<br>
+每拉起一台新的机器，LB策略立刻把所有的流量打到这么一台机器上，导致它再次崩溃。</p>
+<p>如果有一个恐慌阈值，譬如50%，那么LB会在50%机器崩溃的时候，禁用淘汰策略，把所有机器都当做健康的，在整体集群上执行普通的Round-Robin策略。<br>
+多数机器恢复，整个集群的处理能力恢复80%的正确率。这使得整个集群能够在遇到极特殊情况的时候能够从困境中恢复</p>
+<h1 id="lb用的负载均衡算法">LB用的负载均衡算法</h1>
+<h2 id="edf调度算法">EDF调度算法</h2>
+<p><a href="http://zablog.me/2019/08/02/2019-08-02/" target="_blank" rel="noopener noreffer ">EDF调度算法</a><br>
+最早截止时间优先调度法 Earliest Deadline First (EDF) scheduler，是加权轮转调度算法（WRR，Weighted Round-Robin）的一种实现方式。<br>
+其核心思想是为每个条目截止时间赋值为当前时间加权重的倒数，然后采用最早截止时间优先的方式进行调度。<br>
+调度算法最主要的应用是操作系统调度进程，重要的调度理论基本上都是在此时涌现的。而后续反向代理对下游条目进行负载均衡，也可以参考一样的调度理论，只是进程的运行和切换转变为请求的接受与投递。</p>
+<p>假设有三个条目可供调度，分别是A、B、C，他们的权重分别是3：2：1。<br>
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb2.png"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb2.png, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb2.png 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb2.png 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/lb2.png"
+        title="调度队列" /><br>
+图上有一个数轴，从0到3，分别表示三个周期。<br>
+A条目的权重是3，我们以1/3为分隔不断重绘A，使得数轴的1/3，2/3，1，4/3等位置印上A；<br>
+B条目的权重是2，我们以1/2为分隔不断重绘B，使得数轴的1/2，1，3/2，2等位置印上B；<br>
+C条目的权重是1，我们以1为分隔不断重绘C，使得数轴的1，2，3等位置印上C；<br>
+最后，我们使用一个游标从左向右扫，扫描到的顺序就是调度的顺序，因此我们调度的顺序为A-B-A-C-B-A-A-B-A…<br>
+显而易见，调用的顺序含有一个循环节A-B-A-C-B-A，所以当调度足够多次数后，A、B、C的调度比值将会趋近于3：2：1</p>
+<h3 id="实现1">实现1</h3>
+<p>最简单的实现，是使用上述办法模拟一个周期，然后把周期存到数组中，用游标扫描即可。<br>
+以上述情形为例，首先我们定制一个数组 A-B-A-C-B-A，然后不断回环扫描这个数组，就可以完成加权轮转调度。<br>
+这种方法的每次调度的时间复杂度为O(1)，空间复杂度为O(M*N)，其中M是条目的平均权重，N是条目的数量。<br>
+优势：<br>
+实现简单，容易理解<br>
+单次调度的很快<br>
+多线程共享游标index即可，协作方便<br>
+劣势：<br>
+空间复杂度高<br>
+对条目修改很不友好（修改其中一个条目的权重，那么整个表需要重新构建，耗CPU）</p>
+<h3 id="实现2">实现2</h3>
+<p>我们可以维护一个大小为节点数量的堆，按照最快到期时间来排序，每次取最快到期的节点（就是线段上最靠前的节点），返回后更新它的节点到期时间。</p>
+<ol>
+<li>初始时 entry.deadline = 1.0/entry.Weight</li>
+<li>调度的时候，从中选择 deadline 最小的使用，并把 deadline 设置为 ttl（当前时间）+ 1.0/entry.Weight，然后重新把这个条目放入优先队列中。重新排布优先队列，如此往复。</li>
+</ol>
+<p>举个例子：<br>
+三个节点A、B、C权重分别为5、2、1</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">请求序号</th>
+<th style="text-align:center">选择的节点</th>
+<th style="text-align:center">选择节点后的堆</th>
+<th style="text-align:center">选择时的TTL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">未请求</td>
+<td style="text-align:center">/</td>
+<td style="text-align:center">[A(1/5), B(1/2), C(1)]</td>
+<td style="text-align:center">0</td>
+</tr>
+<tr>
+<td style="text-align:center">1</td>
+<td style="text-align:center">A</td>
+<td style="text-align:center">[A(2/5), B(1/2), C(1)]</td>
+<td style="text-align:center">1/5</td>
+</tr>
+<tr>
+<td style="text-align:center">2</td>
+<td style="text-align:center">A</td>
+<td style="text-align:center">[B(1/2), A(3/5), C(1)]</td>
+<td style="text-align:center">2/5</td>
+</tr>
+<tr>
+<td style="text-align:center">3</td>
+<td style="text-align:center">B</td>
+<td style="text-align:center">[A(3/5), B(1), C(1)]</td>
+<td style="text-align:center">1/2</td>
+</tr>
+<tr>
+<td style="text-align:center">4</td>
+<td style="text-align:center">A</td>
+<td style="text-align:center">[A(4/5), B(1), C(1)]</td>
+<td style="text-align:center">3/5</td>
+</tr>
+<tr>
+<td style="text-align:center">5</td>
+<td style="text-align:center">A</td>
+<td style="text-align:center">[A(1), B(1), C(1)]</td>
+<td style="text-align:center">4/5</td>
+</tr>
+<tr>
+<td style="text-align:center">6</td>
+<td style="text-align:center">A</td>
+<td style="text-align:center">[B(1), C(1), A(6/5)]</td>
+<td style="text-align:center">1</td>
+</tr>
+<tr>
+<td style="text-align:center">7</td>
+<td style="text-align:center">B</td>
+<td style="text-align:center">[C(1), A(6/5), B(3/2)]</td>
+<td style="text-align:center">3/2</td>
+</tr>
+<tr>
+<td style="text-align:center">8</td>
+<td style="text-align:center">C</td>
+<td style="text-align:center">[A(6/5), B(3/2), C(2)]</td>
+<td style="text-align:center">1</td>
+</tr>
+</tbody>
+</table>
+<p>复杂度分析：<br>
+空间复杂度降低为 O(N) ，每次Pick的时间复杂度为 O(logN)<br>
+初始化的时间复杂度为 O(N)，也就是堆排序的复杂度</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span><span class="lnt">80
+</span><span class="lnt">81
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// 节点
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">type</span> <span class="nx">Entry</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">deadline</span> <span class="kt">float64</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">index</span>    <span class="kt">int64</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">Value</span>    <span class="kt">string</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">Weight</span>   <span class="kt">float64</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// EDF implements the Earliest Deadline First scheduling algorithm
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">type</span> <span class="nx">EDF</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">pq</span>       <span class="o">*</span><span class="nx">priorityQueue</span>    <span class="c1">//这个优先级队列用deadline排序
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">curIndex</span> <span class="kt">int64</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">curDDL</span>   <span class="kt">float64</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Add a new entry for load balance
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">e</span> <span class="o">*</span><span class="nx">EDF</span><span class="p">)</span> <span class="nf">Add</span><span class="p">(</span><span class="nx">entry</span> <span class="o">*</span><span class="nx">Entry</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">entry</span><span class="p">.</span><span class="nx">deadline</span> <span class="p">=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">curDDL</span> <span class="o">+</span> <span class="mi">1</span><span class="o">/</span><span class="nx">entry</span><span class="p">.</span><span class="nx">Weight</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">e</span><span class="p">.</span><span class="nx">curIndex</span><span class="o">++</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">entry</span><span class="p">.</span><span class="nx">index</span> <span class="p">=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">curIndex</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">heap</span><span class="p">.</span><span class="nf">Push</span><span class="p">(</span><span class="nx">e</span><span class="p">.</span><span class="nx">pq</span><span class="p">,</span> <span class="nx">entry</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// AddRaw add a new entry for load balance without sort
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">e</span> <span class="o">*</span><span class="nx">EDF</span><span class="p">)</span> <span class="nf">AddRaw</span><span class="p">(</span><span class="nx">entry</span> <span class="o">*</span><span class="nx">Entry</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">entry</span><span class="p">.</span><span class="nx">deadline</span> <span class="p">=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">curDDL</span> <span class="o">+</span> <span class="mi">1</span><span class="o">/</span><span class="nx">entry</span><span class="p">.</span><span class="nx">Weight</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">e</span><span class="p">.</span><span class="nx">curIndex</span><span class="o">++</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">entry</span><span class="p">.</span><span class="nx">index</span> <span class="p">=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">curIndex</span>
+</span></span><span class="line"><span class="cl">	<span class="o">*</span><span class="nx">e</span><span class="p">.</span><span class="nx">pq</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="o">*</span><span class="nx">e</span><span class="p">.</span><span class="nx">pq</span><span class="p">,</span> <span class="nx">entry</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Delete an entry
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">e</span> <span class="o">*</span><span class="nx">EDF</span><span class="p">)</span> <span class="nf">Delete</span><span class="p">(</span><span class="nx">entry</span> <span class="o">*</span><span class="nx">Entry</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">entry</span><span class="p">.</span><span class="nx">Weight</span> <span class="p">=</span> <span class="o">-</span><span class="mi">1</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Pick an available entry
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">e</span> <span class="o">*</span><span class="nx">EDF</span><span class="p">)</span> <span class="nf">Pick</span><span class="p">()</span> <span class="o">*</span><span class="nx">Entry</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// if no available entry, return nil
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="o">*</span><span class="nx">e</span><span class="p">.</span><span class="nx">pq</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="kc">nil</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">entry</span> <span class="o">:=</span> <span class="nx">heap</span><span class="p">.</span><span class="nf">Pop</span><span class="p">(</span><span class="nx">e</span><span class="p">.</span><span class="nx">pq</span><span class="p">).(</span><span class="o">*</span><span class="nx">Entry</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">entry</span><span class="p">.</span><span class="nx">Weight</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="c1">// if Weight isn&#39;t positive, try another entry
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="k">return</span> <span class="nx">e</span><span class="p">.</span><span class="nf">Pick</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// curDDL should be entry&#39;s deadline so that new added entry would have a fair
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="c1">// competition environment with the old ones
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">e</span><span class="p">.</span><span class="nx">curDDL</span> <span class="p">=</span> <span class="nx">entry</span><span class="p">.</span><span class="nx">deadline</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">entry</span><span class="p">.</span><span class="nx">deadline</span> <span class="p">=</span> <span class="nx">entry</span><span class="p">.</span><span class="nx">deadline</span> <span class="o">+</span> <span class="mi">1</span><span class="o">/</span><span class="nx">entry</span><span class="p">.</span><span class="nx">Weight</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">e</span><span class="p">.</span><span class="nx">curIndex</span><span class="o">++</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">entry</span><span class="p">.</span><span class="nx">index</span> <span class="p">=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">curIndex</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">heap</span><span class="p">.</span><span class="nf">Push</span><span class="p">(</span><span class="nx">e</span><span class="p">.</span><span class="nx">pq</span><span class="p">,</span> <span class="nx">entry</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">entry</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// NewEDF create a new edf scheduler
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="nf">NewEDF</span><span class="p">(</span><span class="nx">entries</span> <span class="p">[]</span><span class="o">*</span><span class="nx">Entry</span><span class="p">)</span> <span class="o">*</span><span class="nx">EDF</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// make a new edf
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">priorityQueue</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="nx">priorityQueue</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">edf</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">EDF</span><span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">pq</span><span class="p">:</span>       <span class="o">&amp;</span><span class="nx">priorityQueue</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">curIndex</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// put entries into priority queue
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="c1">// TODO(maziang): use O(N) heap.Init instead of O(NlogN) Add.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">entry</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">entries</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">edf</span><span class="p">.</span><span class="nf">AddRaw</span><span class="p">(</span><span class="nx">entry</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">heap</span><span class="p">.</span><span class="nf">Init</span><span class="p">(</span><span class="nx">edf</span><span class="p">.</span><span class="nx">pq</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">// avoid instance flood pressure for the first entry
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="c1">// start from a random one via pick random times
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">rand</span><span class="p">.</span><span class="nf">Seed</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">().</span><span class="nf">UnixNano</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">randomPick</span> <span class="o">:=</span> <span class="nx">rand</span><span class="p">.</span><span class="nf">Intn</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nx">entries</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">randomPick</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">edf</span><span class="p">.</span><span class="nf">Pick</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">edf</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Note1 同样权重的情况: index是节点进入堆的次序。当deadline一样时，会选取index小的那一个。这是为了避免当所有节点权重一样时，变成完全随机调度。如果有了index，那么每次选取之后该节点的index会加一（相当于排到后面去），这样就能保证下一个节点能被调度到。<br>
+Note2 存储空间优化：<br>
+Note3 起始随机化：如果有个节点权重很大，那么在调度器全部重启的时候可能都会调度到这个节点，导致这个节点压力过大。所以NewEDF的初始化阶段会有随机化操作。</p>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2020-05-21</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/load_balance/index.md" target="_blank">Read Markdown</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="http://chestnutheng.github.io/load_balance/" data-title="[后台]负载均衡 （一）算法篇" data-hashtags="负载均衡,算法,后台"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="http://chestnutheng.github.io/load_balance/" data-hashtag="负载均衡"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Hacker News" data-sharer="hackernews" data-url="http://chestnutheng.github.io/load_balance/" data-title="[后台]负载均衡 （一）算法篇"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="http://chestnutheng.github.io/load_balance/" data-title="[后台]负载均衡 （一）算法篇"><i data-svg-src="/lib/simple-icons/icons/line.min.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="http://chestnutheng.github.io/load_balance/" data-title="[后台]负载均衡 （一）算法篇" data-ralateuid="2461859532"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw" aria-hidden="true"></i>&nbsp;<a href="/tags/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/">负载均衡</a>,&nbsp;<a href="/tags/%E7%AE%97%E6%B3%95/">算法</a>,&nbsp;<a href="/tags/%E5%90%8E%E5%8F%B0/">后台</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/linux_io/" class="prev" rel="prev" title="[Linux]文件和零拷贝"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>[Linux]文件和零拷贝</a>
+            <a href="/load_balance2/" class="next" rel="next" title="[后台]负载均衡（二）能力篇">[后台]负载均衡（二）能力篇<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
+</div>
+<div id="comments"><div id="giscus" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://giscus.app">Giscus</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.118.2">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2015 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="about" target="_blank">子恒</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/lightgallery/css/lightgallery-bundle.min.css"><link rel="stylesheet" href="/lib/katex/katex.min.css"><script type="text/javascript" src="/lib/autocomplete/autocomplete.min.js"></script><script type="text/javascript" src="/lib/lunr/lunr.min.js"></script><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/lightgallery/lightgallery.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/thumbnail/lg-thumbnail.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/zoom/lg-zoom.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript" src="/lib/sharer/sharer.min.js"></script><script type="text/javascript" src="/lib/katex/katex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/auto-render.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/copy-tex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{"giscus":{"category":"Announcements","categoryId":"DIC_kwDOA9ikP84CQT5Y","darkTheme":"dark","emitMetadata":"0","inputPosition":"bottom","lang":"en","lazyLoading":true,"lightTheme":"light","mapping":"pathname","reactionsEnabled":"1","repo":"chestnutheng/chestnutheng.github.io","repoId":"MDEwOlJlcG9zaXRvcnk2NDUyOTQ3MQ=="}},"lightgallery":true,"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":true,"left":"\\begin{equation}","right":"\\end{equation}"},{"display":true,"left":"\\begin{equation*}","right":"\\end{equation*}"},{"display":true,"left":"\\begin{align}","right":"\\end{align}"},{"display":true,"left":"\\begin{align*}","right":"\\end{align*}"},{"display":true,"left":"\\begin{alignat}","right":"\\end{alignat}"},{"display":true,"left":"\\begin{alignat*}","right":"\\end{alignat*}"},{"display":true,"left":"\\begin{gather}","right":"\\end{gather}"},{"display":true,"left":"\\begin{CD}","right":"\\end{CD}"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"highlightTag":"em","lunrIndexURL":"/index.json","maxResultLength":10,"noResultsFound":"No results found","snippetLength":50,"type":"lunr"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

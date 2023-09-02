@@ -1,0 +1,38 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>perfbook - Tag - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/tags/perfbook/</link>
+        <description>perfbook - Tag - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Fri, 26 Jul 2019 16:49:50 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/tags/perfbook/" rel="self" type="application/rss+xml" /><item>
+    <title>[Linux]谈一谈并行Counting</title>
+    <link>http://chestnutheng.github.io/counting/</link>
+    <pubDate>Fri, 26 Jul 2019 16:49:50 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/counting/</guid>
+    <description><![CDATA[简单的并行计数 在一个简单的多线程计数程序中，我们假设要每个线程去把sum的值多加100m，同时进行。代码如下：
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 #include &lt;pthread.h&gt; #include &lt;stdio.h&gt; #if 0 #define ADD_P(x) __sync_fetch_and_add((x), 1) #else #define ADD_P(x) (++(*x)) #endif #define TC 8 void *thgo(void *arg){ long i = 1000*1000*100; while(i-- &gt; 0){ADD_P((long *)arg);}; pthread_t me = pthread_self(); printf(&#34;thread sum: %ld tid: %lu \n&#34;, *(long *)arg, (unsigned long)me); } int main (){ long sum = 0; pthread_t ths[TC]; // threads for (int i = 0; i &lt; TC; ++i){ pthread_create(&amp;ths[i], NULL, thgo, &amp;sum); } // main thread thgo(&amp;sum); // join for (int i = 0; i &lt; TC; ++i){ pthread_join(ths[i], NULL); } printf(&#34;all final sum : %ld\n&#34;, sum); return 0; } 如果使用一般的计数，会出现严重的数据踩踏问题，导致结果只能取得一定近似的值：]]></description>
+</item>
+<item>
+    <title>[Linux]并行编程：进程、线程和同步</title>
+    <link>http://chestnutheng.github.io/pthread/</link>
+    <pubDate>Thu, 25 Jul 2019 15:45:04 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/pthread/</guid>
+    <description><![CDATA[如何进行并行编程？本文给了一些pthead库基本的多进程、多线程API，和详细的样例帮助理解这些API。
+本教程基于AUPE 2013、 perfbook
+Shell中的并行 后台执行 &amp; 通过&amp;符号指定实例在后台运行，然后统一等待结束。
+1 2 3 4 compute_it 1 &gt; 1.out &amp; compute_it 2 &gt; 2.out &amp; wait cat 1.out 2.out 管道 | 对于一个足够大的输入文件来说，grep模式匹配将与sed编辑和sort处理并行运行。
+1 grep &#34;$pattern&#34; | sed -e &#34;s/a/b/&#34; | sort POSIX多进程 下面给出的程序中建立了一个进程，然后修改了x的值并打印，最后父进程等待子进程结束。
+fork int fork()马上创建一个当前进程的子进程。子进程会复制(而不是共享)父进程的堆栈、数据空间、fd。
+如果是父进程，fork返回子进程的pid。如果是子进程，fork返回0。一般用这个区分不同的分支。 fork返回负数表示失败。失败的原因可能有：系统有了太多的进程；系统中用户进程数超过了CHILD_MAX。此时返回负数。 fork后如果不需要父进程的存储空间会立马调用exec。 使用fork一般有两个目的。父进程希望复制自己，或者想执行另外的程序（调用exec） 为了避免拷贝成本，出现了写时拷贝技术(Copy-On-Write, COW)，子进程创建后分享父进程的数据，并把内存区域设置为只读。当需要写数据时再为这块数据创建副本。 vfork int vfork()创建一个子进程，但分享(不复制)父进程的数据。当执行exec时父进程才退出休眠。专为了避免fork的拷贝成本设计。因为share父进程的数据有很大风险，所以man手册里明确说明vfork()之后，子进程只应该调用_exit()或者exec函数族。
+exit void exit(int)退出当前进程。不像return会析构局部变量，弹栈，回到上级函数。如果在子进程的main中调用了return，main会返回两次，导致程序出错。exit不会有这个问题。
+wait pid_t wait(int &amp;status) 阻塞等待任意一个子进程结束
+a)如果子进程都在运行则阻塞
+b)如果一个子进程已经终止，内核向父进程发出了SIGCHLD信号，则获得终止状态并立即返回
+c)成功了返回pid，没有子进程，立即出错返回-1
+d)子进程状态status可以用四个返回bool的宏 WIFEXITED(int)、WIFEXITSIGNALED(int)、WIFSTOPPED(int)、WIFCONTINUED(int)、来判断属于正常、异常、暂停、暂停后继续的状态。此外还有对应的WEIXTSTATUS(int)返回子进程exit函数的参数、WTERMSIG(int)返回信号编号、WCOREDUMP(int）返回是否生成coredump等。
+pid_t waitpid(pid_t pid, int &amp;status, int option)等待指定的pid的子进程结束。]]></description>
+</item>
+</channel>
+</rss>

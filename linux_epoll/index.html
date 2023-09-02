@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>[Linux]高级IO - 子恒的博客</title><meta name="Description" content="当处理多个IO时，阻塞往往不是可行的方案。本文介绍了select、poll、epoll的用法和注意点。"><meta property="og:title" content="[Linux]高级IO" />
+<meta property="og:description" content="当处理多个IO时，阻塞往往不是可行的方案。本文介绍了select、poll、epoll的用法和注意点。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://chestnutheng.github.io/linux_epoll/" /><meta property="og:image" content="http://chestnutheng.github.io/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2019-07-31T20:20:43+08:00" />
+<meta property="article:modified_time" content="2019-08-01T20:07:18+08:00" /><meta property="og:site_name" content="子恒的博客" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="http://chestnutheng.github.io/logo.png"/>
+
+<meta name="twitter:title" content="[Linux]高级IO"/>
+<meta name="twitter:description" content="当处理多个IO时，阻塞往往不是可行的方案。本文介绍了select、poll、epoll的用法和注意点。"/>
+<meta name="application-name" content="我的网站">
+<meta name="apple-mobile-web-app-title" content="我的网站"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://chestnutheng.github.io/linux_epoll/" /><link rel="prev" href="http://chestnutheng.github.io/counting/" /><link rel="next" href="http://chestnutheng.github.io/ipc/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[Linux]高级IO",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/chestnutheng.github.io\/linux_epoll\/"
+        },"genre": "posts","keywords": "Linux, AUPE","wordcount":  1026 ,
+        "url": "http:\/\/chestnutheng.github.io\/linux_epoll\/","datePublished": "2019-07-31T20:20:43+08:00","dateModified": "2019-08-01T20:07:18+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "子恒"
+            },"description": "当处理多个IO时，阻塞往往不是可行的方案。本文介绍了select、poll、epoll的用法和注意点。"
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="子恒的博客">子恒的博客</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/"> 主页 </a><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/freinds/"> 友链 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="子恒的博客">子恒的博客</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        Cancel
+                    </a>
+                </div><a class="menu-item" href="/" title="">主页</a><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/freinds/" title="">友链</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><div class="search-dropdown desktop">
+        <div id="search-dropdown-desktop"></div>
+    </div>
+    <div class="search-dropdown mobile">
+        <div id="search-dropdown-mobile"></div>
+    </div><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">[Linux]高级IO</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="about" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>子恒</a></span>&nbsp;<span class="post-category">included in <a href="/categories/linux/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>Linux</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2019-07-31">2019-07-31</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;1026 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;5 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#如果有多个io需要处理">如果有多个IO需要处理</a></li>
+    <li><a href="#io多路复用select">IO多路复用：select</a></li>
+    <li><a href="#io多路复用poll">IO多路复用：poll</a></li>
+    <li><a href="#io多路复用epoll">IO多路复用：epoll</a>
+      <ul>
+        <li><a href="#初始化和注册事件epoll_create--epoll_ctl">初始化和注册事件：epoll_create / epoll_ctl</a></li>
+        <li><a href="#监听事件epoll_wait">监听事件：epoll_wait</a></li>
+        <li><a href="#边沿触发和水平触发">边沿触发和水平触发</a>
+          <ul>
+            <li><a href="#两种触发的区别">两种触发的区别</a></li>
+            <li><a href="#两种触发的使用方法">两种触发的使用方法</a></li>
+          </ul>
+        </li>
+        <li><a href="#和selectpoll-相比">和select/poll 相比</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="如果有多个io需要处理">如果有多个IO需要处理</h1>
+<p>当一个描述符读，然后又写到另一个描述符时，可以用循环的方式访问阻塞io：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#define BUF_SIZE 128
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="n">BUF_SIZE</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">int</span> <span class="n">n</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="k">while</span> <span class="p">(</span> <span class="n">n</span> <span class="o">=</span> <span class="nf">read</span><span class="p">(</span><span class="n">STDIN_FILENO</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">BUF_SIZE</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	        <span class="k">if</span> <span class="p">(</span><span class="nf">write</span><span class="p">(</span><span class="n">STDOUT_FILENO</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">!=</span> <span class="n">n</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">	                <span class="nf">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&#34;%s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="s">&#34;write error!&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	                <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>但是如果要从两个fd读的时候，就不能用阻塞io去读了。因为进程阻塞在某个fd的时候，另一个fd即使输入了数据也无法处理。<br>
+比如一个telnet程序的输出有两个来源，用户输入回显和远端回包。如果阻塞在等待远端回包，用户输入就不会有回显了。解决这个问题就几种思路：</p>
+<ol>
+<li>再fork一个进程，每个进程处理一个fd。这看起来很好，但是处理EOF却成了问题。如果子进程先读到EOF，那么子进程终止，返回SIGCHLD给父进程，然后父进程终止。如果父进程读到EOF，父进程就需要通知子进程结束，此时需要额外的信号（如SIGUSER1）.</li>
+<li>用两个线程来处理，每个线程一个fd。同样的，处理线程之间的同步也会变的比较复杂。</li>
+<li>用<code>非阻塞的io</code>来轮询。先read一个fd，如果没数据立即返回，然后等待若干时间，然后再read下一个fd，直到某个fd有数据读为止。这个方法有两个缺点，一是频繁的read调用浪费了cpu时间，但是大部分时间是没数据读的。二是每次read返回后等待的时间不好确定，太久会读取不及时，太短会使得cpu更加繁忙。</li>
+<li>使用<code>异步IO</code>。当fd归属的设备准备好的时候，用信号通知处理进程。这个方法有两个缺点，一是信号在不同的系统上实现不同，移植性较差。二是进程收到的信号只有一种（SIGPOLL或者SIGIO），进程无法分辨是哪个fd。</li>
+</ol>
+<p>有没有比较完善的方案？io多路复用来了。这种方案会记录一个我们需要的fd的列表，然后我们去查询，当这个列表中有fd有数据时，查询就会返回这个fd。</p>
+<h1 id="io多路复用select">IO多路复用：select</h1>
+<p><code>int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);</code> select 函数提供了查询fd状态的能力。我们传入希望监听的fd，内核告诉我们哪些fd已经有事件发生并返回。</p>
+<ol>
+<li>参数 <code>timeout</code> 控制愿意等待的时间。timeval为NULL时，select会一直阻塞等待某个fd准备好。（如果接收到信号，select也会提前返回-1，并把errno设为INTR）</li>
+<li>参数 <code>readfds</code>, <code>writefds</code>, <code>exceptfds</code> 是我们告诉内核希望监听的fd的指针。如果希望监听某fd的读事件，就加入到<code>readfds</code>中。后面两个用于监听写事件和异常事件。</li>
+<li>返回时，<code>readfds</code>, <code>writefds</code>, <code>exceptfds</code> 中会留下对应事件已经就绪的fd。此时这些fd是可读的、可写的或发生异常的。</li>
+<li>参数 <code>nfds</code> 是三个fd集合中的最大值加一，它制定了fd的遍历范围。也可以把它设为<code>FD_SETSIZE</code>，一般为1024，但是这样会导致select遍历系统中所有的fd。</li>
+<li>返回值：a)如果没有就绪的fd，函数返回0。b)如果有就绪的fd，函数返回就绪的fd数量。c)如果收到信号，返回-1，并把errno设为INTR d)特别地，如果fd到达EOF，函数调用read，然后返回0</li>
+<li>函数<code>pselect</code>采用了timespec类型的超时设置。此外，还可以设置sigmask用来屏蔽一些信号，防止自己被终止。</li>
+</ol>
+<p><code>fd_set</code> 是一个fd的集合。在实现上是一个大bit数组，它只支持赋值操作和下面宏定义的操作：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// 如果fd在fd_set中返回0
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int</span>  <span class="nf">FD_ISSET</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="n">fd_set</span> <span class="o">*</span><span class="n">set</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 初始化fd_set
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">void</span> <span class="nf">FD_ZERO</span><span class="p">(</span><span class="n">fd_set</span> <span class="o">*</span><span class="n">set</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 设置某个fd
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">void</span> <span class="nf">FD_SET</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="n">fd_set</span> <span class="o">*</span><span class="n">set</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 清除某个fd
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">void</span> <span class="nf">FD_CLR</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="n">fd_set</span> <span class="o">*</span><span class="n">set</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>下面给了一个select的例子。他会等待输入五秒钟，如果有输入会立马回显。如果超时，则会直接退出。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;sys/time.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;sys/types.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#define TIMEOUT 5       </span><span class="cm">/* select timeout in seconds */</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#define BUF_LEN 1024    </span><span class="cm">/* read buffer in bytes */</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span> <span class="kt">void</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">struct</span> <span class="nc">timeval</span>	<span class="n">tv</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">fd_set</span>		<span class="n">readfds</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">int</span>		<span class="n">ret</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="cm">/* Wait on stdin for input. */</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FD_ZERO</span><span class="p">(</span> <span class="o">&amp;</span><span class="n">readfds</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">FD_SET</span><span class="p">(</span> <span class="n">STDIN_FILENO</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">readfds</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="cm">/* Wait up to five seconds. */</span>
+</span></span><span class="line"><span class="cl">	<span class="n">tv</span><span class="p">.</span><span class="n">tv_sec</span>	<span class="o">=</span> <span class="n">TIMEOUT</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">tv</span><span class="p">.</span><span class="n">tv_usec</span>	<span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="cm">/* All right, now block! */</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ret</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span> <span class="n">STDIN_FILENO</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">		      <span class="o">&amp;</span><span class="n">readfds</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">		      <span class="nb">NULL</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">		      <span class="nb">NULL</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">		      <span class="o">&amp;</span><span class="n">tv</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span> <span class="n">ret</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">perror</span><span class="p">(</span><span class="s">&#34;select&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">ret</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">printf</span><span class="p">(</span><span class="s">&#34;%d seconds elapsed.</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">TIMEOUT</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="cm">/*
+</span></span></span><span class="line"><span class="cl"><span class="cm"> *  * Is our file descriptor ready to read?
+</span></span></span><span class="line"><span class="cl"><span class="cm"> *   * (It must be, as it was the only fd that
+</span></span></span><span class="line"><span class="cl"><span class="cm"> *    * we provided and the call returned
+</span></span></span><span class="line"><span class="cl"><span class="cm"> *     * nonzero, but we will humor ourselves.)
+</span></span></span><span class="line"><span class="cl"><span class="cm"> *      */</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span> <span class="n">FD_ISSET</span><span class="p">(</span> <span class="n">STDIN_FILENO</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">readfds</span> <span class="p">)</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="kt">char</span>	<span class="n">buf</span><span class="p">[</span><span class="n">BUF_LEN</span> <span class="o">+</span> <span class="mi">1</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">		<span class="kt">int</span>	<span class="n">len</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="cm">/* guaranteed to not block */</span>
+</span></span><span class="line"><span class="cl">		<span class="n">len</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span> <span class="n">STDIN_FILENO</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">BUF_LEN</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">(</span> <span class="n">len</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="n">perror</span><span class="p">(</span><span class="s">&#34;read&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">			<span class="k">return</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">(</span> <span class="n">len</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="n">buf</span><span class="p">[</span><span class="n">len</span><span class="p">]</span> <span class="o">=</span><span class="sc">&#39;\0&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">			<span class="n">printf</span><span class="p">(</span><span class="s">&#34;read: %s </span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">buf</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="n">fprintf</span><span class="p">(</span> <span class="n">stderr</span><span class="p">,</span><span class="s">&#34;This should not happen !</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h1 id="io多路复用poll">IO多路复用：poll</h1>
+<p>select有一些缺点。由于传入的fd的集合是一个bit数组，所以select必须得从0开始一直扫描到nfds指定的最大值，效率很低。poll优化了select的一些易用性的问题。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">poll</span><span class="p">(</span><span class="k">struct</span> <span class="nc">pollfd</span> <span class="o">*</span><span class="n">fds</span><span class="p">,</span> <span class="n">nfds_t</span> <span class="n">nfds</span><span class="p">,</span> <span class="kt">int</span> <span class="n">timeout</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="nc">pollfd</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span>   <span class="n">fd</span><span class="p">;</span>         <span class="cm">/* file descriptor */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">short</span> <span class="n">events</span><span class="p">;</span>     <span class="cm">/* requested events */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">short</span> <span class="n">revents</span><span class="p">;</span>    <span class="cm">/* returned events */</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// short events 定义
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">POLLIN</span> <span class="err">有数据可读。（和</span><span class="n">POLLRDNORM</span> <span class="o">|</span> <span class="n">POLLRDBAND</span> <span class="err">等价）</span>
+</span></span><span class="line"><span class="cl"><span class="n">POLLRDNORM</span> <span class="err">有正常数据可读。</span>
+</span></span><span class="line"><span class="cl"><span class="n">POLLRDBAND</span> <span class="err">有优先数据可读。</span>
+</span></span><span class="line"><span class="cl"><span class="n">POLLPRI</span> <span class="err">有高优先数据可读。</span>
+</span></span><span class="line"><span class="cl"><span class="n">POLLOUT</span> <span class="err">写操作不会阻塞。（和</span><span class="n">POLLWRNORM</span> <span class="o">|</span> <span class="n">POLLBAND</span> <span class="err">等价）</span>
+</span></span><span class="line"><span class="cl"><span class="n">POLLWRNORM</span> <span class="err">写正常数据不会阻塞。</span>
+</span></span><span class="line"><span class="cl"><span class="n">POLLBAND</span> <span class="err">写优先数据不会阻塞。</span>
+</span></span><span class="line"><span class="cl"><span class="n">POLLMSG</span> <span class="err">有一个</span><span class="n">SIGPOLL消息可用</span><span class="err">。</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">POLLER</span> <span class="err">输入的</span><span class="n">fd有错误</span><span class="err">。</span>
+</span></span><span class="line"><span class="cl"><span class="n">POLLHUP</span> <span class="n">fd被挂起</span><span class="err">。（请注意，文件到达</span><span class="n">EOF</span><span class="err">，会返回</span><span class="n">POLLIN</span><span class="err">，然后</span><span class="n">read返回0</span><span class="err">）</span>
+</span></span><span class="line"><span class="cl"><span class="n">POLLNVAL</span> <span class="err">输入的</span><span class="n">fd无效</span><span class="err">。</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">POLLIN</span> <span class="o">|</span> <span class="n">POLLPRI</span> <span class="err">对应</span><span class="n">select的读事件</span>
+</span></span><span class="line"><span class="cl"><span class="n">POLLOUT</span> <span class="o">|</span> <span class="n">POLLWRBAND</span> <span class="err">对应</span><span class="n">select的写事件</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>poll 函数提供了一个select的改进版本。</p>
+<ol>
+<li>参数 <code>fds</code> 是一个<code>poolfd</code>的指针，或者一个数组（同时监听多个fd）。<code>poolfd</code>这个结构体包含三个参数，监视的文件描述符<code>fd</code>，关注的event事件类型<code>events</code>，和内核返回的fd的事件类型<code>revents</code> 。</li>
+<li>参数 <code>nfds</code> 告诉我们需要监听的fd数量，即参数 <code>fds</code> 的长度。</li>
+<li>参数 <code>timeout</code> 告诉我们等待多久超时，单位为ms。为-1时，poll永远不超时。为0时，poll立即返回。为正数时，poll等待对应的毫秒数。</li>
+</ol>
+<p>那么到底poll有哪些改进？</p>
+<ol>
+<li>poll优化了参数。a)无需调用者知道fd最大值加一是什么。b)而且不用每次调用前都初始化select的fdset（select会改变自己的fd集合参数）。</li>
+<li>poll效率更高。它只会在参数里的几个fd中查询fd状态（这些fd放在也给链表中）。而select必须从0开始查询到fd最大值。因此poll不必局限于文件描述符的数量。<br>
+不过，select也提供了更为精确的超时时间，以及更好的可移植性。</li>
+</ol>
+<p>下面给出了一个poll的例子。他会检测读写标准输入输出的可用状态并打印。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;poll.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#define TIMEOUT 5 </span><span class="cm">/* poll timeout, in seconds */</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span> <span class="kt">void</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">struct</span> <span class="nc">pollfd</span>	<span class="n">fds</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">int</span>		<span class="n">ret</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="cm">/* watch stdin for input */</span>
+</span></span><span class="line"><span class="cl">	<span class="n">fds</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">fd</span>	<span class="o">=</span> <span class="n">STDIN_FILENO</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">fds</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">events</span>	<span class="o">=</span> <span class="n">POLLIN</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="cm">/* watch stdout for ability to write (almost always true) */</span>
+</span></span><span class="line"><span class="cl">	<span class="n">fds</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">fd</span>	<span class="o">=</span> <span class="n">STDOUT_FILENO</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">fds</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">events</span>	<span class="o">=</span> <span class="n">POLLOUT</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="cm">/* All set, block! */</span>
+</span></span><span class="line"><span class="cl">	<span class="n">ret</span> <span class="o">=</span> <span class="n">poll</span><span class="p">(</span> <span class="n">fds</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">TIMEOUT</span> <span class="o">*</span> <span class="mi">1000</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span> <span class="n">ret</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">perror</span><span class="p">(</span> <span class="s">&#34;poll&#34;</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">ret</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">printf</span><span class="p">(</span> <span class="s">&#34;%d seconds elapsed.</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">TIMEOUT</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span> <span class="n">fds</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">revents</span> <span class="o">&amp;</span> <span class="n">POLLIN</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="n">printf</span><span class="p">(</span> <span class="s">&#34;stdin is readable</span><span class="se">\n</span><span class="s">&#34;</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span> <span class="n">fds</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">revents</span> <span class="o">&amp;</span> <span class="n">POLLOUT</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="n">printf</span><span class="p">(</span> <span class="s">&#34;stdout is writable</span><span class="se">\n</span><span class="s">&#34;</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// ./poll 时，poll会发现写此时可用。输出stdout is writable
+</span></span></span><span class="line"><span class="cl"><span class="c1">// ./poll &lt; a.txt poll会发现写此时读写都可用。输出stdout is writable stdin is readable
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h1 id="io多路复用epoll">IO多路复用：epoll</h1>
+<p>select主要缺陷是，对单个进程打开的文件描述是有一定限制的，它由FD_SETSIZE设置，默认值是1024，虽然可以通过编译内核改变，但相对麻烦，另外在检查数组中是否有文件描述需要读写时，采用的是线性扫描的方法，即不管这些socket是不是活跃的，我都轮询一遍，所以效率比较低。<br>
+poll本质和select没有区别，但其采用链表存储，解决了select最大连接数存在限制的问题，但其也是采用遍历的方式来判断是否有设备就绪，所以效率比较低，另外一个问题是大量的fd数组在用户空间和内核空间之间来回复制传递（每次调用poll都会拷贝），也浪费了不少性能。<br>
+我们用一种新的事件驱动技术epoll来解决上述问题。</p>
+<h2 id="初始化和注册事件epoll_create--epoll_ctl">初始化和注册事件：epoll_create / epoll_ctl</h2>
+<p><code>int epoll_create(int size)</code> 创建一个epoll实例，返回该实例的fd。</p>
+<ol>
+<li>参数<code>size</code>为估计的处理fd数量，越精确性能越高。Linux 2.6后不在使用该参数</li>
+<li>成功时，返回fd。失败时，返回-1，并设置errno。</li>
+<li>返回的fd和要处理的fd没有关联，只是用来调用epoll。</li>
+</ol>
+<p><code>int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)</code> 在一个epoll中添加监听的fd和对应的时间类型</p>
+<ol>
+<li>参数<code>epfd</code>为上面create返回的epollfd</li>
+<li>参数<code>op</code>有几个值：<code>EPOLL_CTL_ADD</code> 添加fd，<code>EPOLL_CTL_DEL</code> 删除fd，<code>EPOLL_CTL_MOD</code> 改变fd监听类型。</li>
+<li>参数<code>fd</code>是监听的fd对象。</li>
+<li>参数<code>event</code>见下面的代码块。</li>
+<li>成功后，epoll_ctl返回0 。失败时，返回-1，并设置errno。</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">typedef</span> <span class="k">union</span> <span class="nc">epoll_data</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">void</span>        <span class="o">*</span><span class="n">ptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span>          <span class="n">fd</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">__uint32_t</span>   <span class="n">u32</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">__uint64_t</span>   <span class="n">u64</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span> <span class="n">epoll_data_t</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="nc">epoll_event</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">__uint32_t</span>   <span class="n">events</span><span class="p">;</span>      <span class="cm">/* Epoll 事件类型，见下面 */</span>
+</span></span><span class="line"><span class="cl">    <span class="n">epoll_data_t</span> <span class="n">data</span><span class="p">;</span>        <span class="cm">/* 用户存储数据，稍后会返回 */</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Epoll 事件类型       
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">EPOLLIN</span> <span class="err">文件可读</span>
+</span></span><span class="line"><span class="cl"><span class="n">EPOLLOUT</span> <span class="err">文件可写</span>
+</span></span><span class="line"><span class="cl"><span class="n">EPOLLPRI</span> <span class="err">高优先级文件可读</span>
+</span></span><span class="line"><span class="cl"><span class="n">EPOLLET</span> <span class="err">设置为边沿触发，默认为水平触发。</span>
+</span></span><span class="line"><span class="cl"><span class="n">EPOLLHUP</span> <span class="err">文件挂起。默认会监听</span>
+</span></span><span class="line"><span class="cl"><span class="n">EPOLLERR</span> <span class="err">文件出错。默认会监听</span>
+</span></span><span class="line"><span class="cl"><span class="n">EPOLLONESHOT</span> <span class="err">一次性监听，有事件发生并处理后不再监听该文件。</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 下面是一个关联事件类型的样例
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">struct</span> <span class="nc">epoll_event</span> <span class="n">event</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">event</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">fd</span> <span class="o">=</span> <span class="n">fd</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">event</span><span class="p">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">EPOLLIN</span> <span class="o">|</span> <span class="n">EPOLLOUT</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="n">ret</span> <span class="o">=</span> <span class="n">epoll_ctl</span><span class="p">(</span><span class="n">epfd</span><span class="p">,</span> <span class="n">EPOLL_CTL_ADD</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">event</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span><span class="p">(</span><span class="n">ret</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="n">perror</span><span class="p">(</span><span class="s">&#34;epoll_ctl&#34;</span><span class="p">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="监听事件epoll_wait">监听事件：epoll_wait</h2>
+<p><code>int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout)</code> 等待某个epoll上的fd发生事件，时限为timeout毫秒。</p>
+<ol>
+<li>参数<code>epfd</code>为需要等待的epollfd</li>
+<li>参数<code>events</code>为返回的事件的地址。也可以是一个数组。</li>
+<li>参数 <code>maxevents</code> 表明返回的事件数量不能超过该值，一般时数组的长度。</li>
+<li>参数 <code>timeout</code> 告诉我们等待多久超时，单位为ms。为-1时，poll永远不超时。为0时，poll立即返回。为正数时，poll等待对应的毫秒数。</li>
+</ol>
+<p>下面时一个完整的wait样例。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="cp">#define MAX_EVENTS 64
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span><span class="k">struct</span> <span class="nc">epoll_event</span>	<span class="o">*</span><span class="n">events</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span>	<span class="n">nr_events</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">epfd</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">events</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="nc">epoll_event</span><span class="p">)</span> <span class="o">*</span> <span class="n">MAX_EVENTS</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">events</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">perror</span><span class="p">(</span> <span class="s">&#34;malloc&#34;</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="n">nr_events</span> <span class="o">=</span> <span class="n">epoll_wait</span><span class="p">(</span> <span class="n">epfd</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">MAX_EVENTS</span><span class="p">,</span> <span class="err">−</span><span class="mi">1</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span> <span class="n">nr_events</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">perror</span><span class="p">(</span> <span class="s">&#34;epoll_wait&#34;</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">free</span><span class="p">(</span> <span class="n">events</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="k">for</span> <span class="p">(</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">nr_events</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="n">printf</span><span class="p">(</span> <span class="s">&#34;event=%ld on fd=%d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">		<span class="n">events</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">events</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">		<span class="n">events</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">data</span><span class="p">.</span><span class="n">fd</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="cm">/*
+</span></span></span><span class="line"><span class="cl"><span class="cm">	 * We now can, per events[i].events, operate on
+</span></span></span><span class="line"><span class="cl"><span class="cm">	 * events[i].data.fd without blocking.
+</span></span></span><span class="line"><span class="cl"><span class="cm">	 */</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="n">free</span><span class="p">(</span> <span class="n">events</span> <span class="p">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="边沿触发和水平触发">边沿触发和水平触发</h2>
+<h3 id="两种触发的区别">两种触发的区别</h3>
+<p>epoll默认的工作方式是水平触发。在水平触发模式下，只要满足fd可读/写，每次调用epoll_wait都会返回这个fd。在边沿触发模式下，只有fd从不可读(写)变为可读(写)时，才会返回这个fd。（读缓冲区有数据就是可读，写缓冲区不满就是可写）</p>
+<p>考虑下面的情况，两种触发模式的epoll都监听了读缓冲区：</p>
+<ol>
+<li>读缓冲区刚开始是空的</li>
+<li>读缓冲区写入2KB数据</li>
+<li>水平触发和边缘触发模式此时都会发出可读信号</li>
+<li>收到信号通知后，读取了1kb的数据，读缓冲区还剩余1KB数据</li>
+<li>水平触发会再次进行通知，而边缘触发不会再进行通知<br>
+所以，边缘触发需要一次性的把缓冲区的数据读完为止，也就是一直读，直到读到EGAIN为止，EGAIN说明缓冲区已经空了，因为这一点，边缘触发需要设置文件句柄为非阻塞。</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="c1">//水平触发LT
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">ret</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">//边缘触发ET
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">while</span><span class="p">(</span><span class="nb">true</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">ret</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">ret</span> <span class="o">==</span> <span class="n">EAGAIN</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="两种触发的使用方法">两种触发的使用方法</h3>
+<p>参考 <a href="https://blog.csdn.net/dongfuye/article/details/50880251"> dongyue-epoll LT/ET 深入剖析</a></p>
+<p>LT的处理过程：<br>
+. accept一个连接，添加到epoll中监听EPOLLIN事件<br>
+. 当EPOLLIN事件到达时，read fd中的数据并处理<br>
+. 当需要写出数据时，把数据write到fd中；如果数据较大，无法一次性写出，那么在epoll中监听EPOLLOUT事件<br>
+. 当EPOLLOUT事件到达时，继续把数据write到fd中；如果数据写出完毕，那么在epoll中关闭EPOLLOUT事件</p>
+<p>ET的处理过程：<br>
+. accept一个一个连接，添加到epoll中监听EPOLLIN|EPOLLOUT事件<br>
+. 当EPOLLIN事件到达时，read fd中的数据并处理，read需要一直读，直到返回EAGAIN为止<br>
+. 当需要写出数据时，把数据write到fd中，直到数据全部写完，或者write返回EAGAIN<br>
+. 当EPOLLOUT事件到达时，继续把数据write到fd中，直到数据全部写完，或者write返回EAGAIN</p>
+<p>使用ET模式，特定场景下会比LT更快，因为它可以便捷的处理EPOLLOUT事件，省去打开与关闭EPOLLOUT的<code>epoll_ctl(EPOLL_CTL_MOD)</code>调用。从而有可能让你的性能得到一定的提升。</p>
+<p>例如你需要写出1M的数据，写出到socket 256k时，返回了EAGAIN, 然后：</p>
+<ol>
+<li>ET模式下，当再次epoll返回EPOLLOUT事件时，继续写出待写出的数据，当没有数据需要写出时，不处理直接略过即可。</li>
+<li>LT模式则需要先打开EPOLLOUT，当没有数据需要写出时，再关闭EPOLLOUT（否则会一直返回EPOLLOUT事件）</li>
+</ol>
+<p>总体来说，ET处理EPOLLOUT方便高效些，LT不容易遗漏事件、不易产生bug如果server的响应通常较小，不会触发EPOLLOUT，那么适合使用LT，例如redis等。而nginx作为高性能的通用服务器，网络流量可以跑满达到1G，这种情况下很容易触发EPOLLOUT，则使用ET。</p>
+<h2 id="和selectpoll-相比">和select/poll 相比</h2>
+<p><a href="https://cloud.tencent.com/developer/article/1373483"> 各种IO复用模型的比较-云社区 </a></p>
+<p>epoll和kqueue （FreeBSD上和epoll类似的组件）是更先进的IO复用模型。比起select和poll来说：</p>
+<ol>
+<li>没有最大连接数的限制。1G内存，可以打开约10万左右的连接。而且仅仅使用一个文件描述符，就可以管理多个文件描述符。</li>
+<li>内核拷贝只在初始化后发生一次。将用户关系的文件描述符的事件存放到内核的一个事件表中（底层采用的是mmap的方式），这样在用户空间和内核空间的copy只需一次。</li>
+<li>复杂度O(1)。这种模型里面，采用了类似事件驱动的回调机制或者叫通知机制，在注册fd时加入特定的状态，一旦fd就绪就会主动通知内核。这样以来就避免了select的无脑遍历socket的方法，这种模式下仅仅是活跃的socket连接才会主动通知内核，所以直接将时间复杂度降为O(1)。</li>
+</ol>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2019-08-01</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/linux_epoll/index.md" target="_blank">Read Markdown</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="http://chestnutheng.github.io/linux_epoll/" data-title="[Linux]高级IO" data-hashtags="Linux,AUPE"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="http://chestnutheng.github.io/linux_epoll/" data-hashtag="Linux"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Hacker News" data-sharer="hackernews" data-url="http://chestnutheng.github.io/linux_epoll/" data-title="[Linux]高级IO"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="http://chestnutheng.github.io/linux_epoll/" data-title="[Linux]高级IO"><i data-svg-src="/lib/simple-icons/icons/line.min.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="http://chestnutheng.github.io/linux_epoll/" data-title="[Linux]高级IO" data-ralateuid="2461859532"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw" aria-hidden="true"></i>&nbsp;<a href="/tags/linux/">Linux</a>,&nbsp;<a href="/tags/aupe/">AUPE</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/counting/" class="prev" rel="prev" title="[Linux]谈一谈并行Counting"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>[Linux]谈一谈并行Counting</a>
+            <a href="/ipc/" class="next" rel="next" title="[Linux]进程间通信">[Linux]进程间通信<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
+</div>
+<div id="comments"><div id="giscus" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://giscus.app">Giscus</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.118.2">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2015 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="about" target="_blank">子恒</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/lightgallery/css/lightgallery-bundle.min.css"><link rel="stylesheet" href="/lib/katex/katex.min.css"><script type="text/javascript" src="/lib/autocomplete/autocomplete.min.js"></script><script type="text/javascript" src="/lib/lunr/lunr.min.js"></script><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/lightgallery/lightgallery.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/thumbnail/lg-thumbnail.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/zoom/lg-zoom.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript" src="/lib/sharer/sharer.min.js"></script><script type="text/javascript" src="/lib/katex/katex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/auto-render.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/copy-tex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{"giscus":{"category":"Announcements","categoryId":"DIC_kwDOA9ikP84CQT5Y","darkTheme":"dark","emitMetadata":"0","inputPosition":"bottom","lang":"en","lazyLoading":true,"lightTheme":"light","mapping":"pathname","reactionsEnabled":"1","repo":"chestnutheng/chestnutheng.github.io","repoId":"MDEwOlJlcG9zaXRvcnk2NDUyOTQ3MQ=="}},"lightgallery":true,"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":true,"left":"\\begin{equation}","right":"\\end{equation}"},{"display":true,"left":"\\begin{equation*}","right":"\\end{equation*}"},{"display":true,"left":"\\begin{align}","right":"\\end{align}"},{"display":true,"left":"\\begin{align*}","right":"\\end{align*}"},{"display":true,"left":"\\begin{alignat}","right":"\\end{alignat}"},{"display":true,"left":"\\begin{alignat*}","right":"\\end{alignat*}"},{"display":true,"left":"\\begin{gather}","right":"\\end{gather}"},{"display":true,"left":"\\begin{CD}","right":"\\end{CD}"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"highlightTag":"em","lunrIndexURL":"/index.json","maxResultLength":10,"noResultsFound":"No results found","snippetLength":50,"type":"lunr"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

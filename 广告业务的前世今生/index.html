@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>[互联网]广告业务的前世今生 - 子恒的博客</title><meta name="Description" content="笔者曾在腾讯商业化、字节广告变现承担过多年广告后台相关工作，对业界的广告套路和广告架构比较熟悉。本文旨在以尽量容易理解的方式来分享广告相关的知识，来给对广告业务了解较少的同学形成一个基本的认知。"><meta property="og:title" content="[互联网]广告业务的前世今生" />
+<meta property="og:description" content="笔者曾在腾讯商业化、字节广告变现承担过多年广告后台相关工作，对业界的广告套路和广告架构比较熟悉。本文旨在以尽量容易理解的方式来分享广告相关的知识，来给对广告业务了解较少的同学形成一个基本的认知。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://chestnutheng.github.io/%E5%B9%BF%E5%91%8A%E4%B8%9A%E5%8A%A1%E7%9A%84%E5%89%8D%E4%B8%96%E4%BB%8A%E7%94%9F/" /><meta property="og:image" content="http://chestnutheng.github.io/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2022-01-04T17:23:09+08:00" />
+<meta property="article:modified_time" content="2022-01-04T17:23:09+08:00" /><meta property="og:site_name" content="子恒的博客" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="http://chestnutheng.github.io/logo.png"/>
+
+<meta name="twitter:title" content="[互联网]广告业务的前世今生"/>
+<meta name="twitter:description" content="笔者曾在腾讯商业化、字节广告变现承担过多年广告后台相关工作，对业界的广告套路和广告架构比较熟悉。本文旨在以尽量容易理解的方式来分享广告相关的知识，来给对广告业务了解较少的同学形成一个基本的认知。"/>
+<meta name="application-name" content="我的网站">
+<meta name="apple-mobile-web-app-title" content="我的网站"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://chestnutheng.github.io/%E5%B9%BF%E5%91%8A%E4%B8%9A%E5%8A%A1%E7%9A%84%E5%89%8D%E4%B8%96%E4%BB%8A%E7%94%9F/" /><link rel="prev" href="http://chestnutheng.github.io/high_perf_1/" /><link rel="next" href="http://chestnutheng.github.io/notes/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[互联网]广告业务的前世今生",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/chestnutheng.github.io\/%E5%B9%BF%E5%91%8A%E4%B8%9A%E5%8A%A1%E7%9A%84%E5%89%8D%E4%B8%96%E4%BB%8A%E7%94%9F\/"
+        },"genre": "posts","keywords": "互联网, 广告","wordcount":  362 ,
+        "url": "http:\/\/chestnutheng.github.io\/%E5%B9%BF%E5%91%8A%E4%B8%9A%E5%8A%A1%E7%9A%84%E5%89%8D%E4%B8%96%E4%BB%8A%E7%94%9F\/","datePublished": "2022-01-04T17:23:09+08:00","dateModified": "2022-01-04T17:23:09+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "子恒"
+            },"description": "笔者曾在腾讯商业化、字节广告变现承担过多年广告后台相关工作，对业界的广告套路和广告架构比较熟悉。本文旨在以尽量容易理解的方式来分享广告相关的知识，来给对广告业务了解较少的同学形成一个基本的认知。"
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="子恒的博客">子恒的博客</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/"> 主页 </a><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/freinds/"> 友链 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="子恒的博客">子恒的博客</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        Cancel
+                    </a>
+                </div><a class="menu-item" href="/" title="">主页</a><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/freinds/" title="">友链</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><div class="search-dropdown desktop">
+        <div id="search-dropdown-desktop"></div>
+    </div>
+    <div class="search-dropdown mobile">
+        <div id="search-dropdown-mobile"></div>
+    </div><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">[互联网]广告业务的前世今生</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="about" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>子恒</a></span>&nbsp;<span class="post-category">included in <a href="/categories/%E4%BA%92%E8%81%94%E7%BD%91/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>互联网</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2022-01-04">2022-01-04</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;362 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;2 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#商业模型">商业模型</a></li>
+    <li><a href="#广告业务">广告业务</a>
+      <ul>
+        <li><a href="#广告形态">广告形态</a></li>
+        <li><a href="#交易链路">交易链路</a></li>
+        <li><a href="#行业角色">行业角色</a></li>
+        <li><a href="#变现公式">变现公式</a></li>
+      </ul>
+    </li>
+    <li><a href="#广告架构">广告架构</a>
+      <ul>
+        <li><a href="#召回">召回</a>
+          <ul>
+            <li><a href="#targeting">targeting</a></li>
+            <li><a href="#频控">频控</a></li>
+            <li><a href="#倒排索引">倒排索引</a></li>
+          </ul>
+        </li>
+        <li><a href="#粗排">粗排</a>
+          <ul>
+            <li><a href="#预估">预估</a></li>
+            <li><a href="#learning2rank">learning2rank</a></li>
+          </ul>
+        </li>
+        <li><a href="#精排">精排</a>
+          <ul>
+            <li><a href="#ctr预估">CTR预估</a></li>
+          </ul>
+        </li>
+        <li><a href="#计费竞价">计费/竞价</a>
+          <ul>
+            <li><a href="#计费方式">计费方式</a></li>
+            <li><a href="#广告竞价">广告竞价</a>
+              <ul>
+                <li><a href="#广义一价">广义一价</a></li>
+                <li><a href="#广义二价">广义二价</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li><a href="#策略工程">策略工程</a>
+      <ul>
+        <li>
+          <ul>
+            <li><a href="#实验">实验</a></li>
+            <li><a href="#定向">定向</a></li>
+            <li><a href="#流控">流控</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><p>笔者曾在腾讯商业化、字节广告变现承担过多年广告后台相关工作，对业界的广告套路和广告架构比较熟悉。本文旨在以尽量容易理解的方式来分享广告相关的知识，来给对广告业务了解较少的同学形成一个基本的认知：</p>
+<ul>
+<li>广告是如何赚钱的？</li>
+<li>广告系统的组成是什么样的？</li>
+<li>广告系统有哪些值得学习的策略？</li>
+</ul>
+<h1 id="商业模型">商业模型</h1>
+<p><strong>广告在平台内部的“永动机”</strong></p>
+<ul>
+<li>用户产品：把平台拉新进来的用户留存，转化成活跃用户</li>
+<li>商业化：在活跃用户的浏览行为中插入广告，获得收入</li>
+<li>UG：把部分商业化的收入用来拉新、激励，使得有源源不断的新用户进来<br>
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/1.svg"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/1.svg, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/1.svg 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/1.svg 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/1.svg"
+        title="永动机" /></li>
+</ul>
+<p><strong>广告做的是下面三个人群的生意</strong></p>
+<ul>
+<li>用户：需要使用平台的服务，如新闻、推文、博客、视频</li>
+<li>广告主：需要构建自己的品牌价值、推销自己的产品等</li>
+<li>平台：需要用自己产品的DAU变现</li>
+</ul>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/2.jpeg"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/2.jpeg, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/2.jpeg 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/2.jpeg 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/2.jpeg"
+        title="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/2.jpeg" /></p>
+<h1 id="广告业务">广告业务</h1>
+<h2 id="广告形态">广告形态</h2>
+<p>常见的广告形态<br>
+硬广</p>
+<ul>
+<li>开屏广告</li>
+<li>原生开屏广告</li>
+<li>信息流广告</li>
+<li>搜索广告</li>
+</ul>
+<p>软广</p>
+<ul>
+<li>图文视频软广</li>
+</ul>
+<p>非标</p>
+<ul>
+<li>锚点</li>
+<li>彩蛋</li>
+<li>hashtag</li>
+<li>DOU+</li>
+</ul>
+<h2 id="交易链路">交易链路</h2>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/3.png"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/3.png, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/3.png 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/3.png 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/3.png"
+        title="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/3.png" /></p>
+<p>如果广告主想要在多个媒体（网站、广告网络、交易平台）投放广告 ，是一个非常繁琐的过程。因为每一个网站、广告网络、交易平台的媒体购买系统、操作规则不同，需要人工进行调整，费时低效；而且跨渠道媒体购买很可能重复购买同一部分人群。</p>
+<p>DSP平台把广告主、代理人员从庞杂的重复手工操作中解放出来。广告主只要在DSP平台投放广告即可，由DSP平台帮助广告在多个媒体投放广告。</p>
+<p>同理，如果流量主想在自己的网站流量位置上插入广告，如果自己去招商，也是个非常消耗人力的事情，寻找广告主、和广告主对接、广告主提供的素材匹配自己的广告位都需要很多时间。SSP平台可以快速满足流量主接入广告的需求，帮助流量主快速变现。</p>
+<p>名词解释</p>
+<ul>
+<li><strong>DSP</strong> (Demand-Side Platform)： <strong>需求方平台</strong>，可以简单理解为需要采买流量的平台（广告主自建或者第三方技术公司）</li>
+<li><strong>SSP</strong> (Supply-Side Platform)：<strong>供应方平台/媒体平台</strong>，管理流量和坑位。可以简单理解为流量（抖火西头）</li>
+<li><strong>DMP</strong> (Data Management Platform）：<strong>数据管理平台</strong>，管理人群，生成定向人群包</li>
+<li><strong>ADX</strong> (AD Exchange)：<strong>程序化广告****交易平台</strong>，通过技术对接的方式，支持客户（DSP）进行媒体的流量（用户）采买</li>
+<li><strong>ADN</strong> (Ad Network )： <strong>广告网络</strong>，聚合了大量App内的展示广告资源，主要包含中长尾App流量，帮助广告主实现媒体精准、灵活的投放。汇集了很多媒体的余量</li>
+</ul>
+<p>各种公司的布局：<br>
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/4.png"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/4.png, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/4.png 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/4.png 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/4.png"
+        title="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/4.png" /></p>
+<h2 id="行业角色">行业角色</h2>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/5.svg"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/5.svg, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/5.svg 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/5.svg 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/5.svg"
+        title="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/5.svg" /></p>
+<h2 id="变现公式">变现公式</h2>
+<p>**广告收入 = 活跃用户数 * 人均展示数 * 广告负载 *** <strong>广告点击率 * 广告价格</strong></p>
+<p>$$（Ad Revenue = DAU * Avg Imps * AdLoad * CTR * AdPrice）$$<br>
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/6.svg"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/6.svg, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/6.svg 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/6.svg 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/6.svg"
+        title="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/6.svg" /></p>
+<ul>
+<li>
+<p>活跃用户数（DAU）：产品每天至少使用产品一次的用户数</p>
+</li>
+<li>
+<p>人均展示数（Avg Imps）：活跃用户平均每天请求次数</p>
+</li>
+<li>
+<p>广告负载（AdLoad）：活跃用户中进入广告场景的用户占比，即有可能看到广告的用户比例</p>
+</li>
+<li>
+<p>广告点击率（CTR）：实际点击广告的次数在整体广告展示次数中的占比，即广告点击率 = 广告点击次数 / 广告展示次数</p>
+</li>
+<li>
+<p>单次点击广告价格（AdPrice）：每一次广告点击广告平台愿意支付给我们的价格<br>
+通过这个收入公式，我们尝试看看能有什么办法提升收入：</p>
+</li>
+<li>
+<p>DAU和用户请求次数不由商业产品控制，由UG保证，商业产品只关注广告位</p>
+</li>
+<li>
+<p>AdLoad一般不做改动，商业产品会针对新老用户做不同策略</p>
+</li>
+<li>
+<p>CTR * AdPrice / eCPM *PV / CTR * CVR * AdPrice 是商业产品主要操作的方向（如下图）</p>
+<ul>
+<li>提升填充率：无满足要求的广告、请求超时的时候兜底余量</li>
+<li>提升展示率：提高用户页面停留时长，预加载大体积广告，提升广告加载速度等</li>
+<li>提高点击率：采用原生广告，优化广告素材，增大button和点击区域</li>
+<li>提高转化率：双链直达，App自动下载，内跳</li>
+</ul>
+</li>
+</ul>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/7.png"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/7.png, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/7.png 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/7.png 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/7.png"
+        title="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/7.png" /></p>
+<h1 id="广告架构">广告架构</h1>
+<p>广告的服务架构和一般推荐的链路非常相似，也分为召回、粗排、精排几层，越往上，数据量级越大，对应的模型越简单，检索速度越快；往下，数据量级迅速下降，对应的模型也更加精准和复杂<br>
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/7.svg"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/7.svg, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/7.svg 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/7.svg 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/7.svg"
+        title="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/7.svg" /><br>
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/8.svg"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/8.svg, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/8.svg 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/8.svg 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/8.svg"
+        title="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/8.svg" /></p>
+<h2 id="召回">召回</h2>
+<p>召回主要负责从千万级的广告计划中快速检索出可以下发的广告候选集。首先要求检索要快，然后要准确（符合广告主要求），最后要足够好（符合用户喜好）。我们分三块看下，其中targeting负责把“好”的广告加入候选，频控负责把“不好”的广告干掉；倒排索引则是检索速度的关键。</p>
+<h3 id="targeting">targeting</h3>
+<p>在满足定向条件的前提下，从广告全库中获得足够多的「好」候选。</p>
+<ul>
+<li>硬要求（人工）：广告主对希望投放的人群有清晰的认知
+<ul>
+<li>广告属性：比如限定安卓应用</li>
+<li>人群属性：比如限制年龄、性别、地理位置</li>
+</ul>
+</li>
+<li>软要求（算法）：广告主希望广告的效果好，但是没有明确诉求
+<ul>
+<li>兴趣定向：用模型预测用户是否对某些类别的长期兴趣</li>
+<li>行为定向：用户的短期行为（转发过美妆视频，点击过游戏广告等等）</li>
+<li>lookalike：给定一组种子用户，根据模型学习找到和这组种子用户相似的用户。种子用户一般由广告主直接提供，比如产品的购买者，下载app的用户email，看过广告主官网页面的人等等</li>
+</ul>
+</li>
+</ul>
+<h3 id="频控">频控</h3>
+<p>频控是一种常见的新鲜度控制策略，可以提高用户对所推荐内容的满意度和广度，有效减轻过度拟合导致推荐越来越窄的问题</p>
+<ol>
+<li>防止用户反感/审美疲劳：对同一用户重复曝光同一广告素材的意义不大，还可能导致反感</li>
+<li>提升点击率和转化率：节省出来的流量可以投放不同创意的广告，提升广告效果</li>
+</ol>
+<p>频控一般有下面几种：</p>
+<ul>
+<li>send（下发）频控，一般几个小时到一天</li>
+<li>show（曝光）频控，补充下发了看不到的情况</li>
+<li>dislike（负反馈）频控</li>
+</ul>
+<p>还可以做更复杂的策略，比如给用户send了某个ad group里面的一条，或者用户主动dislike了某个ad group里面的一条，会在一定时间内整个组内的广告素材都不会下发</p>
+<h3 id="倒排索引">倒排索引</h3>
+<p>如何在数千万的广告计划中快速匹配用户的特征和广告主的诉求呢？倒排索引是广告定向检索的关键。</p>
+<p>考虑下面4个广告计划，他们有性别和年龄段两个定向配置</p>
+<blockquote>
+<p>计划1：投男性</p>
+<p>计划2：投青年/中年，不可投男性</p>
+<p>计划3：投女性，老年</p>
+<p>计划4：不可投老年，不可忽略性别</p>
+</blockquote>
+<p>分别构建正定向索引和反定向两个倒排索引，key是定向的维度，value是广告id的bitmap：</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/10.png"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/10.png, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/10.png 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/10.png 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/10.png"
+        title="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/10.png" /></p>
+<p>特征X不可投 = 正向all - 正向特征命中X + 反向特征命中X</p>
+<p>可投广告 = 全集 - (特征1不可投 + 特征2不可投 + &hellip;)</p>
+<h2 id="粗排">粗排</h2>
+<p>粗排的主要目的是在召回的大量数据中对数据进行初筛，缩小到几千的数量级喂给精排。粗排不关心具体的数值，只关心精排的排序，在目标上和精排是一致的。</p>
+<h3 id="预估">预估</h3>
+<p>因为最终决定广告价值排序的是精排，所以如果我们把粗排的优化目标和精排设定为完全一致是最好的。但是粗排处理的广告量级显然决定了不能和精排完全一致，必须要设计一个简单版本，来快速处理大量数据。我们考虑几种方案：</p>
+<ul>
+<li>也把粗排的排序当做一个二分类问题来看，使用精排的某一个指标：比如只做CVR预估，放弃CTR预估？</li>
+<li>使用精排的弱化版本，比如训练改成离线的？降低性能需求？</li>
+<li>使用另一套简单的预估模型？</li>
+</ul>
+<p>无论是哪种方案，都会带来一些不一致的问题，比如精排里最高打分的TopN还没有来得及打分就被粗排干掉了，这在推荐里是致命的badcase。</p>
+<h3 id="learning2rank">learning2rank</h3>
+<p>所以，直接预估的方法是不行的，我们还是要把粗排的目标设定为和精排保持一致，用模型学模型的方法去做。</p>
+<p>假如精排的队列有100个排好序的样本，我们可以在前10里面取出一个A，作为好样本。再从后10个取出一个B当做坏样本。粗排的目标，就是要让自己也认为A好于B。越是这样，它就和精排越像，就越能帮精排分担压力。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/11.png"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/11.png, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/11.png 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/11.png 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/11.png"
+        title="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/11.png" /></p>
+<h2 id="精排">精排</h2>
+<p>精排会对粗排的结果集做进一步筛选，并对广告素材进行打分，来确定最终的广告展示顺序。</p>
+<p>精排是推荐系统的核心，直接对推荐系统的结果负责。推荐系统一般都有一个核心的优化指标，比如在短视频平台上，推荐看的就是观看时长、点赞，而广告看的则是eCPM（出价乘以CTR乘以CVR，参考上面的变现公式）。在电商平台上看的是GMV。线上提升是由线下的一个一个模型提升带来的。比如在广告场景下，既要提升CTR，也要提升CVR，还要改善出价机制，还要考虑隐匿成本（用户体验）。</p>
+<p>精排学习的目标的范围一般是所有存在曝光的样本。以点击率（CTR）预估为例，以有曝光但没有点击的是负样本，有曝光也有点击的就是正样本。所以，一般会采取二分类模型来实现精排。</p>
+<h3 id="ctr预估">CTR预估</h3>
+<p>我们用一个最简单的LR模型为例子，看看精排怎么解决预估的问题。虽然业界目前采用的模型比这个简单版本要复杂的多得多，但是大多都是在一些特征的选取和加工、模型选取、专门针对模型问题的优化和解决上做工作，我们通过这个简单版依然可以看出一些基本的解决手段：</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/12.png"
+        data-srcset="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/12.png, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/12.png 1.5x, https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/12.png 2x"
+        data-sizes="auto"
+        alt="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/12.png"
+        title="https://chestnutheng-blog-1254282572.cos.ap-chengdu.myqcloud.com/2022/12.png" /></p>
+<p>学习集合：用户的特征，广告的特征，是否点击的历史数据<br>
+输入：用户的特征，广告的特征<br>
+输出：点击的概率？</p>
+<p>假设点击率和用户特征、广告特征是线性相关的，我们可以给每个特征加个参数w，用历史数据计算w</p>
+<p>$$f(x) = w_0 + w_1 * 用户性别 + w_2 * 广告颜色  $$</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-Plain" data-lang="Plain"><span class="line"><span class="cl">（男，广告是红色，点击）
+</span></span><span class="line"><span class="cl">（男，广告是白色，未点击）
+</span></span><span class="line"><span class="cl">（女，广告是白色，未点击）
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>求出每个参数的值后，当有新的用户或者广告进来，就可以用我们的公式算出用户会点击广告的概率，然后把概率大的排在前面</p>
+<h2 id="计费竞价">计费/竞价</h2>
+<p>精排在给广告做排序的时候，需要根据广告类型的不同对CTR/CVR做预估，当预估出结果后，计算出预估的eCPM参与竞价。竞价结束后，广告会下发并且曝光，我们的系统再根据广告实际的曝光/点击/转化结合不同的广告类型进行计费，确认广告主的消耗。</p>
+<h3 id="计费方式">计费方式</h3>
+<p>广告系统根据不同广告主的诉求，推出了多种售卖方式，可以让广告主在目标上有偏重和权衡。比如品牌广告，广告主更加在意品牌的曝光，给用户留下深刻印象；效果广告的广告主则只为用户的行为买单，比如下载、购买、注册等实际能产生收益的行为。</p>
+<table>
+<thead>
+<tr>
+<th>广告类型</th>
+<th>计费方式</th>
+<th>竞价指标</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>品牌广告</td>
+<td>CPT (Cost Per Time)</td>
+<td>不参与</td>
+<td>包断时段内整个位置，价格高</td>
+</tr>
+<tr>
+<td>品牌广告</td>
+<td>GD (Guaranteed Delivery)</td>
+<td>不参与</td>
+<td>购买特定数量，价格较高</td>
+</tr>
+<tr>
+<td>效果广告</td>
+<td>CPM (Cost Per Mille)</td>
+<td>eCPM= bid</td>
+<td>受众广，但是不精确</td>
+</tr>
+<tr>
+<td>效果广告</td>
+<td>CPC (Cost Per Click)</td>
+<td>eCPM = bid * CTR</td>
+<td>1. 受众精确<br>2. 但是和最终转化目标较远，广告主成本不可控</td>
+</tr>
+<tr>
+<td>效果广告</td>
+<td>CPA (Cost Per Action)</td>
+<td>eCPM = cpa_bid * CTR * CVR</td>
+<td>1. 和转化直接挂钩，对广告主友好<br>2. 需要广告主回传转化，有作弊风险<br> 3. 转化很低时，平台承担前期成本</td>
+</tr>
+<tr>
+<td>效果广告</td>
+<td>oCPC (Optimized Cost Per Click)</td>
+<td>eCPM = cpa_bid * CTR * CVR</td>
+<td>1. 按照转化出价，但是按照点击计费（price * CVR）<br>2. 广告主和平台的利益相对统一</td>
+</tr>
+</tbody>
+</table>
+<p>所以</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">平台风险大</th>
+<th></th>
+<th style="text-align:right">广告主风险大</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">←&mdash;&mdash;&mdash;-</td>
+<td>&mdash;&ndash;</td>
+<td style="text-align:right">&mdash;&mdash;&mdash;-→</td>
+</tr>
+<tr>
+<td style="text-align:left">CPA（按转化）</td>
+<td>oCPC</td>
+<td style="text-align:right">oCPM（按曝光）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="广告竞价">广告竞价</h3>
+<p>上面我们讲精排的时候讲过，精排会根据最终的eCPM排序来做出下发哪条广告的决定。那除了用户喜好、广告素材的预估点击率，广告主自己怎么来控制自己的素材可以下发呢？直接的手段就是通过竞价，让自己的出价处在广告主中比较有竞争力的水平。竞价系统做了这样一些工作：</p>
+<p>目标1：让广告主觉得公平，没有多收钱</p>
+<p>目标2： 广告平台收益最大化</p>
+<h4 id="广义一价">广义一价</h4>
+<p>最终价格 == 最高用户出价</p>
+<ul>
+<li>计算简单，容易理解，也常用于土地拍卖 / 股票市场</li>
+<li>无法让广告主能够出内心真实价格。在该机制下，广告主有向下调价的动力。即如果广告主出100元达到了效果，下次可能就会想出90元试试看行不行</li>
+</ul>
+<h4 id="广义二价">广义二价</h4>
+<p>最终价格 == 出价第二高的用户的出价<br>
+考虑两个广告： X (bid $100, eCTR_X = 0.01), Y (bid $80, eCTR_Y = 0.02)。<br>
+计算可得：<br>
+eCPM_X = 100 * 0.01 = 1， eCPM_Y = 80 * 0.02 = 1.6</p>
+<p>因为eCPM_Y &gt; eCPM_X， 因此Y赢得竞价。但是在收钱时，Y的每次点击只收取 1 / 0.02 = $50<br>
+。代表Y其实只需要出价 $50就可以赢得这次竞价，因此$50对Y而言是公平的价格。</p>
+<ul>
+<li>对广告主而言较为公平，能出“内心价”</li>
+<li>只适用于一个拍卖位置</li>
+</ul>
+<h1 id="策略工程">策略工程</h1>
+<h3 id="实验">实验</h3>
+<p>怎么吹都不为过的一种思想，应该是广告系统里每一次新的需求的必经之路。每个用户量足够的产品都应该接入来辅助决策</p>
+<ul>
+<li>流量切分，均匀地哈希用户到不同的桶中</li>
+<li>建立AB实验，给实验组、对照组的用户打上标签</li>
+<li>给实验组的用户生效特殊策略，观察核心指标波动</li>
+<li>全量，反转实验，对换实验组和对照组，确保结果正向</li>
+</ul>
+<h3 id="定向">定向</h3>
+<ul>
+<li>优点：确保投放到准确的人群上，“不浪费”每一个流量</li>
+<li>缺点
+<ul>
+<li>向覆盖范围外的人群连触达机会都没有</li>
+<li>容易让用户产生疲劳</li>
+</ul>
+</li>
+</ul>
+<h3 id="流控">流控</h3>
+<p>超投问题：当广告计费到达额度，即将下线的时候，广告链路上依然有很多广告在请求、定向、筛选、排序、曝光等等流程中，所以到量的那一瞬间依然会有很多广告在投放状态，产生扣费</p>
+<p>如何解决？出价会根据PID算法做适当的调整，来影响eCPM改变排序，以保量的合约广告为例子：</p>
+<ol>
+<li>当模型发现某个广告投快了，降低出价，放弃本次展示机会</li>
+<li>当模型发现某个广告投慢了，提高出价，pk掉其他合约广告，并且有可能在精排里pk掉后续的竞价广告（如果本次pk失败，下次仍会继续提高出价），最终获得广告展示机会</li>
+</ol>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2022-01-04</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/%E5%B9%BF%E5%91%8A%E4%B8%9A%E5%8A%A1%E7%9A%84%E5%89%8D%E4%B8%96%E4%BB%8A%E7%94%9F/index.md" target="_blank">Read Markdown</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="http://chestnutheng.github.io/%E5%B9%BF%E5%91%8A%E4%B8%9A%E5%8A%A1%E7%9A%84%E5%89%8D%E4%B8%96%E4%BB%8A%E7%94%9F/" data-title="[互联网]广告业务的前世今生" data-hashtags="互联网,广告"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="http://chestnutheng.github.io/%E5%B9%BF%E5%91%8A%E4%B8%9A%E5%8A%A1%E7%9A%84%E5%89%8D%E4%B8%96%E4%BB%8A%E7%94%9F/" data-hashtag="互联网"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Hacker News" data-sharer="hackernews" data-url="http://chestnutheng.github.io/%E5%B9%BF%E5%91%8A%E4%B8%9A%E5%8A%A1%E7%9A%84%E5%89%8D%E4%B8%96%E4%BB%8A%E7%94%9F/" data-title="[互联网]广告业务的前世今生"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="http://chestnutheng.github.io/%E5%B9%BF%E5%91%8A%E4%B8%9A%E5%8A%A1%E7%9A%84%E5%89%8D%E4%B8%96%E4%BB%8A%E7%94%9F/" data-title="[互联网]广告业务的前世今生"><i data-svg-src="/lib/simple-icons/icons/line.min.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="http://chestnutheng.github.io/%E5%B9%BF%E5%91%8A%E4%B8%9A%E5%8A%A1%E7%9A%84%E5%89%8D%E4%B8%96%E4%BB%8A%E7%94%9F/" data-title="[互联网]广告业务的前世今生" data-ralateuid="2461859532"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw" aria-hidden="true"></i>&nbsp;<a href="/tags/%E4%BA%92%E8%81%94%E7%BD%91/">互联网</a>,&nbsp;<a href="/tags/%E5%B9%BF%E5%91%8A/">广告</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/high_perf_1/" class="prev" rel="prev" title="[后台]服务端高性能架构之道（系统和服务篇）"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>[后台]服务端高性能架构之道（系统和服务篇）</a>
+            <a href="/notes/" class="next" rel="next" title="[杂谈]我怎么选择笔记软件">[杂谈]我怎么选择笔记软件<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
+</div>
+<div id="comments"><div id="giscus" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://giscus.app">Giscus</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.118.2">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2015 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="about" target="_blank">子恒</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/lightgallery/css/lightgallery-bundle.min.css"><link rel="stylesheet" href="/lib/katex/katex.min.css"><script type="text/javascript" src="/lib/autocomplete/autocomplete.min.js"></script><script type="text/javascript" src="/lib/lunr/lunr.min.js"></script><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/lightgallery/lightgallery.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/thumbnail/lg-thumbnail.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/zoom/lg-zoom.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript" src="/lib/sharer/sharer.min.js"></script><script type="text/javascript" src="/lib/katex/katex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/auto-render.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/copy-tex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{"giscus":{"category":"Announcements","categoryId":"DIC_kwDOA9ikP84CQT5Y","darkTheme":"dark","emitMetadata":"0","inputPosition":"bottom","lang":"en","lazyLoading":true,"lightTheme":"light","mapping":"pathname","reactionsEnabled":"1","repo":"chestnutheng/chestnutheng.github.io","repoId":"MDEwOlJlcG9zaXRvcnk2NDUyOTQ3MQ=="}},"lightgallery":true,"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":true,"left":"\\begin{equation}","right":"\\end{equation}"},{"display":true,"left":"\\begin{equation*}","right":"\\end{equation*}"},{"display":true,"left":"\\begin{align}","right":"\\end{align}"},{"display":true,"left":"\\begin{align*}","right":"\\end{align*}"},{"display":true,"left":"\\begin{alignat}","right":"\\end{alignat}"},{"display":true,"left":"\\begin{alignat*}","right":"\\end{alignat*}"},{"display":true,"left":"\\begin{gather}","right":"\\end{gather}"},{"display":true,"left":"\\begin{CD}","right":"\\end{CD}"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"highlightTag":"em","lunrIndexURL":"/index.json","maxResultLength":10,"noResultsFound":"No results found","snippetLength":50,"type":"lunr"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

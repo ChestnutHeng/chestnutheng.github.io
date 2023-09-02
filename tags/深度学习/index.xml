@@ -1,0 +1,43 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>深度学习 - Tag - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/</link>
+        <description>深度学习 - Tag - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Tue, 14 Aug 2018 21:09:13 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="self" type="application/rss+xml" /><item>
+    <title>[深度学习]C1W1~C1W2</title>
+    <link>http://chestnutheng.github.io/c1w1-c1w2/</link>
+    <pubDate>Tue, 14 Aug 2018 21:09:13 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/c1w1-c1w2/</guid>
+    <description><![CDATA[C1W1: 什么是deep learning 单一神经元 deeplearning是模拟大脑的一种机器学习算法。以房价预测为例：
+上图把房子面积作为输入X，房价作为输出Y，通过拟合得到了一个一次函数
+$$
+Y=aX+b
+$$
+这个函数的负值均视为0，即使用了ReLU函数作为神经元的激活函数做了处理。
+$$
+f(x) = \max(aX+b, 0)
+$$
+Note: ReLU函数：f(x)=\max(0, x)，近年来使用ReLU函数代替sigmoid函数为计算速度做了巨大的提升。
+看看更多特征的情况：
+飞速发展 上图中可以看到传统算法和神经网络的效果的一个对比，在数据多的情况下神经网络有明显的优势。近年来以下的一些原因导致deep learning飞速发展成为主流
+计算速度飞速提升，使得训练较大的神经网络成为可能 数据变多（labeled data 变多） 生命周期 一个典型的深度学习的流程，即是一个Idea-Code-Train 的循环
+C1W2: 基本的神经网络 问题描述 这里从一个简单的问题开始说起：识别一个64x64的图像是否为猫：
+每个像素有RGB三个值组成，64*64个像素就是12228个值。所以X可以表示为一个12228维的向量。Y则是0或1（是或不是猫咪）。
+这里需要很多(X, Y)组成的labeled data数据用来学习。每个样本用如下的数学方式表示：
+$$
+X\in R^{n_x}, Y\in{0,1} \qquad 其中n_x为每个图片的维度(12288)
+$$
+训练集可以用很多样本表示：
+$$
+\textrm{m training examples: } \{(X^{(1)}, Y^{(1)}), (X^{(2)}, Y^{(2)}), &hellip; ,(X^{(3)}, Y^{(3)})\}
+$$
+其中每个X都有n_x列，所以整个样本集可以表示为
+$$
+X\in R^{n_x\times m},Y \in R^{1 \times m}
+$$
+逻辑回归 Sigmoid函数 在开始正题之前，先看一个函数：]]></description>
+</item>
+</channel>
+</rss>

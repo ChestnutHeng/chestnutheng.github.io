@@ -1,0 +1,22 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>sizeof - Tag - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/tags/sizeof/</link>
+        <description>sizeof - Tag - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Wed, 16 Aug 2017 23:33:20 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/tags/sizeof/" rel="self" type="application/rss+xml" /><item>
+    <title>[C&#43;&#43;]sizeof那些事儿</title>
+    <link>http://chestnutheng.github.io/size_of_things/</link>
+    <pubDate>Wed, 16 Aug 2017 23:33:20 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/size_of_things/</guid>
+    <description><![CDATA[sizeof 是什么 首先明确一点，sizeof是运算符，不是函数。运算符是一个对于编译器来说的概念，是由编译器处理的，在程序编译好之后所有的sizeof都已经被替换为实际的值。类似的还有decltype。所以像
+1 sizeof(++i); 这类的语句是不会改变i的值的。在C99之后，sizeof增加了一些运行时特性，可以算出可变数组的大小，像这样：
+1 2 3 4 int num; scanf(&#34;%d&#34;, &amp;num);	//input 4 int arr[num]; sizeof(arr);	//output 16 sizeof 怎么用 sizeof 支持下面的语法：
+1 2 sizeof(type) (1) 以字节数返回type类型对象表示的大小 sizeof expression (2) 以字节数返回expression的类型对象表示的大小 其中，sizeof(char)、 sizeof(signed char)以及sizeof(unsigned char)始终返回1。
+sizeof不能用于函数类型、不完整类型（含void）或位域左值。在一些编译器里，sizeof(void)会返回0，但这是没有定义的。
+普通的sizeof 几个上面用法的例子：
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 int main(void) { // type argument: printf(&#34;sizeof(float) = %u\n&#34;, sizeof(float)); //4 printf(&#34;sizeof(void(*)(void)) = %u\n&#34;, sizeof(void(*)(void))); //4 printf(&#34;sizeof(char[10]) = %u\n&#34;, sizeof(char[10])); //10 // expression argument: printf(&#34;sizeof &#39;a&#39; = %u\n&#34;, sizeof &#39;a&#39;); // &#39;a&#39;的类型是int, 4 // printf(&#34;sizeof main = %zu\n&#34;, sizeof main); // 错误：函数类型 printf(&#34;sizeof &amp;main = %u\n&#34;, sizeof main()); //类型为返回值int, 4 printf(&#34;sizeof \&#34;hello\&#34; = %u\n&#34;, sizeof &#34;hello&#34;); // 类型为char[6], 6 printf(&#34;sizeof(\&#34;12345\&#34; + 1) = %u\n&#34;, sizeof(&#34;12345&#34; + 1)); // 类型为指针, 4 } 需要注意的是，在函数传参等数组退化为指针的时候sizeof返回的当然是指针大小，切忌用它来计算数组大小。]]></description>
+</item>
+</channel>
+</rss>

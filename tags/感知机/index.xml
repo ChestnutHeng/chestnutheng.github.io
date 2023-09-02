@@ -1,0 +1,31 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>感知机 - Tag - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/tags/%E6%84%9F%E7%9F%A5%E6%9C%BA/</link>
+        <description>感知机 - Tag - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Sat, 06 Feb 2016 00:19:00 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/tags/%E6%84%9F%E7%9F%A5%E6%9C%BA/" rel="self" type="application/rss+xml" /><item>
+    <title>[机器学习]感知机</title>
+    <link>http://chestnutheng.github.io/machine_learning_procetron/</link>
+    <pubDate>Sat, 06 Feb 2016 00:19:00 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/machine_learning_procetron/</guid>
+    <description><![CDATA[机器学习基石笔记 感知机 损失函数 给定一个数据集 $T ={(x_1,y_1),(x_2,y_2),\cdots,(x_N,y_N)}$ , 其中 $x = R^n , , y={+1,-1}$
+若存在超平面S $w\cdot x + b = 0$ 能将所有的正负实例点分到两侧，则称数据集是线性可分的，否则称线性不可分。
+任意一点$x_0$到超平面的距离为
+$$\frac{1}{||w||}|w\cdot x_0 + b|$$
+对于误分类数据$(x_i,y_i)$来说，
+$-y_i(w\cdot x_i + b) &gt; 0$
+有误分类点到超平面距离
+$$-\frac{1}{||w||}y_i|w\cdot x_0 + b|$$
+则所有误分类点到超平面距离为
+$$-\frac{1}{||w||}\sum_{x_i \in m }y_i|w\cdot x_0 + b|$$
+所以感知机$sign(w\cdot x + b)$学习损失函数为
+$$L(w,b) = -\sum_{x_i \in m }y_i|w\cdot x_0 + b|$$
+学习算法 选取初值$w_0,b_0$
+在训练集中选取数据$(x_i,y_i)$
+如果$y_i(w\cdot xi+ b) \leq 0$（分类错误）
+$$w \leftarrow w + x_iy_i$$]]></description>
+</item>
+</channel>
+</rss>

@@ -1,0 +1,33 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title> 操作系统 - Tag - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/</link>
+        <description> 操作系统 - Tag - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Mon, 03 Apr 2017 13:58:53 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" rel="self" type="application/rss+xml" /><item>
+    <title>[C&#43;&#43;]C&#43;&#43;多线程基础</title>
+    <link>http://chestnutheng.github.io/cpp_multithreading/</link>
+    <pubDate>Mon, 03 Apr 2017 13:58:53 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/cpp_multithreading/</guid>
+    <description><![CDATA[各种锁的基本概念以及在C++里的使用，还有C的一个生产消费模型。
+操作系统的知识 概念 临界区：访问和操作共享数据的代码段
+避免死锁：嵌套加锁时按顺序加锁, 防止发生饥饿
+原子操作：atomic_t
+自旋锁 自旋锁：请求该锁的线程在等待时自旋（特别耗费处理器时间），所以只能轻量级加锁（一般锁的时间小于上下文切换的开销）。
+注意：对数据而不是对代码加锁。
+读写自旋锁：读时(允许读，不允许写)，写时（不允许读，不允许写）。
+注意：不能把读锁升级为写锁，不然会死锁。读写操作要清晰地分开。
+信号量 信号量：请求锁的进程在等待时加入等待队列并睡眠。一般用于长时间加锁（唤醒、睡眠、加入队列都是很大的开销）。
+通过P/V或者down()/up()操作来控制允许同时进行的线程数。信号量减一就等同与获取一个锁，锁为负数时线程就会进入等待队列。
+0/1信号量（互斥信号量）：只允许同时一个线程执行。
+计数信号量：允许同时多个线程执行。
+读写信号量：互斥信号量的一种。
+互斥体 互斥体(mutex): 可以睡眠的强制互斥锁。比信号量更加首选。
+mutex和自旋锁的区别：
+需求 加锁方法 低开销加锁 优先自旋锁 短期加锁 优先自旋锁 长期加锁 优先mutex 中断上下文加锁 只能自旋锁 持有锁时需要睡眠 只能mutex C++11 的线程库 std::thread std::thread用于创建一个执行的线程实例，所以它是一切并发编程的基础，使用时需要包含头文件，它提供了很多基本的线程操作，例如get_id()来获取所创建线程的线程 ID，例如使用join()来加入一个线程等。
+std::mutex, std::unique_lock, std::lock_guard 使用std::mutex创建互斥体，std::unique_lock上锁。由于C++保证了所有栈对象在声明周期结束时会被销毁，所以这样的代码是异常安全的。无论发生异常还是正常结束，都会自动调用unlock()。
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 #include &lt;iostream&gt; #include &lt;thread&gt; #include &lt;mutex&gt; std::mutex mtx; void block_area() { std::unique_lock&lt;std::mutex&gt; lock(mtx); //.]]></description>
+</item>
+</channel>
+</rss>
