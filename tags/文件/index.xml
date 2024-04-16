@@ -1,0 +1,16 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>文件 - Tag - 子恒的博客</title>
+        <link>http://chestnutheng.github.io/tags/%E6%96%87%E4%BB%B6/</link>
+        <description>文件 - Tag - 子恒的博客</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1085912251@qq.com (子恒)</managingEditor>
+            <webMaster>1085912251@qq.com (子恒)</webMaster><lastBuildDate>Thu, 31 Oct 2019 17:25:36 &#43;0800</lastBuildDate><atom:link href="http://chestnutheng.github.io/tags/%E6%96%87%E4%BB%B6/" rel="self" type="application/rss+xml" /><item>
+    <title>[Linux]文件和零拷贝</title>
+    <link>http://chestnutheng.github.io/linux_io/</link>
+    <pubDate>Thu, 31 Oct 2019 17:25:36 &#43;0800</pubDate>
+    <author>子恒</author>
+    <guid>http://chestnutheng.github.io/linux_io/</guid>
+    <description><![CDATA[文件 文件描述符 文件描述符：在Linux中，所有的文件都是通过文件描述符引用。fd是一个非负整数。按照惯例，标准输入的fd是0，标准输出的fd是1，标准错误的fd是2。分别作为STDIN_FILENO、STDOUT_FILENO、STDERR_FILENO定义在unistd中。 文件描述符的上限：fd的范围是 0 ~ OEPN_MAX-1 。OPEN_MAX一般是20或者64。这代表一个进程最多打开19或63个文件。 文件内核API 文件的打开：int open(const char *pathname, int flags)参数填上要打开的文件的名字（甚至可以不存在），会返回打开的fd。下面是一些常用的选项： 1 2 3 4 5 6 O_APPEND 文件将以追加模式打开，每次写操作之前，文件偏移量都会置于文件末尾。 O_CREAT 创建文件。如果文件已经存在，则会直接打开。 O_EXCL 和上面的O_CREAT联用时，表示如果文件已经存在，就会失败。可以保证多进程同时创建文件的原子操作。 O_SYNC 打开文件用于同步I/O。在数据写到磁盘之前写操作不会完成；一般的读操作已是同步的，所以这个标志对读操作没有影响。 O_NONBLOCK 如果可以，文件将在非阻塞模式下打开。任何其它操作都不会使该进程在I/O中阻塞。这种情况可能只用于FIFO。 O_DIRECT 打开文件用于直接I/O。将会绕过缓冲区操作。 文件的关闭：int close(int fd) 关闭一个文件会释放上面所有的记录锁。一个进程终止后，内核会自动关闭它打开的所有文件。 文件定位： off_t lseek(int fd, off_t offset, int whence) 参数whence指定了偏移地址（开始点SEEK_SET 当前点SEEK_CUR 结束点SEET_END），另一个参数offset是从参考点开始的偏移量（可正可负）。返回新的偏移地址。 空洞文件：如果写入一部分之后lseek到后面去写入，中间就会产生一个空洞，实际不占用磁盘大小。 文件读取：ssize_t read(int fd, void *buf, size_t nbytes) 返回读取到的字节数。下面的情况可能使得读取到的字节数少于需要的字节数： 1)再读这么多就到了文件尾 2)读网络缓冲区读完 3)读FIFO管道包含的字节少于需要的长度 4)读终端设备，一次一行 文件写入：ssize_t write(int fd, const void* buf, size_t nbytes) 返回写入的字节数。一般和nbytes相同。 文件属性编辑：int fcntl(int fd, int cmd, .]]></description>
+</item>
+</channel>
+</rss>

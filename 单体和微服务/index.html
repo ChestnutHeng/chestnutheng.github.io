@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>[架构]单体和微服务 - 子恒的博客</title><meta name="Description" content="从单体到微服务，再到monorepo，为什么合久必分，分久必合？"><meta property="og:title" content="[架构]单体和微服务" />
+<meta property="og:description" content="从单体到微服务，再到monorepo，为什么合久必分，分久必合？" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://chestnutheng.github.io/%E5%8D%95%E4%BD%93%E5%92%8C%E5%BE%AE%E6%9C%8D%E5%8A%A1/" /><meta property="og:image" content="http://chestnutheng.github.io/logo.png" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-04-15T19:31:56+08:00" />
+<meta property="article:modified_time" content="2024-04-15T19:31:56+08:00" /><meta property="og:site_name" content="子恒的博客" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="http://chestnutheng.github.io/logo.png" /><meta name="twitter:title" content="[架构]单体和微服务"/>
+<meta name="twitter:description" content="从单体到微服务，再到monorepo，为什么合久必分，分久必合？"/>
+<meta name="application-name" content="我的网站">
+<meta name="apple-mobile-web-app-title" content="我的网站"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://chestnutheng.github.io/%E5%8D%95%E4%BD%93%E5%92%8C%E5%BE%AE%E6%9C%8D%E5%8A%A1/" /><link rel="prev" href="http://chestnutheng.github.io/%E6%91%84%E5%BD%B1%E5%92%8C%E7%9C%BC%E7%9D%9B/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[架构]单体和微服务",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/chestnutheng.github.io\/%E5%8D%95%E4%BD%93%E5%92%8C%E5%BE%AE%E6%9C%8D%E5%8A%A1\/"
+        },"genre": "posts","keywords": "架构","wordcount":  66 ,
+        "url": "http:\/\/chestnutheng.github.io\/%E5%8D%95%E4%BD%93%E5%92%8C%E5%BE%AE%E6%9C%8D%E5%8A%A1\/","datePublished": "2024-04-15T19:31:56+08:00","dateModified": "2024-04-15T19:31:56+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "子恒"
+            },"description": "从单体到微服务，再到monorepo，为什么合久必分，分久必合？"
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="子恒的博客">子恒的博客</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/"> 主页 </a><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/freinds/"> 友链 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="子恒的博客">子恒的博客</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        Cancel
+                    </a>
+                </div><a class="menu-item" href="/" title="">主页</a><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/freinds/" title="">友链</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><div class="search-dropdown desktop">
+        <div id="search-dropdown-desktop"></div>
+    </div>
+    <div class="search-dropdown mobile">
+        <div id="search-dropdown-mobile"></div>
+    </div><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">[架构]单体和微服务</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="about" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>子恒</a></span>&nbsp;<span class="post-category">included in <a href="/categories/%E6%9E%B6%E6%9E%84/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>架构</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2024-04-15">2024-04-15</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;66 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;One minute&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#多大的服务">多大的服务</a></li>
+    <li><a href="#更微更好">更微=更好?</a></li>
+    <li><a href="#微服务教">微服务教</a></li>
+    <li><a href="#再次回到起点monorepo">再次回到起点：monorepo</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="多大的服务">多大的服务</h1>
+<p>“宜小不宜微”，不宜过大的单体，也不宜滥用微服务，应保持在合适的大小。<br>
+（ps. 这里只讨论服务的大小。不讨论服务的手段，拆分解耦、服务发现、mesh、告警、限流、全链路建设，都是好的实践，任何服务都可以做的同样好）<br>
+什么样的服务大小属于合理的服务？核心有两点，合理划分服务边界，匹配组织结构。</p>
+<ul>
+<li>团队视角：服务的规模应该尽量限制在最小团队，约3人左右的团队为宜
+<ul>
+<li>❎ 过大！跨团队修改同一服务，风险大且不利于基础建设。没有人对整体的架构和质量负责。没有人有全局视角，写代码因为不了解改动范围容易出故障。</li>
+<li>❎ 过大！10人以上的团队不宜修改同一服务。很可能服务定位不清晰，10个人的信息交流会有很多gap，效率会大大降低</li>
+<li>❎ 过小！团队每个人管三四个服务，说明服务数量过多，无用工作会增加，效率也会降低</li>
+</ul>
+</li>
+<li>业务视角：保证产品需求变更如果只在本团队内，修改的服务1-2个即可
+<ul>
+<li>❎ 过小！改一个小小的功能，牵扯4-5个服务。服务太小了，效率降低</li>
+<li>❎ 过大！同时有四五个业务需求，对应数十个研发同时修改一个服务，而这些功能看起来并不密切。这说明服务包揽的功能太多了，已经膨胀的太大了</li>
+</ul>
+</li>
+</ul>
+<h1 id="更微更好">更微=更好?</h1>
+<p>我们以一个模块划分合理、大小合适的单体服务为例，看看如果拆分的更微小，对比起来会有哪些点值得关注：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">关注点</th>
+<th style="text-align:left">合理的单体</th>
+<th style="text-align:left">更微服务</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">性能</td>
+<td style="text-align:left">无劣化</td>
+<td style="text-align:left">约数ms的劣化</td>
+</tr>
+<tr>
+<td style="text-align:left">复用性</td>
+<td style="text-align:left">可以仓库内直接引用</td>
+<td style="text-align:left">不可复用其他仓库代码；所以也不会复用到bug</td>
+</tr>
+<tr>
+<td style="text-align:left">可读性</td>
+<td style="text-align:left">容易找代码</td>
+<td style="text-align:left">需要跨的仓库多，层次深，理解困难</td>
+</tr>
+<tr>
+<td style="text-align:left">研发成本</td>
+<td style="text-align:left">编译可能较慢</td>
+<td style="text-align:left">写代码、编译、调试、发布、部署都需要多仓库并行，成本高</td>
+</tr>
+<tr>
+<td style="text-align:left">部署成本</td>
+<td style="text-align:left">单机器</td>
+<td style="text-align:left">高，需要多台机器</td>
+</tr>
+<tr>
+<td style="text-align:left">代码合入</td>
+<td style="text-align:left">公共部分容易冲突</td>
+<td style="text-align:left">不容易冲突</td>
+</tr>
+</tbody>
+</table>
+<h1 id="微服务教">微服务教</h1>
+<p>我们看下某网站对单体的批评，一一回应下：</p>
+<ul>
+<li>开发效率低：所有的开发在一个项目改代码，递交代码相互等待，代码冲突不断
+<ul>
+<li>确实，代码冲突会变多。但在单体内部模块划分合理的情况下，冲突的只会是公共模块；如果这些代码冲突了，使用微服务也会冲突。</li>
+</ul>
+</li>
+<li>代码维护难：代码功能耦合在一起，新人不知道何从下手
+<ul>
+<li>耦合是模块设计的问题，不是单体的问题。而且单体断层更少，更容易阅读</li>
+</ul>
+</li>
+<li>部署不灵活：构建时间长，任何小修改必须重新构建整个项目，这个过程往往很长
+<ul>
+<li>没发现编译时间有显著区别。部分单体仓库会编译多个产物，建议针对性编译，效果更好。</li>
+</ul>
+</li>
+<li>稳定性不高：一个微不足道的小问题，可以导致整个应用挂掉
+<ul>
+<li>绝对意义上，微服务存在同样的问题，而且更难定位。相对意义上，如果说单体的复用代码带来了问题风险的扩大，这属于因噎废食，不可取。<br>
+微服务给我们带来了什么样的反思？拒绝盲目创新，提防吹牛皮但不切实际，小心滥用导致过犹不及。</li>
+</ul>
+</li>
+</ul>
+<h1 id="再次回到起点monorepo">再次回到起点：monorepo</h1>
+<p>有趣的是，越来越多人意识到了微服务的问题，最终又回归了单一的仓库，并发明了一新的词：monorepo。</p>
+<blockquote>
+<p>Segment.com 提供活动收集和转发服务，每个客户都需要使用一种特殊格式的数据。因此，工程团队最初决定混合使用微服务和多代码库。这一策略效果很好——随着客户基数的增长，他们扩大了规模，没有出现问题。但是，当转发目的地的数量超过 100 个时，事情开始变得糟糕起来。维护、测试和部署超过 140 个代码库（每个代码库都有数百个日益分化的依赖关系）的管理负担太高了。最终，团队发现他们无法取得进展，三个全职工程师花费了大部分时间来维持系统的运行。<br>
+对于 Segment 来说，补救办法就是合并，将所有的服务和依赖迁移到一个单一代码库中。他们必须协调共享库并且测试所有内容，虽然花了很大的代价，但迁移非常成功，最终的结果是降低了复杂性，增加了可维护性。</p>
+</blockquote>
+<p>每个团队的精力是有限的，当每个人管理的仓库&gt;10个，团队管理的仓库&gt;100个，会出现非常多的问题：</p>
+<ul>
+<li>团队无法集中注意力管理。有很多的仓库大部分人并不知晓。这部分代码不再能被复用，也不再被了解</li>
+<li>开发要打开很多IDE并发进行，容易出错。测试需要部署非常多的服务，也不能跨服务debug。发布时需要发布过多的仓库，发布容易遗漏；发布有很复杂的依赖，发布也会花费更久的时间。</li>
+<li>无法发起整体性重构。重构一个服务和同时重构10个服务的难度不是一个级别。</li>
+</ul>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2024-04-15</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/%E5%8D%95%E4%BD%93%E5%92%8C%E5%BE%AE%E6%9C%8D%E5%8A%A1/index.md" target="_blank">Read Markdown</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="http://chestnutheng.github.io/%E5%8D%95%E4%BD%93%E5%92%8C%E5%BE%AE%E6%9C%8D%E5%8A%A1/" data-title="[架构]单体和微服务" data-hashtags="架构"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="http://chestnutheng.github.io/%E5%8D%95%E4%BD%93%E5%92%8C%E5%BE%AE%E6%9C%8D%E5%8A%A1/" data-hashtag="架构"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Hacker News" data-sharer="hackernews" data-url="http://chestnutheng.github.io/%E5%8D%95%E4%BD%93%E5%92%8C%E5%BE%AE%E6%9C%8D%E5%8A%A1/" data-title="[架构]单体和微服务"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="http://chestnutheng.github.io/%E5%8D%95%E4%BD%93%E5%92%8C%E5%BE%AE%E6%9C%8D%E5%8A%A1/" data-title="[架构]单体和微服务"><i data-svg-src="/lib/simple-icons/icons/line.min.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="http://chestnutheng.github.io/%E5%8D%95%E4%BD%93%E5%92%8C%E5%BE%AE%E6%9C%8D%E5%8A%A1/" data-title="[架构]单体和微服务" data-ralateuid="2461859532"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw" aria-hidden="true"></i>&nbsp;<a href="/tags/%E6%9E%B6%E6%9E%84/">架构</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/%E6%91%84%E5%BD%B1%E5%92%8C%E7%9C%BC%E7%9D%9B/" class="prev" rel="prev" title="[游记]摄影和眼睛"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>[游记]摄影和眼睛</a></div>
+</div>
+<div id="comments"><div id="giscus" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://giscus.app">Giscus</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.124.1">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2015 - 2024</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="about" target="_blank">子恒</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/lightgallery/css/lightgallery-bundle.min.css"><link rel="stylesheet" href="/lib/katex/katex.min.css"><script type="text/javascript" src="/lib/autocomplete/autocomplete.min.js"></script><script type="text/javascript" src="/lib/lunr/lunr.min.js"></script><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/lightgallery/lightgallery.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/thumbnail/lg-thumbnail.min.js"></script><script type="text/javascript" src="/lib/lightgallery/plugins/zoom/lg-zoom.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript" src="/lib/sharer/sharer.min.js"></script><script type="text/javascript" src="/lib/katex/katex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/auto-render.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/copy-tex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{"giscus":{"category":"Announcements","categoryId":"DIC_kwDOA9ikP84CQT5Y","darkTheme":"dark","emitMetadata":"0","inputPosition":"bottom","lang":"en","lazyLoading":true,"lightTheme":"light","mapping":"pathname","reactionsEnabled":"1","repo":"chestnutheng/chestnutheng.github.io","repoId":"MDEwOlJlcG9zaXRvcnk2NDUyOTQ3MQ=="}},"lightgallery":true,"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":true,"left":"\\begin{equation}","right":"\\end{equation}"},{"display":true,"left":"\\begin{equation*}","right":"\\end{equation*}"},{"display":true,"left":"\\begin{align}","right":"\\end{align}"},{"display":true,"left":"\\begin{align*}","right":"\\end{align*}"},{"display":true,"left":"\\begin{alignat}","right":"\\end{alignat}"},{"display":true,"left":"\\begin{alignat*}","right":"\\end{alignat*}"},{"display":true,"left":"\\begin{gather}","right":"\\end{gather}"},{"display":true,"left":"\\begin{CD}","right":"\\end{CD}"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"highlightTag":"em","lunrIndexURL":"/index.json","maxResultLength":10,"noResultsFound":"No results found","snippetLength":50,"type":"lunr"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>
