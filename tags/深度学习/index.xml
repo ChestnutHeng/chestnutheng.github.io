@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>深度学习 on 子恒的博客</title>
+    <link>http://chestnutheng.github.io/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/</link>
+    <description>Recent content in 深度学习 on 子恒的博客</description>
+    <generator>Hugo</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Mon, 10 Sep 2018 02:44:37 +0800</lastBuildDate>
+    <atom:link href="http://chestnutheng.github.io/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>[深度学习]C1W1~C1W2</title>
+      <link>http://chestnutheng.github.io/c1w1-c1w2/</link>
+      <pubDate>Tue, 14 Aug 2018 21:09:13 +0800</pubDate>
+      <guid>http://chestnutheng.github.io/c1w1-c1w2/</guid>
+      <description>&lt;h2 id=&#34;c1w1-什么是deep-learning&#34;&gt;C1W1: 什么是deep learning&lt;/h2&gt;&#xA;&lt;h3 id=&#34;单一神经元&#34;&gt;单一神经元&lt;/h3&gt;&#xA;&lt;p&gt;deeplearning是模拟大脑的一种机器学习算法。以房价预测为例：&lt;/p&gt;&#xA;&lt;img src=&#34;http://chestnutheng-blog-1254282572.file.myqcloud.com/c1w1-1.png&#34; style=&#34;width: 500px&#34;/&gt;&#xA;&lt;p&gt;上图把房子面积作为输入X，房价作为输出Y，通过拟合得到了一个一次函数&lt;br&gt;&#xA;$$&lt;br&gt;&#xA;Y=aX+b&lt;br&gt;&#xA;$$&lt;br&gt;&#xA;这个函数的负值均视为0，即使用了ReLU函数作为神经元的激活函数做了处理。&lt;br&gt;&#xA;$$&lt;br&gt;&#xA;f(x) = \max(aX+b, 0)&lt;br&gt;&#xA;$$&lt;/p&gt;&#xA;&lt;p&gt;Note: ReLU函数：f(x)=\max(0, x)，近年来使用ReLU函数代替sigmoid函数为计算速度做了巨大的提升。&lt;/p&gt;&#xA;&lt;p&gt;看看更多特征的情况：&lt;br&gt;&#xA;&lt;img src=&#34;http://chestnutheng-blog-1254282572.file.myqcloud.com/c1w1-1.5.png&#34; style=&#34;height: 250px&#34; /&gt;&lt;/p&gt;&#xA;&lt;h3 id=&#34;飞速发展&#34;&gt;飞速发展&lt;/h3&gt;&#xA;&lt;img src=&#34;http://chestnutheng-blog-1254282572.file.myqcloud.com/dlc1w1-3.png&#34; style=&#34;height: 300px&#34; /&gt;&#xA;&lt;p&gt;上图中可以看到传统算法和神经网络的效果的一个对比，在数据多的情况下神经网络有明显的优势。近年来以下的一些原因导致deep learning飞速发展成为主流&lt;/p&gt;&#xA;&lt;ol&gt;&#xA;&lt;li&gt;计算速度飞速提升，使得训练较大的神经网络成为可能&lt;/li&gt;&#xA;&lt;li&gt;数据变多（labeled data 变多）&lt;/li&gt;&#xA;&lt;/ol&gt;&#xA;&lt;h3 id=&#34;生命周期&#34;&gt;生命周期&lt;/h3&gt;&#xA;&lt;p&gt;一个典型的深度学习的流程，即是一个Idea-Code-Train 的循环&lt;/p&gt;&#xA;&lt;img src=&#34;http://chestnutheng-blog-1254282572.file.myqcloud.com/c1w1-2.png&#34; style=&#34;height: 280px&#34; /&gt;&#xA;&lt;h2 id=&#34;c1w2-基本的神经网络&#34;&gt;C1W2: 基本的神经网络&lt;/h2&gt;&#xA;&lt;h3 id=&#34;问题描述&#34;&gt;问题描述&lt;/h3&gt;&#xA;&lt;img src=&#34;http://chestnutheng-blog-1254282572.file.myqcloud.com/C1W2-1.png&#34; style=&#34;height: 280px&#34; /&gt;&#xA;&lt;p&gt;这里从一个简单的问题开始说起：识别一个64x64的图像是否为猫：&lt;/p&gt;&#xA;&lt;p&gt;每个像素有RGB三个值组成，64*64个像素就是12228个值。所以X可以表示为一个12228维的向量。Y则是0或1（是或不是猫咪）。&lt;/p&gt;&#xA;&lt;p&gt;这里需要很多(X, Y)组成的labeled data数据用来学习。每个样本用如下的数学方式表示：&lt;br&gt;&#xA;$$&lt;br&gt;&#xA;X\in R^{n_x}, Y\in{0,1}   \qquad 其中n_x为每个图片的维度(12288)&lt;br&gt;&#xA;$$&lt;br&gt;&#xA;训练集可以用很多样本表示：&lt;br&gt;&#xA;$$&lt;br&gt;&#xA;\textrm{m training examples:   } \{(X^{(1)}, Y^{(1)}), (X^{(2)}, Y^{(2)}), &amp;hellip; ,(X^{(3)}, Y^{(3)})\}&lt;br&gt;&#xA;$$&lt;br&gt;&#xA;其中每个X都有n_x列，所以整个样本集可以表示为&lt;br&gt;&#xA;$$&lt;br&gt;&#xA;X\in R^{n_x\times m},Y \in R^{1 \times m}&lt;br&gt;&#xA;$$&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

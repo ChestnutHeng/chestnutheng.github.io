@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>感知机 on 子恒的博客</title>
+    <link>http://chestnutheng.github.io/tags/%E6%84%9F%E7%9F%A5%E6%9C%BA/</link>
+    <description>Recent content in 感知机 on 子恒的博客</description>
+    <generator>Hugo</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Sat, 06 Feb 2016 00:19:00 +0800</lastBuildDate>
+    <atom:link href="http://chestnutheng.github.io/tags/%E6%84%9F%E7%9F%A5%E6%9C%BA/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>[机器学习]感知机</title>
+      <link>http://chestnutheng.github.io/machine_learning_procetron/</link>
+      <pubDate>Sat, 06 Feb 2016 00:19:00 +0800</pubDate>
+      <guid>http://chestnutheng.github.io/machine_learning_procetron/</guid>
+      <description>&lt;h1 id=&#34;机器学习基石笔记-感知机&#34;&gt;机器学习基石笔记 感知机&lt;/h1&gt;&#xA;&lt;h2 id=&#34;损失函数&#34;&gt;损失函数&lt;/h2&gt;&#xA;&lt;p&gt;给定一个数据集  $T ={(x_1,y_1),(x_2,y_2),\cdots,(x_N,y_N)}$  ,  其中    $x = R^n , , y={+1,-1}$&lt;/p&gt;&#xA;&lt;p&gt;若存在超平面S   $w\cdot x + b = 0$  能将所有的正负实例点分到两侧，则称数据集是线性可分的，否则称线性不可分。&lt;br&gt;&#xA;任意一点$x_0$到超平面的距离为&lt;br&gt;&#xA;$$\frac{1}{||w||}|w\cdot x_0 + b|$$&lt;br&gt;&#xA;对于误分类数据$(x_i,y_i)$来说，&lt;br&gt;&#xA;$-y_i(w\cdot x_i + b) &amp;gt; 0$&lt;/p&gt;&#xA;&lt;p&gt;有误分类点到超平面距离&lt;br&gt;&#xA;$$-\frac{1}{||w||}y_i|w\cdot x_0 + b|$$&lt;/p&gt;&#xA;&lt;p&gt;则所有误分类点到超平面距离为&lt;br&gt;&#xA;$$-\frac{1}{||w||}\sum_{x_i \in m }y_i|w\cdot x_0 + b|$$&lt;/p&gt;&#xA;&lt;p&gt;所以感知机$sign(w\cdot x + b)$学习损失函数为&lt;br&gt;&#xA;$$L(w,b) = -\sum_{x_i \in m }y_i|w\cdot x_0 + b|$$&lt;/p&gt;&#xA;&lt;h2 id=&#34;学习算法&#34;&gt;学习算法&lt;/h2&gt;&#xA;&lt;ol&gt;&#xA;&lt;li&gt;&#xA;&lt;p&gt;选取初值$w_0,b_0$&lt;/p&gt;&#xA;&lt;/li&gt;&#xA;&lt;li&gt;&#xA;&lt;p&gt;在训练集中选取数据$(x_i,y_i)$&lt;/p&gt;&#xA;&lt;/li&gt;&#xA;&lt;li&gt;&#xA;&lt;p&gt;如果$y_i(w\cdot xi+ b) \leq 0$（分类错误）&lt;br&gt;&#xA;$$w \leftarrow w + x_iy_i$$&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>分布式 on 子恒的博客</title>
+    <link>http://chestnutheng.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/</link>
+    <description>Recent content in 分布式 on 子恒的博客</description>
+    <generator>Hugo</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Wed, 22 Nov 2017 00:10:12 +0800</lastBuildDate>
+    <atom:link href="http://chestnutheng.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>[后台]分布式基础概念</title>
+      <link>http://chestnutheng.github.io/nosql_base/</link>
+      <pubDate>Thu, 09 Nov 2017 22:22:02 +0800</pubDate>
+      <guid>http://chestnutheng.github.io/nosql_base/</guid>
+      <description>&lt;h2 id=&#34;cap&#34;&gt;CAP&lt;/h2&gt;&#xA;&lt;p&gt;&lt;a href=&#34;http://www.julianbrowne.com/article/brewers-cap-theorem&#34;&gt;Brewer&amp;rsquo;s CAP Theorem, 2009&lt;/a&gt;&lt;/p&gt;&#xA;&lt;p&gt;CAP理论是分布式系统的基石，他指出了分布式系统的以下特性：&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Consistency  强一致性(返回的数据时刻一致)&lt;/li&gt;&#xA;&lt;li&gt;Availability 高可用性(服务一直可用，响应时间正常)&lt;/li&gt;&#xA;&lt;li&gt;Tolerance of network Partition 分区容错性(保证有机器宕机服务依然正常)&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;CAP理论表明，一个分布式系统不可能同时满足一致性，可用性和分区容错性这三个需求，&lt;br&gt;&#xA;最多只能同时满足两个。证明可以看上面的链接。&lt;/p&gt;&#xA;&lt;p&gt;所以架构师往往要做出牺牲某一特性的选择：&lt;/p&gt;&#xA;&lt;p&gt;CP：金融行业的数据库，价格昂贵，符合ACID&lt;br&gt;&#xA;CA：传统关系型数据库，用于小型系统或单机系统&lt;br&gt;&#xA;AP：key-value数据库，现代UGC服务基本都是这种架构，用最终一致性来换取高可用和分区容错性。&lt;br&gt;&#xA;电商：牺牲少量的可用性和一致性，比较平衡，符合BASE&lt;/p&gt;&#xA;&lt;img src=&#34;http://chestnutheng-blog-1254282572.file.myqcloud.com/cap_thoery.png&#34; /&gt;&#xA;&lt;h2 id=&#34;acid&#34;&gt;ACID&lt;/h2&gt;&#xA;&lt;p&gt;老生常谈的数据库事务的特性：&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;原子性(Atomicity)&lt;/strong&gt;  事务中有失败，立即回滚到执行前。没有失败，全部成功&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;一致性(Consistency)&lt;/strong&gt; 事务执行后数据的约束没有被破坏&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;隔离性(Isolation）&lt;/strong&gt; 事务之间不交叉进行&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;持久性(Durability）&lt;/strong&gt; 事务完成，永久储存&lt;/p&gt;&#xA;&lt;h2 id=&#34;base&#34;&gt;BASE&lt;/h2&gt;&#xA;&lt;p&gt;&lt;a href=&#34;http://www.infoq.com/cn/articles/ebay-scalability-best-practices&#34;&gt;可伸缩性最佳实践：来自eBay的经验&lt;/a&gt;&lt;/p&gt;&#xA;&lt;p&gt;BASE理论是对CAP理论的延伸，核心思想是即使无法做到强一致性（CAP的Consistency），但应用可以采用适合的方式达到最终一致性，来保证系统的容量和可用性。&lt;/p&gt;&#xA;&lt;h3 id=&#34;basically-availble-基本可用&#34;&gt;Basically Availble （基本可用）&lt;/h3&gt;&#xA;&lt;p&gt;基本可用是指系统只保证核心可用，在访问量突增时采用有损服务的策略，让部分用户使用降级的服务。&lt;br&gt;&#xA;什么是基本可用的服务？以秒杀为例：&lt;br&gt;&#xA;逻辑有损：秒杀时只执行重要逻辑，加载资源可以先使用预加载的或者小图等&lt;br&gt;&#xA;业务有损：秒杀需要会员、抢秒杀资格&lt;br&gt;&#xA;流程有损：比如秒杀时前段丢掉大部分请求，从后端少量请求中选取中奖的请求处理&lt;/p&gt;&#xA;&lt;h3 id=&#34;soft-state-软状态柔性事务&#34;&gt;Soft-state （软状态/柔性事务）&lt;/h3&gt;&#xA;&lt;p&gt;&amp;ldquo;Soft state&amp;rdquo; 可以理解为&amp;quot;无连接&amp;quot;的, 而 &amp;ldquo;Hard state&amp;rdquo; 是&amp;quot;面向连接&amp;quot;的。换句话说，软状态的数据库可能存在很多中间状态，不同节点到达最终统一的状态前会有延迟（如异步复制）。&lt;/p&gt;&#xA;&lt;h3 id=&#34;eventual-consistency-最终一致性&#34;&gt;Eventual Consistency （最终一致性）&lt;/h3&gt;&#xA;&lt;p&gt;并非时刻保持一致，所有复制节点在某段时间后保持一致。&lt;br&gt;&#xA;最终一致性是弱一致性的一种特例：&lt;br&gt;&#xA;&lt;strong&gt;Step 1.&lt;/strong&gt; A首先write了一个值到存储系统&lt;br&gt;&#xA;&lt;strong&gt;Step 2.&lt;/strong&gt; 存储系统保证在A,B,C后续读取之前没有其它写操作更新同样的值&lt;br&gt;&#xA;&lt;strong&gt;Step 3.&lt;/strong&gt; 最终所有的读取操作都会读取到最A写入的最新值&lt;/p&gt;&#xA;&lt;p&gt;从A写入到读取操作读取成功有一定的时间，即不一致性窗口。如果没有失败发生的话，“不一致性窗口”的大小依赖于以下的几个因素：交互延迟，系统的负载，以及备机slave的个数。最终一致性方面最出名的系统可以说是DNS系统，当更新一个域名的IP以后，根据配置策略以及缓存控制策略的不同，最终所有的客户都会看到最新的值。&lt;/p&gt;&#xA;&lt;p&gt;在下一篇文章的中，会表明只要集群$V_r + V_w \leq N$，即此时读取和写入操作是不重叠的， 就能保证最终一致性。这个时候不一致性的窗口依赖于存储系统的异步实现方式，不一致性的窗口大小就等于从更新开始到所有的节点都异步更新完成之间的时间。&lt;br&gt;&#xA;​&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
