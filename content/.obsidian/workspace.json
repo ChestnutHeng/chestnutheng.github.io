@@ -1,0 +1,293 @@
+{
+  "main": {
+    "id": "2a02f521db248e7c",
+    "type": "split",
+    "children": [
+      {
+        "id": "ff840936ec875973",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "0b94689b7951ab0f",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "drafts/hql备忘录.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "hql备忘录"
+            }
+          },
+          {
+            "id": "6ce9a9716eee5d0b",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "drafts/设计一张表.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "设计一张表"
+            }
+          },
+          {
+            "id": "45d90394fee51783",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "posts/load_balance3.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "load_balance3"
+            }
+          },
+          {
+            "id": "3b0455a3d8fa64b6",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "drafts/服务端高性能架构之道（缓存篇）.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "服务端高性能架构之道（缓存篇）"
+            }
+          },
+          {
+            "id": "fcfb0d01546e3172",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "drafts/docs/wudao money 设计文档.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "wudao money 设计文档"
+            }
+          },
+          {
+            "id": "1657d0f8c058ea07",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "drafts/plant-uml 示例.md",
+                "mode": "preview",
+                "source": true
+              },
+              "icon": "lucide-file",
+              "title": "plant-uml 示例"
+            }
+          },
+          {
+            "id": "4dd6ad55b02f179d",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "drafts/设计一张表.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "设计一张表"
+            }
+          }
+        ],
+        "currentTab": 6
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "ab3d3b94bbd54528",
+    "type": "split",
+    "children": [
+      {
+        "id": "13c220328817c4d7",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "4a66428135a67512",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "byModifiedTime",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "文件列表"
+            }
+          },
+          {
+            "id": "18e49539eb3b7475",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "搜索"
+            }
+          },
+          {
+            "id": "cc5ac2843ae49797",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "书签"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "bf0e7ce2711123cd",
+    "type": "split",
+    "children": [
+      {
+        "id": "0c2b90683a88a73b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "f7550a1466df1b42",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "反向链接"
+            }
+          },
+          {
+            "id": "e1d2da9c4a9c8e88",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "添加笔记属性"
+            }
+          },
+          {
+            "id": "090e3b226bf0ff2c",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              },
+              "icon": "lucide-tags",
+              "title": "标签"
+            }
+          },
+          {
+            "id": "14a0e3e93dbd424a",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {},
+              "icon": "lucide-list",
+              "title": "大纲"
+            }
+          },
+          {
+            "id": "c2fabf9f66e25b6f",
+            "type": "leaf",
+            "state": {
+              "type": "file-properties",
+              "state": {},
+              "icon": "lucide-info",
+              "title": "笔记属性"
+            }
+          }
+        ],
+        "currentTab": 3
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:打开快速切换": false,
+      "graph:查看关系图谱": false,
+      "command-palette:打开命令面板": false,
+      "markdown-importer:打开 Markdown 格式转换器": false
+    }
+  },
+  "active": "4dd6ad55b02f179d",
+  "lastOpenFiles": [
+    "posts/设计合理的幂等方案.md",
+    "drafts/实时数仓.md",
+    "drafts/架构设计九把刀.md",
+    "drafts/软考论文.md",
+    "drafts/时间轮.md",
+    "drafts/ES.md",
+    "drafts/格式大全.md",
+    "posts/广告业务的前世今生.md",
+    "drafts/服务端高性能架构之道（缓存篇）.md",
+    "drafts/设计一张表.md",
+    "about/index.md",
+    "drafts/hql备忘录.md",
+    "posts/nosql_base.md",
+    "drafts/存储方案.md",
+    "drafts/plant-uml 示例.md",
+    "posts/人货场.md",
+    "Pasted image 20240415164706.png",
+    "posts/常见的架构设计思想.md",
+    "posts/对新人友好的项目管理手册.md",
+    "posts/notes.md",
+    "posts/摄影和眼睛.md",
+    "posts/单体和微服务.md",
+    "drafts/stable diffusion.md",
+    "drafts/latex.md",
+    "drafts/RC级别 事务 死锁.md",
+    "drafts/公路车名词.md",
+    "drafts/redis分布式计数器.md",
+    "未命名.canvas",
+    "未命名 1.canvas",
+    "未命名 4.canvas",
+    "未命名 3.canvas",
+    "未命名 2.canvas",
+    "drafts/docs"
+  ]
+}

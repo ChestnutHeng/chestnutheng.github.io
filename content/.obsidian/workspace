@@ -1,0 +1,103 @@
+{
+  "main": {
+    "id": "2a02f521db248e7c",
+    "type": "split",
+    "children": [
+      {
+        "id": "dfe407100c58f482",
+        "type": "leaf",
+        "state": {
+          "type": "markdown",
+          "state": {
+            "file": "幂等.md",
+            "mode": "source",
+            "source": false
+          }
+        }
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "ab3d3b94bbd54528",
+    "type": "split",
+    "children": [
+      {
+        "id": "13c220328817c4d7",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "4a66428135a67512",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {}
+            }
+          },
+          {
+            "id": "18e49539eb3b7475",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "</img>",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "bf0e7ce2711123cd",
+    "type": "split",
+    "children": [
+      {
+        "id": "0c2b90683a88a73b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "f7550a1466df1b42",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "幂等.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "active": "dfe407100c58f482",
+  "lastOpenFiles": [
+    "drafts/架构设计九把刀.md",
+    "drafts/写在DDD之前.md",
+    "drafts/first_post.md",
+    "drafts/big_data_1.md",
+    "drafts/服务端高性能架构之道（缓存篇）.md",
+    "drafts/roaring bitmap.md",
+    "分布式计数器.md",
+    "drafts/对新人友好的项目管理手册.md",
+    "posts/notes.md",
+    "drafts/广告业务的前世今生.md"
+  ]
+}
