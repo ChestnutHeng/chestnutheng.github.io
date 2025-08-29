@@ -11,12 +11,14 @@
             "id": "6a25a283e475b785",
             "type": "leaf",
             "state": {
-              "type": "release-notes",
+              "type": "markdown",
               "state": {
-                "currentVersion": "1.9.10"
+                "file": "content/drafts/设计一张表.md",
+                "mode": "source",
+                "source": false
               },
-              "icon": "lucide-book-up",
-              "title": "版本说明 1.9.10"
+              "icon": "lucide-file",
+              "title": "设计一张表"
             }
           }
         ]
@@ -164,7 +166,7 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "6a25a283e475b785",
+  "active": "cc3b402b102b9c98",
   "lastOpenFiles": [
     "static/favicon.ico",
     "static/README.md",
