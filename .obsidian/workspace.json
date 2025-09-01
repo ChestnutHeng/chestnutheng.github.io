@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "content/drafts/设计一张表.md",
+                "file": "content/posts/设计合理的幂等方案.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "设计一张表"
+              "title": "设计合理的幂等方案"
             }
           }
         ]
@@ -168,6 +168,7 @@
   },
   "active": "cc3b402b102b9c98",
   "lastOpenFiles": [
+    "content/drafts/设计一张表.md",
     "static/favicon.ico",
     "static/README.md",
     "static/IP",
@@ -179,7 +180,6 @@
     "resources/_gen/assets/scss/css/style.scss_26962b449d539ee5c1301a7879e5bb0e.json",
     "resources/_gen/assets/scss/css/style.scss_26962b449d539ee5c1301a7879e5bb0e.content",
     "resources/_gen/assets/scss/css",
-    "resources/_gen/assets/css/style.scss_26962b449d539ee5c1301a7879e5bb0e.json",
     "content/drafts/docs/wudao_money_readme.md",
     "content/drafts/docs/wudao money 设计文档.md",
     "content/drafts/docs/event alarm事件通知.md",
