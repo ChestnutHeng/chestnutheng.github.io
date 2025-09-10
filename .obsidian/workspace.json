@@ -20,8 +20,21 @@
               "icon": "lucide-file",
               "title": "设计合理的幂等方案"
             }
+          },
+          {
+            "id": "c6553267f358eaa9",
+            "type": "leaf",
+            "state": {
+              "type": "release-notes",
+              "state": {
+                "currentVersion": "1.9.12"
+              },
+              "icon": "lucide-book-up",
+              "title": "版本说明 1.9.12"
+            }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -166,7 +179,7 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "cc3b402b102b9c98",
+  "active": "c6553267f358eaa9",
   "lastOpenFiles": [
     "content/drafts/设计一张表.md",
     "static/favicon.ico",
