@@ -60,9 +60,21 @@
               "icon": "lucide-file",
               "title": "load_balance3"
             }
+          },
+          {
+            "id": "3b0bae0612ee5d72",
+            "type": "leaf",
+            "state": {
+              "type": "release-notes",
+              "state": {
+                "currentVersion": "1.11.7"
+              },
+              "icon": "lucide-book-up",
+              "title": "版本说明 1.11.7"
+            }
           }
         ],
-        "currentTab": 3
+        "currentTab": 4
       }
     ],
     "direction": "vertical"
@@ -198,7 +210,7 @@
   },
   "left-ribbon": {
     "hiddenItems": {
-      "bases:创建新数据库": false,
+      "bases:新建数据库": false,
       "switcher:打开快速切换": false,
       "graph:查看关系图谱": false,
       "canvas:新建白板": false,
@@ -207,7 +219,7 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "25a28a58563b1418",
+  "active": "3b0bae0612ee5d72",
   "lastOpenFiles": [
     "content/posts/load_balance2.md",
     "content/posts/load_balance.md",
