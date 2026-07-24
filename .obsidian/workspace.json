@@ -65,12 +65,13 @@
             "id": "3b0bae0612ee5d72",
             "type": "leaf",
             "state": {
-              "type": "release-notes",
+              "type": "bases",
               "state": {
-                "currentVersion": "1.11.7"
+                "file": "未命名 5.base",
+                "viewName": "表格"
               },
-              "icon": "lucide-book-up",
-              "title": "版本说明 1.11.7"
+              "icon": "lucide-table",
+              "title": "未命名 5"
             }
           }
         ],
@@ -127,7 +128,8 @@
               "title": "书签"
             }
           }
-        ]
+        ],
+        "currentTab": 2
       }
     ],
     "direction": "horizontal",
@@ -219,8 +221,16 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "3b0bae0612ee5d72",
+  "active": "1ad4750b2458ae73",
   "lastOpenFiles": [
+    "未命名 4.base",
+    "未命名 5.base",
+    "未命名 3.base",
+    "未命名 2.base",
+    "未命名 1",
+    "未命名",
+    "未命名 1.base",
+    "未命名.base",
     "content/posts/load_balance2.md",
     "content/posts/load_balance.md",
     "content/posts/load_balance3.md",
@@ -233,13 +243,6 @@
     "static/README.md",
     "static/IP",
     "static/CNAME",
-    "static",
-    "start.sh",
-    "resources/_gen/assets/scss/css/style.scss_d75fd08668b4bae707167bbce4d8ca46.content",
-    "resources/_gen/assets/scss/css/style.scss_d75fd08668b4bae707167bbce4d8ca46.json",
-    "resources/_gen/assets/scss/css/style.scss_26962b449d539ee5c1301a7879e5bb0e.json",
-    "resources/_gen/assets/scss/css/style.scss_26962b449d539ee5c1301a7879e5bb0e.content",
-    "resources/_gen/assets/scss/css",
     "content/drafts/docs/wudao_money_readme.md",
     "content/drafts/docs/wudao money 设计文档.md",
     "content/drafts/docs/event alarm事件通知.md",
@@ -255,7 +258,6 @@
     "content/posts/select.md",
     "content/posts/scrapy.md",
     "content/posts/rocketmq.md",
-    "content/posts/reversed_order.md",
-    "content/posts/redis_1.md"
+    "content/posts/reversed_order.md"
   ]
 }
