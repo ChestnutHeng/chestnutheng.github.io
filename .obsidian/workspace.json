@@ -73,9 +73,21 @@
               "icon": "lucide-table",
               "title": "未命名 5"
             }
+          },
+          {
+            "id": "d1c650645f5e8a3e",
+            "type": "leaf",
+            "state": {
+              "type": "release-notes",
+              "state": {
+                "currentVersion": "1.13.4"
+              },
+              "icon": "lucide-book-up",
+              "title": "版本说明 1.13.4"
+            }
           }
         ],
-        "currentTab": 4
+        "currentTab": 5
       }
     ],
     "direction": "vertical"
@@ -123,7 +135,10 @@
             "type": "leaf",
             "state": {
               "type": "bookmarks",
-              "state": {},
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
               "icon": "lucide-bookmark",
               "title": "书签"
             }
@@ -221,7 +236,7 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "1ad4750b2458ae73",
+  "active": "d1c650645f5e8a3e",
   "lastOpenFiles": [
     "未命名 4.base",
     "未命名 5.base",
