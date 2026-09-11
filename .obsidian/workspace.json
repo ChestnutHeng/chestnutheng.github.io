@@ -85,9 +85,21 @@
               "icon": "lucide-book-up",
               "title": "版本说明 1.13.4"
             }
+          },
+          {
+            "id": "c8001caad630a141",
+            "type": "leaf",
+            "state": {
+              "type": "release-notes",
+              "state": {
+                "currentVersion": "1.13.7"
+              },
+              "icon": "lucide-book-up",
+              "title": "版本说明 1.13.7"
+            }
           }
         ],
-        "currentTab": 5
+        "currentTab": 6
       }
     ],
     "direction": "vertical"
@@ -236,7 +248,7 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "d1c650645f5e8a3e",
+  "active": "c8001caad630a141",
   "lastOpenFiles": [
     "未命名 4.base",
     "未命名 5.base",
