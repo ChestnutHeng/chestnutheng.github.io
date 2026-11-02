@@ -22,29 +22,17 @@
             }
           },
           {
-            "id": "c6553267f358eaa9",
-            "type": "leaf",
-            "state": {
-              "type": "release-notes",
-              "state": {
-                "currentVersion": "1.9.12"
-              },
-              "icon": "lucide-book-up",
-              "title": "版本说明 1.9.12"
-            }
-          },
-          {
             "id": "21b78959497fdb5e",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "content/posts/常见的架构设计思想.md",
+                "file": "content/drafts/存储方案.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "常见的架构设计思想"
+              "title": "存储方案"
             }
           },
           {
@@ -78,28 +66,18 @@
             "id": "d1c650645f5e8a3e",
             "type": "leaf",
             "state": {
-              "type": "release-notes",
+              "type": "markdown",
               "state": {
-                "currentVersion": "1.13.4"
+                "file": "content/posts/单体和微服务.md",
+                "mode": "source",
+                "source": false
               },
-              "icon": "lucide-book-up",
-              "title": "版本说明 1.13.4"
-            }
-          },
-          {
-            "id": "c8001caad630a141",
-            "type": "leaf",
-            "state": {
-              "type": "release-notes",
-              "state": {
-                "currentVersion": "1.13.7"
-              },
-              "icon": "lucide-book-up",
-              "title": "版本说明 1.13.7"
+              "icon": "lucide-file",
+              "title": "单体和微服务"
             }
           }
         ],
-        "currentTab": 6
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -119,7 +97,9 @@
               "type": "file-explorer",
               "state": {
                 "sortOrder": "alphabetical",
-                "autoReveal": false
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
               },
               "icon": "lucide-folder-closed",
               "title": "文件列表"
@@ -155,8 +135,7 @@
               "title": "书签"
             }
           }
-        ],
-        "currentTab": 2
+        ]
       }
     ],
     "direction": "horizontal",
@@ -248,8 +227,13 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "c8001caad630a141",
+  "active": "21b78959497fdb5e",
   "lastOpenFiles": [
+    "content/drafts/架构设计九把刀.md",
+    "未命名 7.base",
+    "content/posts/常见的架构设计思想.md",
+    "content/posts/单体和微服务.md",
+    "未命名 6.base",
     "未命名 4.base",
     "未命名 5.base",
     "未命名 3.base",
@@ -261,22 +245,17 @@
     "content/posts/load_balance2.md",
     "content/posts/load_balance.md",
     "content/posts/load_balance3.md",
-    "content/posts/单体和微服务.md",
     "content/drafts/格式大全.md",
     "content/drafts/服务端高性能架构之道（缓存篇）.md",
     "content/drafts/存储方案.md",
     "content/drafts/设计一张表.md",
-    "static/favicon.ico",
     "static/README.md",
-    "static/IP",
-    "static/CNAME",
     "content/drafts/docs/wudao_money_readme.md",
     "content/drafts/docs/wudao money 设计文档.md",
     "content/drafts/docs/event alarm事件通知.md",
     "content/posts/设计合理的幂等方案.md",
     "content/posts/摄影和眼睛.md",
     "content/posts/广告业务的前世今生.md",
-    "content/posts/常见的架构设计思想.md",
     "content/posts/对新人友好的项目管理手册.md",
     "content/posts/人货场.md",
     "content/posts/socket_in_10_lines.md",
