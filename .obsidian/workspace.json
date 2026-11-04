@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "content/drafts/存储方案.md",
+                "file": "content/posts/notes.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "存储方案"
+              "title": "notes"
             }
           },
           {
@@ -111,7 +111,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "",
+                "query": "笔记",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -135,7 +135,8 @@
               "title": "书签"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "horizontal",
@@ -229,6 +230,7 @@
   },
   "active": "21b78959497fdb5e",
   "lastOpenFiles": [
+    "content/drafts/存储方案.md",
     "content/drafts/架构设计九把刀.md",
     "未命名 7.base",
     "content/posts/常见的架构设计思想.md",
@@ -247,7 +249,6 @@
     "content/posts/load_balance3.md",
     "content/drafts/格式大全.md",
     "content/drafts/服务端高性能架构之道（缓存篇）.md",
-    "content/drafts/存储方案.md",
     "content/drafts/设计一张表.md",
     "static/README.md",
     "content/drafts/docs/wudao_money_readme.md",
